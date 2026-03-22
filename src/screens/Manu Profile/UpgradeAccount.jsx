@@ -6,7 +6,12 @@ import {
     ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { COLORS, SIZES, FONTS } from '../../style/Theme';
+
+// components
+import { COLORS, SIZES, FONTS, CARD_SHADOW } from '../../style/Theme';
+import {useTheme} from '../../context/ThemeContext';
+
+// Icons
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -36,19 +41,21 @@ const PLANS = [
 ];
 
 export default function UpgradeAccount() {
+
     const navigation = useNavigation();
+    const {colors} = useTheme();
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, {backgroundColor: colors.background}]}>
             <View style={styles.headerRow}>
                 <TouchableOpacity
-                    style={styles.backBtn}
+                    style={[styles.backBtn, {backgroundColor: colors.chart}]}
                     onPress={() => navigation.goBack()}
                     hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 >
-                    <Feather name="arrow-left" size={22} color={COLORS.white} />
+                    <Feather name="arrow-left" size={22} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>อัปเกรดบัญชี</Text>
+                <Text style={[styles.headerTitle, {color: colors.text}]}>อัปเกรดบัญชี</Text>
                 <View style={{ width: 44 }} />
             </View>
 
@@ -57,14 +64,14 @@ export default function UpgradeAccount() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                <View style={styles.highlightBox}>
+                <View style={[styles.highlightBox, {backgroundColor: colors.cardBg, borderColor: colors.border}]}>
                     <MaterialCommunityIcons
                         name="crown-outline"
                         size={32}
-                        color={COLORS.accent}
+                        color={colors.accent}
                     />
-                    <Text style={styles.highlightTitle}>ควบคุมการเงินแบบโปร</Text>
-                    <Text style={styles.highlightText}>
+                    <Text style={[styles.highlightTitle, {color: colors.text}]}>ควบคุมการเงินแบบโปร</Text>
+                    <Text style={[styles.highlightText, {color: colors.text}]}>
                         อัปเกรดเป็นบัญชีพรีเมียมเพื่อปลดล็อกฟีเจอร์วิเคราะห์เชิงลึก และการเตือนอัจฉริยะ
                     </Text>
                 </View>
@@ -73,15 +80,15 @@ export default function UpgradeAccount() {
                     <View
                         key={plan.id}
                         style={[
-                            styles.planCard,
-                            plan.id === 'pro' && styles.planCardPro,
+                            styles.planCard, {backgroundColor: colors.cardBg, borderColor: colors.border},
+                            plan.id === 'pro' && {backgroundColor: colors.accent},
                         ]}
                     >
                         <View style={styles.planHeaderRow}>
-                            <Text style={styles.planName}>{plan.name}</Text>
-                            <Text style={styles.planPrice}>{plan.price}</Text>
+                            <Text style={[styles.planName, {color: plan.id === 'pro' ? colors.background : colors.text}]}>{plan.name}</Text>
+                            <Text style={[styles.planPrice, {color: colors.accent}]}>{plan.price}</Text>
                         </View>
-                        <Text style={styles.planDescription}>{plan.description}</Text>
+                        <Text style={[styles.planDescription, {color: plan.id === 'pro' ? colors.chart : colors.gray}]}>{plan.description}</Text>
                         <View style={styles.featureList}>
                             {plan.features.map((f, idx) => (
                                 <View key={idx} style={styles.featureRow}>
@@ -89,13 +96,13 @@ export default function UpgradeAccount() {
                                         name="check"
                                         size={14}
                                         color={
-                                            plan.id === 'pro' ? COLORS.black : COLORS.accent
+                                            plan.id === 'pro' ? colors.background : colors.accent
                                         }
                                     />
                                     <Text
                                         style={[
-                                            styles.featureText,
-                                            plan.id === 'pro' && styles.featureTextPro,
+                                            {color: colors.text, fontSize: SIZES.xs},
+                                            plan.id === 'pro' && {color: colors.chart},
                                         ]}
                                     >
                                         {f}
@@ -105,18 +112,18 @@ export default function UpgradeAccount() {
                         </View>
 
                         {plan.isCurrent ? (
-                            <View style={styles.currentBadge}>
-                                <Text style={styles.currentBadgeText}>กำลังใช้งาน</Text>
+                            <View style={[styles.currentBadge, {backgroundColor: colors.accent}]}>
+                                <Text style={[styles.currentBadgeText, {color: colors.background}]}>กำลังใช้งาน</Text>
                             </View>
                         ) : (
                             <TouchableOpacity
                                 style={[
-                                    styles.upgradeButton,
+                                    styles.upgradeButton, {backgroundColor: colors.background},
                                     plan.comingSoon && styles.upgradeButtonDisabled,
                                 ]}
                                 activeOpacity={plan.comingSoon ? 1 : 0.9}
                             >
-                                <Text style={styles.upgradeButtonText}>
+                                <Text style={[styles.upgradeButtonText, {color: colors.text}]}>
                                     {plan.comingSoon ? 'เร็ว ๆ นี้' : 'อัปเกรดเป็นพรีเมียม'}
                                 </Text>
                             </TouchableOpacity>
@@ -164,6 +171,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.chart,
         marginBottom: 16,
+        ...CARD_SHADOW
     },
     highlightTitle: {
         color: COLORS.white,
@@ -178,15 +186,11 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     planCard: {
-        backgroundColor: COLORS.cardBg,
         borderRadius: 18,
         padding: 18,
         marginTop: 12,
         borderWidth: 1,
-        borderColor: COLORS.chart,
-    },
-    planCardPro: {
-        backgroundColor: COLORS.accent,
+        ...CARD_SHADOW
     },
     planHeaderRow: {
         flexDirection: 'row',
@@ -219,19 +223,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 8,
     },
-    featureText: {
-        color: COLORS.background_White,
-        fontSize: SIZES.xs,
-    },
-    featureTextPro: {
-        color: COLORS.black,
-    },
     currentBadge: {
         alignSelf: 'flex-start',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 999,
-        backgroundColor: COLORS.chart,
+        opacity: 0.7,
     },
     currentBadgeText: {
         color: COLORS.background_White,
@@ -244,15 +241,13 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: COLORS.black,
-    },
-    upgradeButtonDisabled: {
-        opacity: 0.7,
     },
     upgradeButtonText: {
-        color: COLORS.white,
         fontSize: SIZES.sm,
         fontWeight: FONTS.bold,
+    },
+    upgradeButtonDisabled: {
+        opacity: 0.9,
     },
 });
 

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -6,51 +6,45 @@ import {
     TouchableOpacity,
     TextInput,
     Animated,
-    Easing,
     KeyboardAvoidingView,
     Platform,
     Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useTheme } from '../context/ThemeContext';
+
+// components
 import { SIZES, FONTS, COLORS } from '../style/Theme';
 
 // icons
 import Feather from '@expo/vector-icons/Feather';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
-export default function Login() {
-    const { colors } = useTheme();
-    const ImgGoogle = require("../imgs/google_img.png")
 
+export default function Login() {
+    const ImgGoogle = require("../imgs/google_img.png")
     const navigation = useNavigation();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
 
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const translateY = useRef(new Animated.Value(24)).current;
+    const translateY = useRef(new Animated.Value(50)).current;
 
     useEffect(() => {
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
-                duration: 450,
-                easing: Easing.out(Easing.cubic),
+                duration: 500,
                 useNativeDriver: true,
             }),
             Animated.timing(translateY, {
                 toValue: 0,
-                duration: 450,
-                easing: Easing.out(Easing.cubic),
+                duration: 500,
                 useNativeDriver: true,
             }),
         ]).start();
     }, []);
 
-    const handleLogin = () => {
-        // TODO: เชื่อมต่อระบบล็อกอินจริง
-        navigation.replace('Home');
+    const handleLogin = async () => {
+        navigation.replace("Home");
     };
 
     return (
@@ -60,8 +54,7 @@ export default function Login() {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <View style={styles.header}>
-                    <Feather name="pie-chart" size={26} color={COLORS.accent} />
-                    <Text style={styles.appName}>MyBank</Text>
+                    <Image source={require('../imgs/logoText.png')} style={{ width: 200, height: 50 }} />
                 </View>
 
                 <Animated.View
@@ -83,8 +76,6 @@ export default function Login() {
                         style={styles.input}
                         placeholder="your@email.com"
                         placeholderTextColor={COLORS.gray}
-                        value={email}
-                        onChangeText={setEmail}
                         keyboardType="email-address"
                         autoCapitalize="none"
                     />
@@ -95,8 +86,6 @@ export default function Login() {
                             style={styles.passwordInput}
                             placeholder="••••••••"
                             placeholderTextColor={COLORS.gray}
-                            value={password}
-                            onChangeText={setPassword}
                             secureTextEntry={!showPassword}
                         />
                         <TouchableOpacity
@@ -123,22 +112,22 @@ export default function Login() {
                         <Text style={styles.loginButtonText}>เข้าสู่ระบบ</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.helperRow}
-                        onPress={() => navigation.navigate('Register')}
+                        onPress={() => navigation.navigate('SignIn')}
                     >
                         <Text style={styles.helperText}>ยังไม่มีบัญชี?</Text>
                         <Text style={styles.helperLink}> สร้างบัญชี </Text>
                     </TouchableOpacity>
 
                     <Text style={styles.textSignin}>หรือเข้าสู่ระบบโดย</Text>
-                    <TouchableOpacity style={styles.signinButton}>
-                        <Image source={ImgGoogle} style={styles.imgLogo}></Image>
-                        <Text style={{fontWeight: FONTS.semibold, fontSize: SIZES.xs, color: COLORS.gray}}>Sign in with Google</Text>
+                    <TouchableOpacity onPress={handleLogin} style={styles.signinButton}>
+                        <Image source={ImgGoogle} style={styles.imgLogo} />
+                        <Text style={{ fontWeight: FONTS.semibold, fontSize: SIZES.xs, color: COLORS.gray }}>Sign in with Google</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.signinButton, {backgroundColor: "#0866ff"}]}>
+                    <TouchableOpacity onPress={handleLogin} style={[styles.signinButton, { backgroundColor: "#0866ff" }]}>
                         <FontAwesome5 name="facebook" size={22} color="white" />
-                        <Text style={{fontWeight: FONTS.semibold, fontSize: SIZES.xs, color: COLORS.background_White}}>Sign in with Facebook</Text>
+                        <Text style={{ fontWeight: FONTS.semibold, fontSize: SIZES.xs, color: COLORS.background_White }}>Sign in with Facebook</Text>
                     </TouchableOpacity>
                 </Animated.View>
             </KeyboardAvoidingView>
@@ -157,7 +146,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 40,
+        marginBottom: 30,
     },
     appName: {
         marginLeft: 10,
@@ -223,6 +212,12 @@ const styles = StyleSheet.create({
         fontSize: SIZES.xs,
         alignSelf: 'flex-end',
         marginTop: 8,
+    },
+    errorText: {
+        color: '#ff6b6b',
+        fontSize: SIZES.xs,
+        marginTop: 10,
+        textAlign: 'center',
     },
     loginButton: {
         marginTop: 24,

@@ -1,25 +1,26 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
     TouchableOpacity,
     TextInput,
-    Animated,
-    Easing,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    Image,
+    Animated,
+    ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
 import { SIZES, FONTS, COLORS } from "../style/Theme";
+import { useRef, useEffect } from 'react';
 
 // icons
 import Feather from '@expo/vector-icons/Feather';
 
 export default function Register() {
-    const { colors } = useTheme();
     const navigation = useNavigation();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -27,30 +28,41 @@ export default function Register() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+    const [loading, setLoading] = useState(false);
+
 
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const translateY = useRef(new Animated.Value(24)).current;
+    const translateY = useRef(new Animated.Value(50)).current;
 
     useEffect(() => {
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
-                duration: 450,
-                easing: Easing.out(Easing.cubic),
+                duration: 500,
                 useNativeDriver: true,
             }),
             Animated.timing(translateY, {
                 toValue: 0,
-                duration: 450,
-                easing: Easing.out(Easing.cubic),
+                duration: 500,
                 useNativeDriver: true,
             }),
         ]).start();
     }, []);
 
     const handleRegister = () => {
-        // TODO: เชื่อมต่อระบบสมัครสมาชิกจริง
-        navigation.goBack();
+        if (!email || !password || !confirmPassword) {
+            setErrorMsg("กรุณากรอกข้อมูลให้ครบ");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setErrorMsg("รหัสผ่านไม่ตรงกัน");
+            return;
+        }
+
+        setErrorMsg("");
+        console.log("สมัครสมาชิก");
     };
 
     return (
@@ -61,15 +73,14 @@ export default function Register() {
             >
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
                     <View style={styles.header}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             onPress={() => navigation.goBack()}
                             style={styles.backButton}
                         >
                             <Feather name="arrow-left" size={24} color={COLORS.white} />
                         </TouchableOpacity>
                         <View style={styles.headerTitleContainer}>
-                           <Feather name="pie-chart" size={26} color={COLORS.accent} />
-                           <Text style={styles.appName}>MyBank</Text>
+                            <Image source={require('../imgs/logoText.png')} style={{ width: 200, height: 50 }} />
                         </View>
                     </View>
 
@@ -87,7 +98,7 @@ export default function Register() {
                             เริ่มต้นออมเงินและจัดการรายจ่ายของคุณ
                         </Text>
 
-                        <Text style={styles.label}>ชื่อ-นามสกุล</Text>
+                        <Text style={styles.label}>ชื่อ</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="Your Name"
@@ -151,12 +162,21 @@ export default function Register() {
                             </TouchableOpacity>
                         </View>
 
+                        {errorMsg ? (
+                            <Text style={styles.errorText}>{errorMsg}</Text>
+                        ) : null}
+
                         <TouchableOpacity
-                            style={styles.registerButton}
+                            style={[styles.registerButton, loading && { opacity: 0.6 }]}
                             activeOpacity={0.9}
                             onPress={handleRegister}
+                            disabled={loading}
                         >
-                            <Text style={styles.registerButtonText}>สร้างบัญชี</Text>
+                            {loading ? (
+                                <ActivityIndicator color={COLORS.black} />
+                            ) : (
+                                <Text style={styles.registerButtonText}>สร้างบัญชี</Text>
+                            )}
                         </TouchableOpacity>
 
                         <View style={styles.helperRow}>
@@ -254,8 +274,14 @@ const styles = StyleSheet.create({
     eyeIcon: {
         padding: 4,
     },
+    errorText: {
+        color: '#ff6b6b',
+        fontSize: SIZES.xs,
+        marginTop: 12,
+        textAlign: 'center',
+    },
     registerButton: {
-        marginTop: 32,
+        marginTop: 20,
         backgroundColor: COLORS.accent,
         borderRadius: 999,
         paddingVertical: 14,

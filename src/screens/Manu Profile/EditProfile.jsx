@@ -8,7 +8,7 @@ import {
     Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { SIZES, FONTS, IMG_SHADOW } from '../../style/Theme';
+import { SIZES, FONTS, CARD_SHADOW } from '../../style/Theme';
 import { useTheme } from '../../context/ThemeContext';
 import Feather from '@expo/vector-icons/Feather';
 
@@ -92,7 +92,7 @@ export default function EditProfile() {
                     activeOpacity={0.9}
                     onPress={handleSave}
                 >
-                    <Text style={[styles.saveButtonText, { color: colors.black }]}>บันทึกการเปลี่ยนแปลง</Text>
+                    <Text style={[styles.saveButtonText, { color: colors.background }]}>บันทึกการเปลี่ยนแปลง</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -135,7 +135,6 @@ const styles = StyleSheet.create({
         borderRadius: (AVATAR_SIZE + 10) / 2,
         alignItems: 'center',
         justifyContent: 'center',
-        ...IMG_SHADOW,
     },
     avatarInner: {
         width: AVATAR_SIZE,
@@ -152,6 +151,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 999,
+        ...CARD_SHADOW
     },
     avatarButtonText: {
         fontSize: SIZES.xs,
@@ -170,14 +170,17 @@ const styles = StyleSheet.create({
         fontSize: SIZES.sm,
         fontWeight: FONTS.semibold,
         borderWidth: 1,
+        ...CARD_SHADOW
     },
     inputDisabled: {
-        opacity: 0.5,
+        opacity: 0.8,
     },
     changePasswordText: {
         fontSize: SIZES.xs,
         fontWeight: FONTS.semibold,
         marginTop: 8,
+        textDecorationLine: 'underline',
+        textAlign: "right",
     },
     footer: {
         position: 'absolute',

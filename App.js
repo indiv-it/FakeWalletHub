@@ -5,10 +5,11 @@ import { StatusBar } from 'expo-status-bar';
 
 // theme provider
 import { ThemeProvider } from './src/context/ThemeContext';
+import { TransactionProvider } from './src/context/TransactionContext';
 
 // screens
 import Login from './src/screens/Login';
-import Register from './src/screens/Register';
+import SignIn from './src/screens/SignIn';
 import Home from './src/screens/Home';
 import Record from './src/screens/Record';
 import Profile from './src/screens/Profile';
@@ -22,7 +23,7 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   return (
     <ThemeProvider>
-      <>
+      <TransactionProvider>
         <StatusBar style="light" />
         <NavigationContainer>
           <Stack.Navigator
@@ -33,7 +34,7 @@ export default function App() {
             }}
           >
             <Stack.Screen name="Login" component={Login} />
-            <Stack.Screen name="Register" component={Register} />
+            <Stack.Screen name="SignIn" component={SignIn} />
             <Stack.Screen name="Home" component={Home} />
             <Stack.Screen name="Record" component={Record} />
             <Stack.Screen name="Profile" component={Profile} />
@@ -43,7 +44,7 @@ export default function App() {
             <Stack.Screen name="UpgradeAccount" component={UpgradeAccount} />
           </Stack.Navigator>
         </NavigationContainer>
-      </>
+      </TransactionProvider>
     </ThemeProvider>
   );
 }

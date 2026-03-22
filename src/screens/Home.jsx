@@ -5,11 +5,12 @@ import {
     TouchableOpacity,
     FlatList,
 } from "react-native"
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 // components
 import { SIZES, FONTS, CARD_SHADOW } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
+import { useTransaction } from '../context/TransactionContext';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
 import PieChartComponent from '../components/pieChart';
@@ -23,8 +24,52 @@ import Entypo from '@expo/vector-icons/Entypo';
 
 export default function Home() {
     const { colors } = useTheme();
+    const { transactions } = useTransaction();
     const [popupMoney, setPopupMoney] = useState(null);
     const [popupGroup, setPopupGroup] = useState(null);
+
+    // Compute aggregated values from real data
+    const stats = useMemo(() => {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        // Filter to current month
+        const monthlyTx = transactions.filter(tx => {
+            const [y, m] = tx.date.split('-').map(Number);
+            return y === currentYear && m === currentMonth + 1;
+        });
+
+        const totalIncome = monthlyTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const totalExpense = monthlyTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        const bankIncome = monthlyTx.filter(t => t.type === 'income' && t.listType === 'เงินในบัญชี').reduce((s, t) => s + t.amount, 0);
+        const bankExpense = monthlyTx.filter(t => t.type === 'expense' && t.listType === 'เงินในบัญชี').reduce((s, t) => s + t.amount, 0);
+        const cashIncome = monthlyTx.filter(t => t.type === 'income' && t.listType === 'เงินสด').reduce((s, t) => s + t.amount, 0);
+        const cashExpense = monthlyTx.filter(t => t.type === 'expense' && t.listType === 'เงินสด').reduce((s, t) => s + t.amount, 0);
+
+        // Per-category stats
+        const categoryStats = {};
+        ['เงินจำเป็น', 'เงินตามใจ', 'เงินลงทุน', 'เงินออม'].forEach(cat => {
+            const catTx = monthlyTx.filter(t => t.category === cat);
+            categoryStats[cat] = {
+                income: catTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
+                expense: catTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
+            };
+        });
+
+        return {
+            totalIncome,
+            totalExpense,
+            netProfit: totalIncome - totalExpense,
+            balance: totalIncome - totalExpense,
+            bank: bankIncome - bankExpense,
+            cash: cashIncome - cashExpense,
+            categoryStats,
+        };
+    }, [transactions]);
+
+    // Format currency
+    const fmt = (n) => `฿ ${n.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
 
     const categories = [
         { id: 1, name: "เงินจำเป็น", icon: <FontAwesome6 name="cart-shopping" size={16} color={colors.background} /> },
@@ -44,13 +89,13 @@ export default function Home() {
 
             <View>
                 <Text style={[styles.cradText, { color: colors.text }]}>{groupName}</Text>
-                <Text style={[styles.cradTextMoney, { color: colors.accent_black }]}>฿ 00.00</Text>
+                <Text style={[styles.cradTextMoney, { color: colors.accent_black }]}>{fmt((stats.categoryStats[groupName]?.income || 0) - (stats.categoryStats[groupName]?.expense || 0))}</Text>
             </View>
 
             <View style={styles.cardPie}>
                 <PieChartComponent
-                    income={1000}
-                    expense={500}
+                    income={stats.categoryStats[groupName]?.income || 0}
+                    expense={stats.categoryStats[groupName]?.expense || 0}
                     size={60}
                     color="white"
                 />
@@ -78,12 +123,12 @@ export default function Home() {
                 <View style={styles.moneyPopup}>
                     <View style={{ alignItems: "center" }}>
                         <Text style={{ color: colors.accent_black }}>รายรับ</Text>
-                        <Text style={{ color: colors.accent_black }}>฿ 00.00</Text>
+                        <Text style={{ color: colors.accent_black }}>{fmt(stats.categoryStats[groupName]?.income || 0)}</Text>
                     </View>
 
                     <View style={{ alignItems: "center" }}>
                         <Text style={{ color: colors.red }}>รายจ่าย</Text>
-                        <Text style={{ color: colors.red }}>฿ 00.00</Text>
+                        <Text style={{ color: colors.red }}>{fmt(stats.categoryStats[groupName]?.expense || 0)}</Text>
                     </View>
                 </View>
 
@@ -126,25 +171,25 @@ export default function Home() {
                 <View>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <MaterialCommunityIcons name="bank" size={14} color={colors.text} />
-                        <Text style={[styles.text, { color: colors.text }]}>฿ 00.00</Text>
+                        <Text style={[styles.text, { color: colors.text }]}>{fmt(stats.bank)}</Text>
                     </View>
 
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <MaterialCommunityIcons name="cash" size={14} color={colors.text} />
-                        <Text style={[styles.text, { color: colors.text }]}>฿ 00.00</Text>
+                        <Text style={[styles.text, { color: colors.text }]}>{fmt(stats.cash)}</Text>
                     </View>
 
                     <View style={{ flexDirection: "row" }}>
                         <Text style={{ color: colors.textSecondary, fontSize: SIZES.xs }}>NP: </Text>
-                        <Text style={[styles.text, { color: colors.text }]}>฿ 00.00</Text>
+                        <Text style={[styles.text, { color: colors.text }]}>{fmt(stats.netProfit)}</Text>
                     </View>
 
-                    <Text style={[styles.textHeader, { color: colors.accent_black }]}>฿ 00.00</Text>
+                    <Text style={[styles.textHeader, { color: colors.accent_black }]}>{fmt(stats.balance)}</Text>
                 </View>
 
                 <PieChartComponent
-                    income={1000}
-                    expense={500}
+                    income={stats.totalIncome}
+                    expense={stats.totalExpense}
                     size={100}
                     color="red"
                     onPieClick={() => setPopupMoney(true)}
@@ -196,12 +241,12 @@ export default function Home() {
                         <View style={styles.moneyPopup}>
                             <View style={{ alignItems: "center" }}>
                                 <Text style={{ color: colors.accent_black }}>รายรับ</Text>
-                                <Text style={{ color: colors.accent_black }}>฿ 00.00</Text>
+                                <Text style={{ color: colors.accent_black }}>{fmt(stats.totalIncome)}</Text>
                             </View>
 
                             <View style={{ alignItems: "center" }}>
                                 <Text style={{ color: colors.red }}>รายจ่าย</Text>
-                                <Text style={{ color: colors.red }}>฿ 00.00</Text>
+                                <Text style={{ color: colors.red }}>{fmt(stats.totalExpense)}</Text>
                             </View>
                         </View>
 

@@ -2,8 +2,10 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DARK_COLORS, LIGHT_COLORS } from '../style/Theme';
 
+// Create the theme context
 const ThemeContext = createContext();
 
+// Custom hook to use the theme
 export const useTheme = () => {
     const context = useContext(ThemeContext);
     if (!context) {
@@ -12,6 +14,7 @@ export const useTheme = () => {
     return context;
 };
 
+// Theme provider component
 export const ThemeProvider = ({ children }) => {
     const [isDarkMode, setIsDarkMode] = useState(true);
 
@@ -20,6 +23,7 @@ export const ThemeProvider = ({ children }) => {
         loadThemePreference();
     }, []);
 
+    // Load theme preference from storage
     const loadThemePreference = async () => {
         try {
             const savedTheme = await AsyncStorage.getItem('themeMode');
@@ -31,6 +35,7 @@ export const ThemeProvider = ({ children }) => {
         }
     };
 
+    // Toggle between dark and light mode
     const toggleTheme = () => {
         const newTheme = !isDarkMode;
         setIsDarkMode(newTheme);
@@ -43,6 +48,7 @@ export const ThemeProvider = ({ children }) => {
         }
     };
 
+    // Theme object
     const theme = {
         colors: isDarkMode ? DARK_COLORS : LIGHT_COLORS,
         isDarkMode,
@@ -50,6 +56,7 @@ export const ThemeProvider = ({ children }) => {
         setIsDarkMode,
     };
 
+    // Provide the theme to the app
     return (
         <ThemeContext.Provider value={theme}>
             {children}

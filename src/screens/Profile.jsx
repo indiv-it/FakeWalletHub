@@ -11,9 +11,9 @@ import {
     Pressable,
     Image,
 } from "react-native"
-
-// navigation & components
 import { useNavigation } from '@react-navigation/native';
+
+// components
 import { SIZES, FONTS, COLORS, CARD_SHADOW } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
 import Footer from "../components/Footer"
@@ -128,11 +128,11 @@ const PopupProfile = ({ visible, onClose, onEditProfile, imageUri, colors }) => 
                 />
                 <View style={popupStyles.contentWrap}>
                     <TouchableOpacity
-                        style={popupStyles.closeBtn}
+                        style={[popupStyles.closeBtn, { backgroundColor: colors.chart }]}
                         onPress={handleClose}
                         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                     >
-                        <Feather name="x" size={28} color={colors.background_White} />
+                        <Feather name="x" size={28} color={colors.text} />
                     </TouchableOpacity>
 
                     <Animated.View
@@ -145,7 +145,7 @@ const PopupProfile = ({ visible, onClose, onEditProfile, imageUri, colors }) => 
                         ]}
                     >
                         <View style={popupStyles.avatarOuter}>
-                            <View style={popupStyles.avatarInner}>
+                            <View style={[popupStyles.avatarInner, { borderColor: colors.background }]}>
                                 {imageUri ? (
                                     <Image
                                         source={{ uri: imageUri }}
@@ -154,7 +154,7 @@ const PopupProfile = ({ visible, onClose, onEditProfile, imageUri, colors }) => 
                                     />
                                 ) : null}
                             </View>
-                            <View style={[popupStyles.avatarRing, { borderColor: `${colors.accent}50` }]} />
+                            <View style={[popupStyles.avatarRing, { borderColor: colors.accent }]} />
                         </View>
                     </Animated.View>
 
@@ -496,7 +496,6 @@ const popupStyles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: 'rgba(255,255,255,0.08)',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 10,
@@ -529,7 +528,7 @@ const popupStyles = StyleSheet.create({
         width: AVATAR_SIZE,
         height: AVATAR_SIZE,
         borderRadius: AVATAR_SIZE / 2,
-        borderWidth: 2,
+        borderWidth: 3,
     },
     footerWrap: {
         position: 'absolute',

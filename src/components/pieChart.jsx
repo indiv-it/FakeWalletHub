@@ -4,25 +4,26 @@ import Svg, { Circle } from 'react-native-svg';
 import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated';
 import { useTheme } from '../context/ThemeContext';
 
+// Animated Circle Component
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
+// Pie Chart Component
 const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, color = "red" }) => {
-    const total = income + expense;
-    const { colors } = useTheme();
-    const radius = size * 0.375;      // outerRadius equivalent
-    const innerRadius = size * 0.25;  // innerRadius equivalent
-    const strokeWidth = radius - innerRadius;
-    const adjustedRadius = (radius + innerRadius) / 2;
-    const circumference = 2 * Math.PI * adjustedRadius;
-    const center = size / 2;
+    const total = income + expense;                         // Total amount
+    const { colors } = useTheme();                          // Theme colors
+    const radius = size * 0.375;                            // outerRadius equivalent
+    const innerRadius = size * 0.25;                        // innerRadius equivalent
+    const strokeWidth = radius - innerRadius;               // Stroke width
+    const adjustedRadius = (radius + innerRadius) / 2;      // Adjusted radius
+    const circumference = 2 * Math.PI * adjustedRadius;     // Circumference
+    const center = size / 2;                                // Center of the pie chart
 
     // Calculate stroke dash for income (green) portion
     const incomeRatio = total > 0 ? income / total : 0.5;
     const incomeArc = circumference * incomeRatio;
-    const expenseArc = circumference - incomeArc;
-
     const progress = useSharedValue(0);
 
+    // Animate the pie chart
     useEffect(() => {
         progress.value = 0;
         progress.value = withTiming(1, {
@@ -31,17 +32,19 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
         });
     }, [income, expense]);
 
+    // Animate the stroke dash
     const animatedProps = useAnimatedProps(() => {
         const animatedIncomeArc = incomeArc * progress.value;
-        const animatedExpenseArc = circumference - animatedIncomeArc;
         return {
-            strokeDasharray: `${animatedIncomeArc} ${animatedExpenseArc}`
+            strokeDasharray: `${animatedIncomeArc} ${circumference - animatedIncomeArc}`
         };
     });
 
+    // Render the pie chart
     const content = (
         <View style={[styles.container, { width: size, height: size }]}>
             <Svg width={size} height={size} viewBox={`0 0 ${size} ${size} `} pointerEvents="none">
+
                 {/* Expense (red) - full circle background */}
                 <Circle
                     cx={center}
@@ -51,6 +54,7 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
                     strokeWidth={strokeWidth}
                     fill="none"
                 />
+
                 {/* Income (green) - partial arc on top */}
                 {total > 0 && (
                     <AnimatedCircle
@@ -69,6 +73,7 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
         </View>
     );
 
+    // Handle click event
     if (onPieClick) {
         return (
             <TouchableOpacity
