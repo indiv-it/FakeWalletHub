@@ -1,13 +1,13 @@
 import { View, TouchableOpacity, Text, StyleSheet, Animated } from "react-native"
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 
 // components
 import { useTheme } from '../context/ThemeContext';
 import { CARD_SHADOW } from "../style/Theme";
 
 // Icons
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { ChartColumnBig, ClipboardList, NotebookPen, Plus } from 'lucide-react-native';
 
 // Components menu
 const Menu = ({ icon, text, link, route, navigation, colors }) => {
@@ -33,20 +33,18 @@ const Menu = ({ icon, text, link, route, navigation, colors }) => {
             >
                 <Animated.View
                     style={{
-                        transform: [{ scale: scaleAnim }]
+                        transform: [{ scale: scaleAnim }],
                     }}
                 >
                     {/* Icon */}
-                    <FontAwesome5
-                        name={icon}
-                        size={16}
-                        color={isActive ? colors.accent : colors.text}
-                    />
+                    {React.cloneElement(icon, {
+                        color: isActive ? colors.accent : colors.text,
+                    })}
                 </Animated.View>
 
                 {/* Text */}
                 {isActive && (
-                    <Text style={[styles.text, { color: colors.accent }]}>{text}</Text>
+                    <Text style={[styles.text, { color: colors.accent, fontWeight: 'bold' }]}>{text}</Text>
                 )}
             </TouchableOpacity>
         </View>
@@ -64,17 +62,13 @@ export default function Footer() {
         <View style={[styles.container, { backgroundColor: colors.cardBg }]}>
 
             {/* Menu */}
-            <Menu icon="home" text="หน้าแรก" link="Home" route={route} navigation={navigation} colors={colors} />
-            <Menu icon="list" text="ประวัติ" link="Record" route={route} navigation={navigation} colors={colors} />
-            <Menu icon="user" text="โปรไฟล์" link="Profile" route={route} navigation={navigation} colors={colors} />
+            <Menu icon={<ChartColumnBig size={20} />} text="กราฟ" link="Home" route={route} navigation={navigation} colors={colors} />
+            <Menu icon={<ClipboardList size={20} />} text="ประวัติ" link="Record" route={route} navigation={navigation} colors={colors} />
+            <Menu icon={<NotebookPen size={20} />} text="บันทึก" link="Profile" route={route} navigation={navigation} colors={colors} />
 
             {/* Add Button */}
             <TouchableOpacity style={[styles.add, { backgroundColor: colors.accent }]} onPress={() => navigation.navigate("AddList")}>
-                <FontAwesome5
-                    name="plus"
-                    size={18}
-                    color={colors.background}
-                />
+                <Plus size={20} color={colors.background} />
             </TouchableOpacity>
         </View>
     )
@@ -95,6 +89,8 @@ const styles = StyleSheet.create({
         paddingRight: 5,
         paddingLeft: 20,
         position: "absolute",
+        borderColor: "#ffffff31",
+        borderWidth: 1,
         ...CARD_SHADOW
     },
     icon: {

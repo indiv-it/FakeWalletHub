@@ -205,20 +205,9 @@ export default function Profile() {
             icon: <AntDesign name="moon" size={20} color={colors.text} />,
             actionComponent: <CustomSwitch value={isDarkMode} onValueChange={toggleTheme} colors={colors} />
         },
-    ]
-
-    const menu2 = [
         {
             name: "เกี่ยวกับ",
             icon: <FontAwesome6 name="circle-question" size={20} color={colors.text} />,
-        },
-        {
-            name: "ลบบัญชี",
-            icon: <Feather name="trash" size={20} color={colors.red} />,
-        },
-        {
-            name: "ออกจากระบบ",
-            icon: <FontAwesome name="sign-out" size={20} color={colors.red} />,
         },
     ]
 
@@ -268,33 +257,6 @@ export default function Profile() {
                 ))}
             </View>
 
-            {/* profile body About */}
-            <Text style={{ marginTop: 20, marginBottom: 10, fontSize: SIZES.sm, fontWeight: FONTS.bold, color: colors.text }}>เพิ่มเติม</Text>
-            <View style={[styles.menu, { backgroundColor: colors.cardBg }]}>
-                {menu2.map((item, index) => (
-                    <TouchableOpacity
-                        key={index}
-                        style={styles.menuItem}
-                        onPress={() => {
-                            if (item.name === "เกี่ยวกับ") {
-                                setDialogType('about');
-                            } else if (item.name === "ลบบัญชี") {
-                                setDialogType('delete');
-                            } else if (item.name === "ออกจากระบบ") {
-                                setDialogType('logout');
-                            }
-                        }}
-                    >
-                        {item.icon}
-                        <Text style={[styles.textMenu, { color: colors.text }]}>
-                            {item.name === "ลบบัญชี" || item.name === "ออกจากระบบ"
-                                ? <Text style={{ color: colors.red }}>{item.name}</Text>
-                                : <Text style={{ color: colors.text }}>{item.name}</Text>}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
             <PopupProfile
                 visible={popupProfileVisible}
                 onClose={() => setPopupProfileVisible(false)}
@@ -327,65 +289,6 @@ export default function Profile() {
                                 >
                                     <Text style={[dialogStyles.primaryButtonText, { color: colors.background }]}>ปิด</Text>
                                 </TouchableOpacity>
-                            </>
-                        )}
-
-                        {dialogType === 'delete' && (
-                            <>
-                                <Text style={[dialogStyles.title, { color: colors.text }]}>ลบบัญชีผู้ใช้?</Text>
-                                <Text style={[dialogStyles.message, { color: colors.textSecondary }]}>
-                                    การลบบัญชีจะลบข้อมูลทั้งหมดที่เกี่ยวข้องกับบัญชีนี้อย่างถาวร{'\n'}
-                                    ฟีเจอร์นี้ยังไม่เปิดให้ใช้งานในเวอร์ชันปัจจุบัน
-                                </Text>
-                                <View style={dialogStyles.rowButtons}>
-                                    <TouchableOpacity
-                                        style={[dialogStyles.secondaryButton, { borderColor: colors.textSecondary }]}
-                                        onPress={() => setDialogType(null)}
-                                        activeOpacity={0.9}
-                                    >
-                                        <Text style={[dialogStyles.secondaryButtonText, { color: colors.textSecondary }]}>ยกเลิก</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[dialogStyles.secondaryButton, { borderColor: colors.red }]}
-                                        onPress={() => setDialogType(null)}
-                                        activeOpacity={0.9}
-                                    >
-                                        <Text style={[dialogStyles.secondaryButtonText, { color: colors.red }]}>
-                                            เร็ว ๆ นี้
-                                        </Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </>
-                        )}
-
-                        {dialogType === 'logout' && (
-                            <>
-                                <Text style={[dialogStyles.title, { color: colors.text }]}>ออกจากระบบ</Text>
-                                <Text style={[dialogStyles.message, { color: colors.textSecondary }]}>
-                                    คุณต้องการออกจากระบบบัญชีนี้หรือไม่?
-                                </Text>
-                                <View style={dialogStyles.rowButtons}>
-                                    <TouchableOpacity
-                                        style={dialogStyles.secondaryButton}
-                                        onPress={() => setDialogType(null)}
-                                        activeOpacity={0.9}
-                                    >
-                                        <Text style={[dialogStyles.secondaryButtonText, { color: colors.textSecondary }]}>ยกเลิก</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[dialogStyles.primaryButton, { backgroundColor: colors.accent }]}
-                                        onPress={() => {
-                                            setDialogType(null);
-                                            navigation.reset({
-                                                index: 0,
-                                                routes: [{ name: 'Login' }],
-                                            });
-                                        }}
-                                        activeOpacity={0.9}
-                                    >
-                                        <Text style={[dialogStyles.primaryButtonText, { color: colors.background }]}>ออกจากระบบ</Text>
-                                    </TouchableOpacity>
-                                </View>
                             </>
                         )}
                     </View>

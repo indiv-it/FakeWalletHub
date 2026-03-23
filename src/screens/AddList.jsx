@@ -109,6 +109,11 @@ export default function AddList() {
             return;
         }
 
+        if (!listType) {
+            alert('กรุณาเลือกประเภทรายการ');
+            return;
+        }
+
         // Map Thai type to English for database
         const typeMapping = {
             'รายรับ': 'income',
@@ -121,8 +126,8 @@ export default function AddList() {
             title,
             amount: numericAmount,
             type: typeMapping[listType] || 'expense',
-            category: listGroup,
-            listType: listAccount,
+            category: listGroup || 'ไม่ระบุหมวดหมู่',
+            listType: listAccount || 'ไม่ระบุประเภทเงิน',
             date: dateStr,
             created_at: new Date().toISOString(),
         };
@@ -130,12 +135,15 @@ export default function AddList() {
         try {
             if (isEditMode && editItem?.id) {
                 await editTransaction(editItem.id, transactionData);
+                alert('สำเร็จ', 'แก้ไขรายการสำเร็จ');
             } else {
                 await addTransaction(transactionData);
+                alert('สำเร็จ', 'เพิ่มรายการสำเร็จ');
             }
             navigation.goBack();
         } catch (error) {
             console.error('Error saving transaction:', error);
+            alert('Error', 'เกิดข้อผิดพลาดในการบันทึกรายการ กรุณาลองใหม่');
         }
     };
 
@@ -164,7 +172,7 @@ export default function AddList() {
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                     {/* note */}
                     <TextInput
-                        keyboardType="text"
+                        keyboardType="default"
                         placeholder="ชื่อรายการ"
                         placeholderTextColor={colors.gray}
                         style={[styles.textInput, { width: "63%", color: colors.text, backgroundColor: colors.cardBg }]}
@@ -222,7 +230,7 @@ export default function AddList() {
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListAccount('เงินในบัญชี')}
+                        onPress={() => setListAccount(listAccount === 'เงินในบัญชี' ? '' : 'เงินในบัญชี')}
                     />
                     <CustomTypeButton
                         label="เงินสด"
@@ -230,7 +238,7 @@ export default function AddList() {
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListAccount('เงินสด')}
+                        onPress={() => setListAccount(listAccount === 'เงินสด' ? '' : 'เงินสด')}
                     />
                 </View>
 
@@ -243,7 +251,7 @@ export default function AddList() {
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListGroup('เงินจำเป็น')}
+                        onPress={() => setListGroup(listGroup === 'เงินจำเป็น' ? '' : 'เงินจำเป็น')}
                     />
                     <CustomTypeButton
                         label="เงินตามใจ"
@@ -251,7 +259,7 @@ export default function AddList() {
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListGroup('เงินตามใจ')}
+                        onPress={() => setListGroup(listGroup === 'เงินตามใจ' ? '' : 'เงินตามใจ')}
                     />
                     <CustomTypeButton
                         label="เงินลงทุน"
@@ -259,7 +267,7 @@ export default function AddList() {
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListGroup('เงินลงทุน')}
+                        onPress={() => setListGroup(listGroup === 'เงินลงทุน' ? '' : 'เงินลงทุน')}
                     />
                     <CustomTypeButton
                         label="เงินออม"
@@ -267,7 +275,7 @@ export default function AddList() {
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListGroup('เงินออม')}
+                        onPress={() => setListGroup(listGroup === 'เงินออม' ? '' : 'เงินออม')}
                     />
                 </View>
             </View>
@@ -336,6 +344,8 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: 15,
         marginTop: 10,
+        borderWidth: 1,
+        borderColor: COLORS.border,
         ...CARD_SHADOW
     },
     typeContainer: {
@@ -353,6 +363,8 @@ const styles = StyleSheet.create({
         width: "33%",
         justifyContent: "center",
         alignItems: "center",
+        borderWidth: 1,
+        borderColor: COLORS.border,
         ...CARD_SHADOW
     },
     dateText: {
@@ -365,6 +377,8 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         alignItems: "center",
         justifyContent: "center",
+        borderWidth: 1,
+        borderColor: COLORS.border,
         ...CARD_SHADOW
     },
     typeText: {
@@ -396,7 +410,7 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "rgba(0,0,0,0.7)",
+        backgroundColor: "rgba(0,0,0,0.5)",
     },
     alertBackdrop: {
         ...StyleSheet.absoluteFillObject,
@@ -408,6 +422,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         borderWidth: 1,
         alignItems: "center",
+        borderColor: COLORS.border,
     },
     alertTitle: {
         fontSize: SIZES.base,

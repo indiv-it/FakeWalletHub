@@ -2,9 +2,10 @@
 // Dark theme colors
 export const DARK_COLORS = {
     accent: '#ACF532',
-    accent_black: '#ACF532',
-    cardBg: '#1D1D1D',
-    red: '#EF4444',
+    accent_black: '#ACF53250',
+    accent_border: '#ACF53260',
+    cardBg: '#141414',
+    red: '#ff0000',
     white: '#FFFFFF',
     background_White: '#dddddd',
     chart: "#353535ff",
@@ -13,15 +14,16 @@ export const DARK_COLORS = {
     background: '#000000',
     text: '#FFFFFF',
     textSecondary: '#dddddd',
-    border: '#353535',
+    border: '#ffffff31',
 };
 
 // Light theme colors
 export const LIGHT_COLORS = {
     accent: '#0051ff',
-    accent_black: '#0051ff',
+    accent_black: '#0051ff50',
+    accent_border: '#0051ff60',
     cardBg: '#FFFFFF',
-    red: '#EF4444',
+    red: '#ff0000',
     white: '#FFFFFF',
     background_White: '#333333',
     chart: "#dddddd",

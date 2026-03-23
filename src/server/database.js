@@ -31,17 +31,29 @@ export async function initDatabase() {
 // Insert a new transaction
 export async function insertTransaction(data) {
     const database = await getDatabase();
+    
+    // Set default values for optional fields
+    const transactionData = {
+        title: data.title || 'ไม่ระบุชื่อ',
+        amount: data.amount || 0,
+        type: data.type || 'expense',
+        category: data.category || 'ไม่ระบุหมวดหมู่',
+        listType: data.listType || 'ไม่ระบุประเภทเงิน',
+        date: data.date || new Date().toISOString().split('T')[0],
+        created_at: data.created_at || new Date().toISOString(),
+    };
+    
     const result = await database.runAsync(
         `INSERT INTO transactions (title, amount, type, category, listType, date, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
-            data.title,
-            data.amount,
-            data.type,
-            data.category,
-            data.listType,
-            data.date,
-            data.created_at,
+            transactionData.title,
+            transactionData.amount,
+            transactionData.type,
+            transactionData.category,
+            transactionData.listType,
+            transactionData.date,
+            transactionData.created_at,
         ]
     );
     return result.lastInsertRowId;
@@ -59,17 +71,29 @@ export async function getAllTransactions() {
 // Update a transaction by id
 export async function updateTransaction(id, data) {
     const database = await getDatabase();
+    
+    // Set default values for optional fields
+    const transactionData = {
+        title: data.title || 'ไม่ระบุชื่อ',
+        amount: data.amount || 0,
+        type: data.type || 'expense',
+        category: data.category || 'ไม่ระบุหมวดหมู่',
+        listType: data.listType || 'ไม่ระบุประเภทเงิน',
+        date: data.date || new Date().toISOString().split('T')[0],
+        created_at: data.created_at || new Date().toISOString(),
+    };
+    
     await database.runAsync(
         `UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, listType = ?, date = ?, created_at = ?
-         WHERE id = ?`,
+        WHERE id = ?`,
         [
-            data.title,
-            data.amount,
-            data.type,
-            data.category,
-            data.listType,
-            data.date,
-            data.created_at,
+            transactionData.title,
+            transactionData.amount,
+            transactionData.type,
+            transactionData.category,
+            transactionData.listType,
+            transactionData.date,
+            transactionData.created_at,
             id,
         ]
     );

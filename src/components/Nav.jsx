@@ -1,47 +1,37 @@
 import {
     View,
-    Text,
     StyleSheet,
     TouchableOpacity,
-    Image
+    Image,
 } from "react-native"
-import { useNavigation } from '@react-navigation/native';
 
 // components
-import { SIZES, FONTS } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
+import { usePopup } from "../context/PopupContext";
 
-// items
-import Feather from '@expo/vector-icons/Feather';
+// icons
+import { Sun, CircleQuestionMark } from 'lucide-react-native';
 
 // Nav Component
 export default function Nav() {
-    const { colors } = useTheme();
-    const navigation = useNavigation();
+    const { colors, toggleTheme, isDarkMode } = useTheme();
+    const { openPopup } = usePopup();
 
     return (
         <View style={styles.nav}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
-
-                {/* Profile Image */}
-                <TouchableOpacity 
-                    onPress={() => navigation.navigate('Profile')} 
-                    style={{ borderWidth: 2, borderColor: colors.accent, padding: 2, borderRadius: 50 }}
-                >
-                    <Image source={require('../imgs/logo.png')} style={styles.img} />
-                </TouchableOpacity>
-
-                {/* User Info */}
-                <View>
-                    <Text style={[styles.text, { color: colors.text }]}>Chockpipat</Text>
-                    <Text style={{ color: colors.accent, fontSize: 11 }}>Test Account</Text>
-                </View>
+            <View style={[styles.logoContainer, { backgroundColor: isDarkMode ? colors.background : colors.accent }]}>
+                <Image source={require('../imgs/logoText.png')} style={styles.img} />
             </View>
 
             {/* Notification Button */}
-            <TouchableOpacity onPress={() => navigation.navigate('Warn')}>
-                <Feather name="bell" size={24} color={colors.text} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+                <TouchableOpacity onPress={toggleTheme}>
+                    <Sun size={24} color={isDarkMode ? colors.accent : colors.text} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={openPopup}>
+                    <CircleQuestionMark size={24} color={colors.text} />
+                </TouchableOpacity>
+            </View>
         </View>
     )
 }
@@ -51,15 +41,16 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        marginVertical: 30,
+        marginTop: 30,
+        marginBottom: 20,
     },
-    text: {
-        fontSize: SIZES.base,
-        fontWeight: FONTS.bold,
+    logoContainer: {
+        paddingHorizontal: 15,
+        paddingVertical: 5,
+        borderRadius: 10,
     },
     img: {
-        width: 40,
+        width: 120,
         height: 40,
-        borderRadius: 50,
     },
 });

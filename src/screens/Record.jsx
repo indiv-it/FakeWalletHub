@@ -11,7 +11,7 @@ import {
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useNavigation, useFocusEffect } from "@react-navigation/native"
 import DateTimePicker from "@react-native-community/datetimepicker"
-import { SIZES, FONTS, CARD_SHADOW } from "../style/Theme"
+import { SIZES, FONTS, CARD_SHADOW, COLORS } from "../style/Theme"
 
 // components
 import Footer from "../components/Footer"
@@ -19,9 +19,16 @@ import { useTheme } from "../context/ThemeContext"
 import { useTransaction } from "../context/TransactionContext"
 
 // icons
-import Entypo from "@expo/vector-icons/Entypo"
-import Ionicons from "@expo/vector-icons/Ionicons"
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import {
+    Landmark,
+    Banknote,
+    X,
+    CalendarDays,
+    Trash2,
+    Pencil,
+    Scroll,
+    Archive
+} from 'lucide-react-native';
 
 // filters
 const FILTERS = [
@@ -176,9 +183,9 @@ export default function Record() {
             <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => setFilter(item.id)}
-                style={[styles.filterChip, isActive && styles.filterChipActive, { backgroundColor: isActive ? colors.accent : colors.cardBg }]}
+                style={[styles.filterChip, { backgroundColor: isActive ? colors.accent : colors.cardBg }]}
             >
-                <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive, { color: isActive ? colors.background : colors.text }]}>
+                <Text style={[styles.filterChipText, { color: isActive ? colors.background : colors.text }]}>
                     {item.label}
                 </Text>
             </TouchableOpacity>
@@ -187,13 +194,12 @@ export default function Record() {
 
     // icon ตาม listType (เงินสด / เงินในบัญชี)
     function iconMoney(listType, isIncome) {
-        const iconName = listType === "เงินสด" ? "cash" : "bank"
         return (
-            <MaterialCommunityIcons
-                name={iconName}
-                size={24}
-                color={isIncome ? colors.background : colors.white}
-            />
+            listType === "เงินสด" 
+            ? <Banknote size={24} color={isIncome ? colors.accent : colors.red} /> 
+            : listType === "เงินในบัญชี"
+            ? <Landmark size={24} color={isIncome ? colors.accent : colors.red} />
+            : <Archive size={24} color={isIncome ? colors.accent : colors.red} />
         )
     }
 
@@ -237,7 +243,10 @@ export default function Record() {
                             {item.title}
                         </Text>
                     </View>
-                    <View style={[styles.listLogo, { backgroundColor: isIncome ? colors.accent : colors.red }]}>
+                    <View style={[styles.listLogo, { 
+                        backgroundColor: isIncome ? colors.accent_black : "#ff000040",
+                        borderColor: isIncome ? colors.accent_border : "#ff000050" 
+                    }]}>
                         {iconMoney(listType, isIncome)}
                     </View>
                 </TouchableOpacity>
@@ -250,7 +259,7 @@ export default function Record() {
         return (
             <View style={styles.emptyState}>
                 <View style={[styles.emptyIconWrap, { backgroundColor: colors.chart }]}>
-                    <Ionicons name="document-text-outline" size={48} color={colors.text} />
+                    <Scroll size={48} color={colors.text} />
                 </View>
                 <Text style={[styles.emptyTitle, { color: colors.text }]}>ยังไม่มีรายการ</Text>
                 <Text style={[styles.emptySub, { color: colors.gray }]}>
@@ -289,15 +298,14 @@ export default function Record() {
                 <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={openDatePicker}
-                    style={[styles.filterChip, dateFilter && styles.filterChipActive, {backgroundColor: dateFilter ? colors.accent : colors.cardBg}]}
+                    style={[styles.filterChip, {backgroundColor: dateFilter ? colors.accent : colors.cardBg}]}
                 >
-                    <Ionicons
-                        name="calendar-outline"
+                    <CalendarDays
                         size={18}
                         color={dateFilter ? colors.background : colors.text}
                         style={{ marginRight: 6 }}
                     />
-                    <Text style={[styles.filterChipText, dateFilter && styles.filterChipTextActive, {color: dateFilter ? colors.background : colors.text}]}>
+                    <Text style={[styles.filterChipText, {color: dateFilter ? colors.background : colors.text}]}>
                         {dateFilter ? formatDate(dateFilter) : "เลือกวันที่"}
                     </Text>
                 </TouchableOpacity>
@@ -309,7 +317,7 @@ export default function Record() {
                         onPress={clearDateFilter}
                         style={[styles.dateFilterClear, { backgroundColor: colors.red }]}
                     >
-                        <Entypo name="cross" size={18} color={colors.white} />
+                        <X size={18} color={colors.white} />
                         <Text style={[styles.dateFilterClearText, { color: colors.white }]}>ล้าง</Text>
                     </TouchableOpacity>
                 )}
@@ -339,7 +347,7 @@ export default function Record() {
                         }}
                         style={[styles.datePickerBtn, styles.datePickerBtnConfirm]}
                     >
-                        <Text style={[styles.datePickerBtnText, styles.datePickerBtnTextConfirm]}>ตกลง</Text>
+                        <Text style={[styles.datePickerBtnText]}>ตกลง</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -384,31 +392,31 @@ export default function Record() {
                             style={styles.modalClose}
                             onPress={closeAction}
                         >
-                            <Entypo name="cross" size={24} color={colors.text} />
+                            <X size={24} color={colors.text} />
                         </TouchableOpacity>
-                        <Text style={[styles.actionModalTitle, { color: colors.text }]}>{actionItem.title}</Text>
+                        <Text style={[styles.actionModalTitle, { color: colors.text, marginBottom: 15 }]}>{actionItem.title}</Text>
                         <Text style={[styles.actionModalAmount, { color: actionItem.type === "income" ? colors.accent : colors.red }]}>
                             {formatAmount(actionItem.amount, actionItem.type)}
                         </Text>
                         <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                            รายการ : {actionItem.type === "income" ? "รายรับ" : "รายจ่าย"}
+                            รายการ : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.type === "income" ? "รายรับ" : "รายจ่าย"}</Text>
                         </Text>
                         <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                            ประเภท : {actionItem.listType}
+                            ประเภท : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.listType}</Text>
                         </Text>
                         <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                            หมวดหมู่ : {actionItem.category}
+                            หมวดหมู่ : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.category}</Text>
                         </Text>
                         <Text style={[styles.actionModalMeta, { marginTop: 20, fontWeight: FONTS.bold, color: colors.text }]}>
                             วันที่ : <Text style={{ fontWeight: FONTS.normal }}>{formatDate(actionItem.date)}</Text>
                         </Text>
                         <View style={styles.actionButtons}>
                             <TouchableOpacity style={[styles.actionBtnEdit, { backgroundColor: colors.accent }]} onPress={handleEdit}>
-                                <Ionicons name="pencil" size={20} color={colors.background} />
+                                <Pencil size={20} color={colors.background} />
                                 <Text style={[styles.actionBtnEditText, { color: colors.background }]}>แก้ไข</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.actionBtnDelete, { backgroundColor: colors.red }]} onPress={() => showPopupDelete()}>
-                                <Ionicons name="trash-outline" size={20} color={colors.white} />
+                                <Trash2 size={20} color={colors.white} />
                                 <Text style={[styles.actionBtnDeleteText, { color: colors.white }]}>ลบ</Text>
                             </TouchableOpacity>
                         </View>
@@ -432,14 +440,14 @@ export default function Record() {
                             },
                         ]}
                     >
-                        <MaterialCommunityIcons name="delete" size={60} color={colors.red} style={{ textAlign: "center", marginBottom: 20, }} />
+                        <Trash2 size={60} color={colors.red} style={{ marginHorizontal: "auto", marginBottom: 20 }} />
                         <Text style={[styles.actionModalTitle, { color: colors.text }]}>ยืนยันการลบรายการ</Text>
                         <Text style={{ color: colors.gray, textAlign: "center", marginBottom: 20, }}>คุณต้องการลบรายการนี้จริงหรือไม่</Text>
                         <TouchableOpacity style={[styles.actionBtnDelete, { backgroundColor: colors.red }]} onPress={handleDelete}>
                             <Text style={[styles.actionBtnDeleteText, { color: colors.white }]}>ลบ</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={closePopupDelete}>
-                            <Text style={[styles.actionBtnDeleteText, { marginTop: 15, color: colors.text }]}>ยกเลิก</Text>
+                            <Text style={[styles.actionBtnDeleteText, { marginTop: 15, color: colors.text, marginBottom: 10 }]}>ยกเลิก</Text>
                         </TouchableOpacity>
                     </Animated.View>
                 </View>
@@ -509,6 +517,8 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 18,
         borderRadius: 20,
+        borderWidth: 1,
+        borderColor: COLORS.border,
         ...CARD_SHADOW
     },
     filterChipText: {
@@ -532,6 +542,8 @@ const styles = StyleSheet.create({
         paddingLeft: 16,
         paddingRight: 14,
         borderLeftWidth: 5,
+        borderWidth: 1,
+        borderColor: COLORS.border,
         ...CARD_SHADOW,
     },
     listContent: {
@@ -568,11 +580,12 @@ const styles = StyleSheet.create({
         fontWeight: FONTS.semibold,
     },
     listLogo: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 50,
+        height: 50,
+        borderRadius: 50,
         alignItems: "center",
         justifyContent: "center",
+        borderWidth: 1,
     },
     emptyState: {
         flex: 1,
@@ -613,7 +626,7 @@ const styles = StyleSheet.create({
     },
     modalBackdrop: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.6)",
+        backgroundColor: "rgba(0,0,0,0.5)",
     },
     actionModal: {
         position: "absolute",
@@ -623,6 +636,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 24,
         borderWidth: 1,
+        borderColor: COLORS.border,
     },
     modalClose: {
         position: "absolute",
@@ -634,7 +648,6 @@ const styles = StyleSheet.create({
         fontSize: SIZES.base,
         fontWeight: FONTS.bold,
         textAlign: "center",
-        marginBottom: 15,
     },
     actionModalAmount: {
         fontSize: SIZES.xl,
@@ -644,6 +657,7 @@ const styles = StyleSheet.create({
     actionModalMeta: {
         fontSize: SIZES.xs,
         marginBottom: 5,
+        fontWeight: FONTS.bold,
     },
     actionButtons: {
         flexDirection: "row",

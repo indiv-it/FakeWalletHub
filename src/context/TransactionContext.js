@@ -55,6 +55,7 @@ export const TransactionProvider = ({ children }) => {
             await loadTransactions();
         } catch (error) {
             console.error('Error adding transaction:', error);
+            throw error;
         }
     }, [loadTransactions]);
 
@@ -65,6 +66,7 @@ export const TransactionProvider = ({ children }) => {
             await loadTransactions();
         } catch (error) {
             console.error('Error editing transaction:', error);
+            throw error;
         }
     }, [loadTransactions]);
 
