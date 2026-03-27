@@ -195,11 +195,11 @@ export default function Record() {
     // icon ตาม listType (เงินสด / เงินในบัญชี)
     function iconMoney(listType, isIncome) {
         return (
-            listType === "เงินสด" 
-            ? <Banknote size={24} color={isIncome ? colors.accent : colors.red} /> 
-            : listType === "เงินในบัญชี"
-            ? <Landmark size={24} color={isIncome ? colors.accent : colors.red} />
-            : <Archive size={24} color={isIncome ? colors.accent : colors.red} />
+            listType === "เงินสด"
+                ? <Banknote size={24} color={isIncome ? colors.accent : colors.red} />
+                : listType === "เงินในบัญชี"
+                    ? <Landmark size={24} color={isIncome ? colors.accent : colors.red} />
+                    : <Archive size={24} color={isIncome ? colors.accent : colors.red} />
         )
     }
 
@@ -243,9 +243,9 @@ export default function Record() {
                             {item.title}
                         </Text>
                     </View>
-                    <View style={[styles.listLogo, { 
+                    <View style={[styles.listLogo, {
                         backgroundColor: isIncome ? colors.accent_black : "#ff000040",
-                        borderColor: isIncome ? colors.accent_border : "#ff000050" 
+                        borderColor: isIncome ? colors.accent_border : "#ff000050"
                     }]}>
                         {iconMoney(listType, isIncome)}
                     </View>
@@ -298,14 +298,14 @@ export default function Record() {
                 <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={openDatePicker}
-                    style={[styles.filterChip, {backgroundColor: dateFilter ? colors.accent : colors.cardBg}]}
+                    style={[styles.filterChip, { backgroundColor: dateFilter ? colors.accent : colors.cardBg }]}
                 >
                     <CalendarDays
                         size={18}
                         color={dateFilter ? colors.background : colors.text}
                         style={{ marginRight: 6 }}
                     />
-                    <Text style={[styles.filterChipText, {color: dateFilter ? colors.background : colors.text}]}>
+                    <Text style={[styles.filterChipText, { color: dateFilter ? colors.background : colors.text }]}>
                         {dateFilter ? formatDate(dateFilter) : "เลือกวันที่"}
                     </Text>
                 </TouchableOpacity>
@@ -383,7 +383,7 @@ export default function Record() {
                         style={[
                             styles.actionModal,
                             {
-                                transform: [{ scale: scaleAnim }], 
+                                transform: [{ scale: scaleAnim }],
                                 backgroundColor: colors.cardBg
                             },
                         ]}

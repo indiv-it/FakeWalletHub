@@ -7,6 +7,7 @@ import {
     Modal,
 } from "react-native"
 import { useState, useMemo } from "react";
+import { BlurView } from 'expo-blur';
 
 // components
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
@@ -16,6 +17,7 @@ import { usePopup } from '../context/PopupContext';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
 import PieChartComponent from '../components/pieChart';
+import PieChartGroup from '../components/pieChartGroup';
 
 // icons
 import {
@@ -90,8 +92,61 @@ export default function Home() {
         const totalCategoryIncome = Object.values(categoryStats).reduce((s, c) => s + c.income, 0);
         const totalCategoryExpense = Object.values(categoryStats).reduce((s, c) => s + c.expense, 0);
 
+        // ยอดคงเหลือรวม
         const sumMoney = totalIncome - totalExpense;
         const sumCategory = totalCategoryIncome - totalCategoryExpense;
+
+        // คำนวนหา % รายรับ-รายจ่าย
+        const incomePercent = totalIncome + totalExpense > 0
+            ? (totalIncome / (totalIncome + totalExpense)) * 100
+            : 0;
+
+        const expensePercent = totalIncome + totalExpense > 0
+            ? (totalExpense / (totalIncome + totalExpense)) * 100
+            : 0;
+
+        // รายรับ-รายจ่ายหมวดดมู่
+        const incomeCategories = Object.values(categoryStats).reduce((s, c) => s + c.income, 0);
+        const expenseCategories = Object.values(categoryStats).reduce((s, c) => s + c.expense, 0);
+
+        // คำนวนหา % รายรับ-รายจ่ายในหมวดหมู่
+        const categoryStatsPercent = {};
+        for (const [cat, stat] of Object.entries(categoryStats)) {
+            const incomePercent = (stat.income / (stat.income + stat.expense)) * 100 || 0;
+            const expensePercent = (stat.expense / (stat.income + stat.expense)) * 100 || 0;
+            categoryStatsPercent[cat] = { incomePercent, expensePercent };
+        }
+
+        // สัดส่วนหมวดหมู่
+        const categoryPercent = {};
+        for (const [cat, stat] of Object.entries(categoryStats)) {
+            const percent = ((stat.income + stat.expense) / (totalCategoryIncome + totalCategoryExpense)) * 100 || 0;
+            categoryPercent[cat] = percent;
+        }
+
+        // ข้อมูลสำหรับ PieChart แสดงรายจ่ายแต่ละหมวดหมู่
+        const expenseByCategory = [
+            {
+                label: 'เงินจำเป็น',
+                value: categoryStats['เงินจำเป็น']?.expense || 0,
+                color: '#375fff'
+            },
+            {
+                label: 'เงินตามใจ',
+                value: categoryStats['เงินตามใจ']?.expense || 0,
+                color: '#28fff4'
+            },
+            {
+                label: 'เงินลงทุน',
+                value: categoryStats['เงินลงทุน']?.expense || 0,
+                color: '#17c800'
+            },
+            {
+                label: 'เงินออม',
+                value: categoryStats['เงินออม']?.expense || 0,
+                color: '#ff00a1'
+            },
+        ].filter(item => item.value > 0); // แสดงเฉพาะหมวดหมู่ที่มีรายจ่าย
 
         return {
             totalIncome,
@@ -101,6 +156,13 @@ export default function Home() {
             bank: bankIncome - bankExpense,
             cash: cashIncome - cashExpense,
             categoryStats,
+            incomePercent,
+            expensePercent,
+            expenseByCategory,
+            categoryStatsPercent,
+            incomeCategories,
+            expenseCategories,
+            categoryPercent,
         };
     }, [transactions]);
 
@@ -135,7 +197,8 @@ export default function Home() {
                     income={stats.categoryStats[groupName]?.income || 0}
                     expense={stats.categoryStats[groupName]?.expense || 0}
                     size={60}
-                    color="white"
+                    color="red"
+                    background={colors.accent}
                 />
             </View>
         </TouchableOpacity>
@@ -157,47 +220,64 @@ export default function Home() {
                     <View style={[styles.cardIcon, { backgroundColor: colors.accent }]}>{icon}</View>
                     <Text style={[styles.textHeader, { color: colors.text }]}>{groupName}</Text>
                 </View>
+            </View>
 
-                <View style={styles.moneyPopup}>
-                    <View style={{ alignItems: "center" }}>
-                        <Text style={{ color: colors.accent }}>รายรับ</Text>
-                        <Text style={{ color: colors.accent }}>{fmt(stats.categoryStats[groupName]?.income || 0)}</Text>
-                    </View>
+            <Text style={[styles.textSmInPopup, { color: colors.text, marginVertical: 20 }]}>ข้อมูลประจำเดือน : {new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}</Text>
+            <ChartIncomeExpense
+                title="รายรับ"
+                money={stats.categoryStats[groupName]?.income || 0}
+                color="white"
+                income={stats.categoryStats[groupName]?.income || 0}
+                expense={stats.categoryStats[groupName]?.expense || 0}
+                percent={stats.categoryStatsPercent[groupName]?.incomePercent.toFixed(1) || 0}
+                background={colors.accent}
+            />
 
-                    <View style={{ alignItems: "center" }}>
-                        <Text style={{ color: colors.red }}>รายจ่าย</Text>
-                        <Text style={{ color: colors.red }}>{fmt(stats.categoryStats[groupName]?.expense || 0)}</Text>
-                    </View>
-                </View>
+            <ChartIncomeExpense
+                title="รายจ่าย"
+                money={stats.categoryStats[groupName]?.expense || 0}
+                color="white"
+                income={stats.categoryStats[groupName]?.expense || 0}
+                expense={stats.categoryStats[groupName]?.income || 0}
+                percent={stats.categoryStatsPercent[groupName]?.expensePercent.toFixed(1) || 0}
+                background={colors.red}
+            />
 
-                <View style={[styles.popupMoneyBox, { backgroundColor: colors.red }]}>
-                    <View style={{
-                        backgroundColor: colors.accent,
-                        height: "100%",
-                        borderTopLeftRadius: 10,
-                        borderBottomLeftRadius: 10,
-                        width: "80%",
-                    }} />
+            <View style={{ borderLeftWidth: 3, borderLeftColor: colors.text, flexDirection: "row", justifyContent: "space-between", alignItems: 'center', paddingLeft: 10, marginBottom: 20 }}>
+                <View>
+                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold' }}>สัดส่วนทั้งหมด</Text>
+                    <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>{stats.categoryPercent[groupName]?.toFixed(1) || 0}%</Text>
                 </View>
-
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 20 }}>
-                    <Text style={{ color: colors.text }}>คิดเป็นทั้งหมด</Text>
-                    <Text style={{ color: colors.text, fontSize: 11 }}>0.0%</Text>
-                </View>
-                <View style={[styles.popupLine, { backgroundColor: colors.chart }]}>
-                    <View style={{ width: "80%", backgroundColor: colors.accent, height: 3, borderRadius: 50 }} />
-                </View>
-
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 20 }}>
-                    <Text style={{ color: colors.text }}>รายจ่ายทั้งหมด</Text>
-                    <Text style={{ color: colors.text, fontSize: 11 }}>0.0%</Text>
-                </View>
-                <View style={[styles.popupLine, { backgroundColor: colors.chart }]}>
-                    <View style={{ width: "30%", backgroundColor: colors.accent, height: 3, borderRadius: 50 }} />
-                </View>
+                <PieChartComponent
+                    income={stats.categoryPercent[groupName] || 0}
+                    expense={100 - (stats.categoryPercent[groupName] || 0)}
+                    size={80}
+                    color="white"
+                    background={colors.text}
+                />
             </View>
         </View>
     );
+
+    // chart รายรับ-รายจ่าย
+    const ChartIncomeExpense = ({ title, money, color, income, expense, percent, background }) => {
+        return (
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <View style={{ borderLeftWidth: 3, borderLeftColor: title === "รายรับ" ? colors.accent : colors.red, paddingLeft: 10 }}>
+                    <Text style={{ color: title === "รายรับ" ? colors.accent : colors.red, fontSize: 16, fontWeight: 'bold' }}>{title}</Text>
+                    <Text style={{ color: title === "รายรับ" ? colors.accent : colors.red, fontSize: 18, fontWeight: 'bold' }}>{fmt(money)}</Text>
+                    <Text style={{ color: colors.gray, fontSize: 14 }}>{percent}%</Text>
+                </View>
+                <PieChartComponent
+                    income={income}
+                    expense={expense}
+                    size={80}
+                    color={color}
+                    background={background}
+                />
+            </View>
+        );
+    };
 
 
     return (
@@ -211,17 +291,14 @@ export default function Home() {
                         <Landmark size={14} color={colors.text} />
                         <Text style={[styles.text, { color: colors.text }]}>{fmt(stats.bank)}</Text>
                     </View>
-
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <Banknote size={14} color={colors.text} />
                         <Text style={[styles.text, { color: colors.text }]}>{fmt(stats.cash)}</Text>
                     </View>
-
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <Archive size={14} color={colors.text} />
                         <Text style={[styles.text, { color: colors.text }]}>{fmt(stats.netProfit)}</Text>
                     </View>
-
                     <Text style={[styles.textHeader, { color: colors.accent }]}>{fmt(stats.balance)}</Text>
                 </View>
 
@@ -231,6 +308,7 @@ export default function Home() {
                     size={100}
                     color="red"
                     onPieClick={() => setPopupMoney(true)}
+                    background={colors.accent}
                 />
             </View>
 
@@ -253,97 +331,106 @@ export default function Home() {
             <Footer />
 
 
-            {/* popup เงิน */}
+            {/* popup รายรับ-รายจ่าย */}
             {popupMoney && (
-                <View style={styles.popupContainer}>
-                    <TouchableOpacity
-                        style={styles.popupshadow}
-                        activeOpacity={1}
-                        onPress={() => setPopupMoney(null)}
-                    />
-
-                    <View style={[styles.popupMoney, { backgroundColor: colors.cardBg }]}>
-                        <X
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={popupMoney}
+                    onRequestClose={() => setPopupMoney(null)}
+                >
+                    <BlurView intensity={10} style={styles.popupContainer}>
+                        <TouchableOpacity
+                            style={styles.popupshadow}
+                            activeOpacity={1}
                             onPress={() => setPopupMoney(null)}
-                            size={24}
-                            color={colors.text}
-                            style={{ position: "absolute", right: 15, top: 15, zIndex: 99 }}
-                        />
+                        >
+                            <View style={[styles.popupMoney, { backgroundColor: colors.cardBg }]}>
+                                <X
+                                    onPress={() => setPopupMoney(null)}
+                                    size={24}
+                                    color={colors.text}
+                                    style={{ position: "absolute", right: 15, top: 15, zIndex: 99 }}
+                                />
 
-                        <View>
-                            <Text style={[styles.textSmInPopup, { color: colors.text }]}>ประจำเดือน : มกราคม</Text>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-                                <View style={{ borderLeftWidth: 3, borderLeftColor: colors.accent, paddingLeft: 10 }}>
-                                    <Text style={{ color: colors.accent, fontSize: 16, fontWeight: 'bold' }}>รายรับ</Text>
-                                    <Text style={{ color: colors.accent, fontSize: 18, fontWeight: 'bold' }}>{fmt(stats.totalIncome || 0)}</Text>
-                                    <Text style={{ color: colors.gray, fontSize: 14 }}>70%</Text>
+                                <View>
+                                    <Text style={[styles.textSmInPopup, { color: colors.text, marginBottom: 20 }]}>ข้อมูลประจำเดือน : {new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}</Text>
+                                    <ChartIncomeExpense
+                                        title="รายรับ"
+                                        money={stats.totalIncome || 0}
+                                        color="white"
+                                        income={stats.totalIncome || 0}
+                                        expense={stats.totalExpense || 0}
+                                        percent={stats.incomePercent.toFixed(1)}
+                                        background={colors.accent}
+                                    />
+                                    <ChartIncomeExpense
+                                        title="รายจ่าย"
+                                        money={stats.totalExpense || 0}
+                                        color="white"
+                                        income={stats.totalExpense || 0}
+                                        expense={stats.totalIncome || 0}
+                                        percent={stats.expensePercent.toFixed(1)}
+                                        background={colors.red}
+                                    />
+                                    <Text style={{ color: colors.text, marginBottom: 10, marginTop: 20, textAlign: 'center', fontWeight: 'bold' }}>สัดส่วนรายจ่ายหมวดหมู่</Text>
+                                    <PieChartGroup data={stats.expenseByCategory || []} />
                                 </View>
-                                <PieChartComponent
-                                    income={stats.totalIncome || 0}
-                                    expense={stats.totalExpense || 0}
-                                    size={80}
-                                    color="white"
-                                />
                             </View>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-                                <View style={{ borderLeftWidth: 3, borderLeftColor: colors.red, paddingLeft: 10, marginTop: 10 }}>
-                                    <Text style={{ color: colors.red, fontSize: 16, fontWeight: 'bold' }}>รายจ่าย</Text>
-                                    <Text style={{ color: colors.red, fontSize: 18, fontWeight: 'bold' }}>{fmt(stats.totalExpense || 0)}</Text>
-                                    <Text style={{ color: colors.gray, fontSize: 14 }}>30%</Text>
-                                </View>
-                                <PieChartComponent
-                                    income={stats.totalExpense || 0}
-                                    expense={stats.totalIncome || 0}
-                                    size={80}
-                                    color='white'
-                                    background="red"
-                                />
-                            </View>
-                        </View>
-                    </View>
-                </View>
+                        </TouchableOpacity>
+                    </BlurView>
+                </Modal>
             )}
 
             {/* popup group */}
             {popupGroup && (
-                <View style={styles.popupContainer}>
-                    <TouchableOpacity
-                        style={styles.popupshadow}
-                        activeOpacity={1}
-                        onPress={() => setPopupGroup(null)}
-                    />
-                    <GroupPopup
-                        groupName={popupGroup}
-                        icon={categories.find(cat => cat.name === popupGroup)?.icon}
-                    />
-                </View>
+                <Modal
+                    transparent={true}
+                    animationType="fade"
+                    onRequestClose={() => setPopupGroup(null)}
+                >
+                    <BlurView intensity={10} style={styles.popupContainer}>
+                        <TouchableOpacity
+                            style={styles.popupshadow}
+                            activeOpacity={1}
+                            onPress={() => setPopupGroup(null)}
+                        >
+                            <GroupPopup
+                                groupName={popupGroup}
+                                icon={categories.find(cat => cat.name === popupGroup)?.icon}
+                            />
+                        </TouchableOpacity>
+                    </BlurView>
+                </Modal>
             )}
 
             {/* popup About */}
             <Modal visible={isOpen} transparent animationType="fade">
-                <View style={dialogStyles.overlay}>
-                    <TouchableOpacity
-                        style={dialogStyles.backdrop}
-                        activeOpacity={1}
-                        onPress={closePopup}
-                    />
-                    <View style={[dialogStyles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-                        <View>
-                            <Text style={[dialogStyles.title, { color: colors.text }]}>เกี่ยวกับ MyBank</Text>
-                            <Text style={[dialogStyles.message, { color: colors.textSecondary }]}>
-                                แอปสำหรับบันทึกและวิเคราะห์รายรับ-รายจ่ายของคุณ{'\n'}
-                                เวอร์ชัน 1.0.0
-                            </Text>
-                            <TouchableOpacity
-                                style={[dialogStyles.primaryButton, { backgroundColor: colors.accent }]}
-                                onPress={closePopup}
-                                activeOpacity={0.9}
-                            >
-                                <Text style={[dialogStyles.primaryButtonText, { color: colors.background }]}>ปิด</Text>
-                            </TouchableOpacity>
+                <BlurView intensity={10} style={styles.popupContainer}>
+                    <View style={dialogStyles.overlay}>
+                        <TouchableOpacity
+                            style={dialogStyles.backdrop}
+                            activeOpacity={1}
+                            onPress={closePopup}
+                        />
+                        <View style={[dialogStyles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+                            <View>
+                                <Text style={[dialogStyles.title, { color: colors.text }]}>เกี่ยวกับ MyBank</Text>
+                                <Text style={[dialogStyles.message, { color: colors.textSecondary }]}>
+                                    แอปสำหรับบันทึกและวิเคราะห์รายรับ-รายจ่ายของคุณ{'\n'}
+                                    เวอร์ชัน 1.0.0
+                                </Text>
+                                <TouchableOpacity
+                                    style={[dialogStyles.primaryButton, { backgroundColor: colors.accent }]}
+                                    onPress={closePopup}
+                                    activeOpacity={0.9}
+                                >
+                                    <Text style={[dialogStyles.primaryButtonText, { color: colors.background }]}>ปิด</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
-                </View>
+                </BlurView>
             </Modal>
         </View>
     );
@@ -418,14 +505,14 @@ const styles = StyleSheet.create({
     },
     popupshadow: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.5)",
+        backgroundColor: "rgba(0,0,0,0.6)",
     },
     popupMoney: {
+        width: 300,
         position: "absolute",
         top: "50%",
         left: "50%",
-        transform: [{ translateX: -150 }, { translateY: -125 }],
-        width: 300,
+        transform: [{ translateX: -150 }, { translateY: -220 }],
         borderRadius: 10,
         padding: 20,
         borderWidth: 1,

@@ -153,7 +153,7 @@ export default function AddList() {
             <Text style={[styles.textHeader, { color: colors.text }]}>{isEditMode ? 'แก้ไขรายการ' : 'เพิ่มรายการ'}</Text>
 
             {/* Form */}
-            <View style={styles.form}>
+            <View>
                 {/* money */}
                 <Text style={[styles.textForm, { color: colors.text }]}>จำนวนเงิน</Text>
                 <TextInput
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         flexWrap: "wrap",
         gap: 10,
-        justifyContent: "space-between",
+        justifyContent: "center",
         alignItems: "center",
         marginTop: 10,
     },
@@ -411,6 +411,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         backgroundColor: "rgba(0,0,0,0.5)",
+
     },
     alertBackdrop: {
         ...StyleSheet.absoluteFillObject,

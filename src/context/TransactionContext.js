@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+
+// Import database functions
 import {
     initDatabase,
     getAllTransactions,
@@ -7,10 +9,10 @@ import {
     deleteTransaction,
 } from '../server/database';
 
-// Create context
+// ------ Create Context ------
 const TransactionContext = createContext();
 
-// Custom hook
+// ------ Custom Hook ------
 export const useTransaction = () => {
     const context = useContext(TransactionContext);
     if (!context) {
@@ -19,12 +21,12 @@ export const useTransaction = () => {
     return context;
 };
 
-// Provider
+// ------ Provider Component ------
 export const TransactionProvider = ({ children }) => {
     const [transactions, setTransactions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Initialize database and load transactions
+    // ------ Load Data on Mount ------
     useEffect(() => {
         (async () => {
             try {
@@ -38,7 +40,7 @@ export const TransactionProvider = ({ children }) => {
         })();
     }, []);
 
-    // Load all transactions from DB
+    // ------ Load Data from DB ------
     const loadTransactions = useCallback(async () => {
         try {
             const rows = await getAllTransactions();
@@ -48,7 +50,7 @@ export const TransactionProvider = ({ children }) => {
         }
     }, []);
 
-    // Add a new transaction
+    // ------ Add Data ------
     const addTransaction = useCallback(async (data) => {
         try {
             await insertTransaction(data);
@@ -59,7 +61,7 @@ export const TransactionProvider = ({ children }) => {
         }
     }, [loadTransactions]);
 
-    // Edit an existing transaction
+    // ------ Edit Data ------
     const editTransaction = useCallback(async (id, data) => {
         try {
             await updateTransaction(id, data);
@@ -70,7 +72,7 @@ export const TransactionProvider = ({ children }) => {
         }
     }, [loadTransactions]);
 
-    // Remove a transaction
+    // ------ Delete Data ------
     const removeTransaction = useCallback(async (id) => {
         try {
             await deleteTransaction(id);
@@ -80,6 +82,7 @@ export const TransactionProvider = ({ children }) => {
         }
     }, [loadTransactions]);
 
+    // ------ Context Value ------
     const value = {
         transactions,
         isLoading,

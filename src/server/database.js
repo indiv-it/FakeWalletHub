@@ -2,7 +2,7 @@ import * as SQLite from 'expo-sqlite';
 
 let db = null;
 
-// Open database (async API for expo-sqlite v15+)
+// ----- Connect database ------
 export async function getDatabase() {
     if (!db) {
         db = await SQLite.openDatabaseAsync('mybank.db');
@@ -10,7 +10,7 @@ export async function getDatabase() {
     return db;
 }
 
-// Initialize database - create tables if not exist
+// ------ Create a database table ------
 export async function initDatabase() {
     const database = await getDatabase();
     await database.execAsync(`
@@ -28,11 +28,11 @@ export async function initDatabase() {
     console.log('Database initialized');
 }
 
-// Insert a new transaction
+// ------ Insert Data ------
 export async function insertTransaction(data) {
     const database = await getDatabase();
-    
-    // Set default values for optional fields
+
+    // Setting Default Data
     const transactionData = {
         title: data.title || 'ไม่ระบุชื่อ',
         amount: data.amount || 0,
@@ -42,7 +42,7 @@ export async function insertTransaction(data) {
         date: data.date || new Date().toISOString().split('T')[0],
         created_at: data.created_at || new Date().toISOString(),
     };
-    
+
     const result = await database.runAsync(
         `INSERT INTO transactions (title, amount, type, category, listType, date, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -59,7 +59,7 @@ export async function insertTransaction(data) {
     return result.lastInsertRowId;
 }
 
-// Get all transactions (sorted by date desc, then id desc)
+// ------ Retrieve information ------
 export async function getAllTransactions() {
     const database = await getDatabase();
     const rows = await database.getAllAsync(
@@ -68,11 +68,11 @@ export async function getAllTransactions() {
     return rows;
 }
 
-// Update a transaction by id
+// ------ Update Data ------
 export async function updateTransaction(id, data) {
     const database = await getDatabase();
-    
-    // Set default values for optional fields
+
+    // Setting Default Data
     const transactionData = {
         title: data.title || 'ไม่ระบุชื่อ',
         amount: data.amount || 0,
@@ -82,7 +82,7 @@ export async function updateTransaction(id, data) {
         date: data.date || new Date().toISOString().split('T')[0],
         created_at: data.created_at || new Date().toISOString(),
     };
-    
+
     await database.runAsync(
         `UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, listType = ?, date = ?, created_at = ?
         WHERE id = ?`,
@@ -99,7 +99,7 @@ export async function updateTransaction(id, data) {
     );
 }
 
-// Delete a transaction by id
+// ------ Delete Data ------
 export async function deleteTransaction(id) {
     const database = await getDatabase();
     await database.runAsync(`DELETE FROM transactions WHERE id = ?`, [id]);

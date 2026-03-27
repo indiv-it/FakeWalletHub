@@ -8,7 +8,7 @@ import { useTheme } from '../context/ThemeContext';
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 // Pie Chart Component
-const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, color = "red", background = "default" }) => {
+const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, color = "red", background }) => {
     const total = income + expense;                         // Total amount
     const { colors } = useTheme();                          // Theme colors
     const radius = size * 0.375;                            // outerRadius equivalent
@@ -61,7 +61,7 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
                         cx={center}
                         cy={center}
                         r={adjustedRadius}
-                        stroke={background == "default" ? colors.accent : colors.red}
+                        stroke={background}
                         strokeWidth={strokeWidth}
                         fill="none"
                         animatedProps={animatedProps}
