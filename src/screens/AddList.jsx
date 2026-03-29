@@ -1,15 +1,26 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Animated, Easing, Platform } from "react-native"
+import { 
+    View, 
+    Text, 
+    StyleSheet, 
+    TouchableOpacity, 
+    TextInput, 
+    Animated, 
+    Easing, 
+    Platform, 
+    Modal 
+} from "react-native"
 import { useNavigation, useRoute } from "@react-navigation/native"
 import { useState, useRef, useEffect } from "react"
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { BlurView } from 'expo-blur';
 
 // components
 import { COLORS, SIZES, FONTS, CARD_SHADOW } from "../style/Theme"
 import { useTheme } from "../context/ThemeContext"
 import { useTransaction } from "../context/TransactionContext"
-
-// icons
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { useLanguage } from "../context/LanguageContext"
+import { useCategory } from "../context/CategoryContext"
+import AlertPopup from "../components/AlertPopup";
 
 // custom type button
 const CustomTypeButton = ({ label, isActive, activeColor, activeTextColor, inactiveTextColor = COLORS.white, onPress }) => {
@@ -60,18 +71,20 @@ export default function AddList() {
     const isEditMode = !!editItem
     const { colors } = useTheme()
     const { addTransaction, editTransaction } = useTransaction()
+    const { t, currentLang } = useLanguage()
+    const { categories } = useCategory()
 
     const mappedType =
         editItem?.type === "income"
-            ? "รายรับ"
+            ? t('income')
             : editItem?.type === "expense"
-                ? "รายจ่าย"
-                : "รายจ่าย"
+                ? t('expense')
+                : t('expense')
 
-    const mappedGroup = editItem?.category || "เงินจำเป็น"
-    const mappedAccountRaw = editItem?.listType || "เงินสด"
+    const mappedGroup = editItem?.category || categories.find(c=>c.id==='essentials')?.name || "เงินจำเป็น"
+    const mappedAccountRaw = editItem?.listType || t('cash')
     const mappedAccount =
-        mappedAccountRaw === "เงินในบัญชี" ? "เงินในบัญชี" : mappedAccountRaw
+        mappedAccountRaw === "เงินในบัญชี" ? t('accountInBank') : mappedAccountRaw
 
     const initialDateTime =
         editItem && editItem.date
@@ -92,6 +105,7 @@ export default function AddList() {
     const [showDatePicker, setShowDatePicker] = useState(false);
     // popup alert
     const [showAmountAlert, setShowAmountAlert] = useState(false);
+    const [showCompleteAlert, setShowCompleteAlert] = useState(false);
 
     // on date change
     const onDateChange = (event, selectedDate) => {
@@ -114,10 +128,13 @@ export default function AddList() {
             return;
         }
 
-        // Map Thai type to English for database
+        // Map type to English for database
+        const curIncome = t('income');
+        const curExpense = t('expense');
+
         const typeMapping = {
-            'รายรับ': 'income',
-            'รายจ่าย': 'expense',
+            [curIncome]: 'income',
+            [curExpense]: 'expense',
         };
 
         const dateStr = `${dateTime.getFullYear()}-${String(dateTime.getMonth() + 1).padStart(2, '0')}-${String(dateTime.getDate()).padStart(2, '0')}`;
@@ -135,27 +152,37 @@ export default function AddList() {
         try {
             if (isEditMode && editItem?.id) {
                 await editTransaction(editItem.id, transactionData);
-                alert('สำเร็จ', 'แก้ไขรายการสำเร็จ');
+                setShowCompleteAlert(true);
             } else {
                 await addTransaction(transactionData);
-                alert('สำเร็จ', 'เพิ่มรายการสำเร็จ');
+                setShowCompleteAlert(true);
             }
-            navigation.goBack();
         } catch (error) {
             console.error('Error saving transaction:', error);
             alert('Error', 'เกิดข้อผิดพลาดในการบันทึกรายการ กรุณาลองใหม่');
         }
     };
 
+    const clearForm = () => {
+        setShowCompleteAlert(false);
+        setTitle('');
+        setAmount('');
+        setListType('');
+        setListGroup('');
+        setListAccount('');
+        setDateTime(new Date());
+        navigation.navigate("Home");
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* header */}
-            <Text style={[styles.textHeader, { color: colors.text }]}>{isEditMode ? 'แก้ไขรายการ' : 'เพิ่มรายการ'}</Text>
+            <Text style={[styles.textHeader, { color: colors.text }]}>{isEditMode ? t('editItem') : t('addItem')}</Text>
 
             {/* Form */}
             <View>
                 {/* money */}
-                <Text style={[styles.textForm, { color: colors.text }]}>จำนวนเงิน</Text>
+                <Text style={[styles.textForm, { color: colors.text }]}>{t('amount')}</Text>
                 <TextInput
                     keyboardType="number-pad"
                     placeholder="00.00"
@@ -166,8 +193,8 @@ export default function AddList() {
                 />
 
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <Text style={[styles.textForm, { color: colors.text }]}>ชื่อรายการ</Text>
-                    <Text style={[styles.textForm, { width: "30%", color: colors.text }]}>วันที่</Text>
+                    <Text style={[styles.textForm, { color: colors.text }]}>{t('title')}</Text>
+                    <Text style={[styles.textForm, { width: "30%", color: colors.text }]}>{t('date')}</Text>
                 </View>
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                     {/* note */}
@@ -201,121 +228,94 @@ export default function AddList() {
                 </View>
 
                 {/* list type */}
-                <Text style={[styles.textForm, { color: colors.text }]}>ประเภทของรายการ</Text>
+                <Text style={[styles.textForm, { color: colors.text }]}>{t('listTypeTitle')}</Text>
                 <View style={styles.typeContainer}>
                     <CustomTypeButton
-                        label="รายรับ"
-                        isActive={listType === 'รายรับ'}
+                        label={t('income')}
+                        isActive={listType === t('income')}
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListType('รายรับ')}
+                        onPress={() => setListType(t('income'))}
                     />
                     <CustomTypeButton
-                        label="รายจ่าย"
-                        isActive={listType === 'รายจ่าย'}
+                        label={t('expense')}
+                        isActive={listType === t('expense')}
                         activeColor={colors.red}
                         activeTextColor={colors.white}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListType('รายจ่าย')}
+                        onPress={() => setListType(t('expense'))}
                     />
                 </View>
 
                 {/* list account */}
-                <Text style={[styles.textForm, { color: colors.text }]}>ประเภทของรายการ</Text>
+                <Text style={[styles.textForm, { color: colors.text }]}>{t('accountTypeTitle')}</Text>
                 <View style={styles.typeContainer}>
                     <CustomTypeButton
-                        label="เงินในบัญชี"
-                        isActive={listAccount === 'เงินในบัญชี'}
+                        label={t('accountInBank')}
+                        isActive={listAccount === t('accountInBank')}
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListAccount(listAccount === 'เงินในบัญชี' ? '' : 'เงินในบัญชี')}
+                        onPress={() => setListAccount(listAccount === t('accountInBank') ? '' : t('accountInBank'))}
                     />
                     <CustomTypeButton
-                        label="เงินสด"
-                        isActive={listAccount === 'เงินสด'}
+                        label={t('cash')}
+                        isActive={listAccount === t('cash')}
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListAccount(listAccount === 'เงินสด' ? '' : 'เงินสด')}
+                        onPress={() => setListAccount(listAccount === t('cash') ? '' : t('cash'))}
                     />
                 </View>
 
                 {/* list group */}
-                <Text style={[styles.textForm, { color: colors.text }]}>หมวหมู่</Text>
+                <Text style={[styles.textForm, { color: colors.text }]}>{t('category')}</Text>
                 <View style={styles.typeContainer}>
-                    <CustomTypeButton
-                        label="เงินจำเป็น"
-                        isActive={listGroup === 'เงินจำเป็น'}
-                        activeColor={colors.accent}
-                        activeTextColor={colors.background}
-                        inactiveTextColor={colors.text}
-                        onPress={() => setListGroup(listGroup === 'เงินจำเป็น' ? '' : 'เงินจำเป็น')}
-                    />
-                    <CustomTypeButton
-                        label="เงินตามใจ"
-                        isActive={listGroup === 'เงินตามใจ'}
-                        activeColor={colors.accent}
-                        activeTextColor={colors.background}
-                        inactiveTextColor={colors.text}
-                        onPress={() => setListGroup(listGroup === 'เงินตามใจ' ? '' : 'เงินตามใจ')}
-                    />
-                    <CustomTypeButton
-                        label="เงินลงทุน"
-                        isActive={listGroup === 'เงินลงทุน'}
-                        activeColor={colors.accent}
-                        activeTextColor={colors.background}
-                        inactiveTextColor={colors.text}
-                        onPress={() => setListGroup(listGroup === 'เงินลงทุน' ? '' : 'เงินลงทุน')}
-                    />
-                    <CustomTypeButton
-                        label="เงินออม"
-                        isActive={listGroup === 'เงินออม'}
-                        activeColor={colors.accent}
-                        activeTextColor={colors.background}
-                        inactiveTextColor={colors.text}
-                        onPress={() => setListGroup(listGroup === 'เงินออม' ? '' : 'เงินออม')}
-                    />
+                    {categories.map((c) => (
+                        <CustomTypeButton
+                            key={c.id}
+                            label={c.name}
+                            isActive={listGroup === c.name}
+                            activeColor={colors.accent}
+                            activeTextColor={colors.background}
+                            inactiveTextColor={colors.text}
+                            onPress={() => setListGroup(listGroup === c.name ? '' : c.name)}
+                        />
+                    ))}
                 </View>
             </View>
 
             {/* button */}
             <View style={styles.buttonContainer}>
                 <TouchableOpacity onPress={() => navigation.navigate("Home")} style={[styles.backButton, { backgroundColor: colors.background, borderColor: colors.accent }]}>
-                    <Text style={[styles.textBack, { color: colors.accent }]}>ยกเลิก</Text>
+                    <Text style={[styles.textBack, { color: colors.accent }]}>{t('cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.backButton, { backgroundColor: colors.accent, borderColor: colors.accent }]}
                     onPress={handleSave}
                 >
-                    <Text style={[styles.textBack, { color: colors.background }]}>บันทึก</Text>
+                    <Text style={[styles.textBack, { color: colors.background }]}>{t('save')}</Text>
                 </TouchableOpacity>
             </View>
 
-            {showAmountAlert && (
-                <View style={styles.alertOverlay}>
-                    <TouchableOpacity
-                        style={styles.alertBackdrop}
-                        activeOpacity={1}
-                        onPress={() => setShowAmountAlert(false)}
-                    />
-                    <View style={[styles.alertBox, { backgroundColor: colors.cardBg }]}>
-                        <Ionicons name="warning-outline" size={60} color={colors.red} style={{ marginBottom: 20 }} />
-                        <Text style={[styles.alertTitle, { color: colors.text }]}>กรุณาระบุจำนวนเงิน</Text>
-                        <Text style={[styles.alertMessage, { color: colors.text }]}>
-                            โปรดกรอกจำนวนเงินก่อนบันทึกรายการของคุณ
-                        </Text>
-                        <TouchableOpacity
-                            style={[styles.alertButton, { backgroundColor: colors.accent }]}
-                            onPress={() => setShowAmountAlert(false)}
-                            activeOpacity={0.9}
-                        >
-                            <Text style={[styles.alertButtonText, { color: colors.background }]}>ตกลง</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            )}
+            <AlertPopup
+                visible={showCompleteAlert}
+                title={t('saveSuccess')}
+                description={t('saveSuccessDesc')}
+                onClose={clearForm}
+                buttonText={t('ok')}
+                type="success"
+            />
+
+            <AlertPopup
+                visible={showAmountAlert}
+                title={t('amountAlert')}
+                description={t('amountAlertDesc')}
+                onClose={() => setShowAmountAlert(false)}
+                buttonText={t('ok')}
+                type="warning"
+            />
         </View>
     )
 }
@@ -387,9 +387,10 @@ const styles = StyleSheet.create({
     },
     buttonContainer: {
         flexDirection: "row",
-        justifyContent: "space-between",
+        justifyContent: "center",
         alignItems: "center",
         position: "absolute",
+        gap: 10,
         bottom: 54,
         left: 20,
         right: 20,

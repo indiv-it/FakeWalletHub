@@ -4,13 +4,14 @@ import React, { useRef, useEffect } from "react";
 
 // components
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { CARD_SHADOW } from "../style/Theme";
 
 // Icons
 import { ChartColumnBig, ClipboardList, NotebookPen, Plus } from 'lucide-react-native';
 
 // Components menu
-const Menu = ({ icon, text, link, route, navigation, colors }) => {
+const Menu = ({ icon: IconComponent, text, link, route, navigation, colors }) => {
     const isActive = route.name === link;
     const scaleAnim = useRef(new Animated.Value(isActive ? 1.1 : 1)).current;
 
@@ -18,11 +19,21 @@ const Menu = ({ icon, text, link, route, navigation, colors }) => {
     useEffect(() => {
         Animated.spring(scaleAnim, {
             toValue: isActive ? 1.1 : 1,
-            friction: 4,
-            tension: 100,
+            friction: 6,
+            tension: 80,
             useNativeDriver: true,
         }).start();
     }, [isActive]);
+
+    const textOpacity = scaleAnim.interpolate({
+        inputRange: [1, 1.1],
+        outputRange: [0, 1],
+    });
+
+    const translateY = scaleAnim.interpolate({
+        inputRange: [1, 1.1],
+        outputRange: [0, 0],
+    });
 
     // Menu item
     return (
@@ -30,21 +41,23 @@ const Menu = ({ icon, text, link, route, navigation, colors }) => {
             <TouchableOpacity
                 style={styles.icon}
                 onPress={() => navigation.navigate(link)}
+                activeOpacity={0.7}
             >
                 <Animated.View
                     style={{
-                        transform: [{ scale: scaleAnim }],
+                        transform: [{ scale: scaleAnim }, { translateY }],
                     }}
                 >
                     {/* Icon */}
-                    {React.cloneElement(icon, {
-                        color: isActive ? colors.accent : colors.text,
-                    })}
+                    <IconComponent
+                        size={20}
+                        color={isActive ? colors.accent : colors.text}
+                    />
                 </Animated.View>
 
                 {/* Text */}
                 {isActive && (
-                    <Text style={[styles.text, { color: colors.accent, fontWeight: 'bold' }]}>{text}</Text>
+                    <Animated.Text style={[styles.text, { color: colors.accent, fontWeight: 'bold', opacity: textOpacity }]}>{text}</Animated.Text>
                 )}
             </TouchableOpacity>
         </View>
@@ -54,6 +67,7 @@ const Menu = ({ icon, text, link, route, navigation, colors }) => {
 // Footer Component
 export default function Footer() {
     const { colors } = useTheme();
+    const { t } = useLanguage();
     const navigation = useNavigation();
     const route = useRoute();
 
@@ -62,9 +76,9 @@ export default function Footer() {
         <View style={[styles.container, { backgroundColor: colors.cardBg }]}>
 
             {/* Menu */}
-            <Menu icon={<ChartColumnBig size={20} />} text="กราฟ" link="Home" route={route} navigation={navigation} colors={colors} />
-            <Menu icon={<ClipboardList size={20} />} text="ประวัติ" link="Record" route={route} navigation={navigation} colors={colors} />
-            <Menu icon={<NotebookPen size={20} />} text="บันทึก" link="Profile" route={route} navigation={navigation} colors={colors} />
+            <Menu icon={ChartColumnBig} text={t('home')} link="Home" route={route} navigation={navigation} colors={colors} />
+            <Menu icon={ClipboardList} text={t('record')} link="Record" route={route} navigation={navigation} colors={colors} />
+            <Menu icon={NotebookPen} text={t('notebook')} link="Notebook" route={route} navigation={navigation} colors={colors} />
 
             {/* Add Button */}
             <TouchableOpacity style={[styles.add, { backgroundColor: colors.accent }]} onPress={() => navigation.navigate("AddList")}>

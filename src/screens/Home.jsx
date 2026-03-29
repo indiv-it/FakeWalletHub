@@ -14,6 +14,9 @@ import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { useTransaction } from '../context/TransactionContext';
 import { usePopup } from '../context/PopupContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useCurrency } from '../context/CurrencyContext';
+import { useCategory } from '../context/CategoryContext';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
 import PieChartComponent from '../components/pieChart';
@@ -34,6 +37,9 @@ import {
 export default function Home() {
     const { colors } = useTheme();
     const { transactions } = useTransaction(); // ข้อมูลการทำรายการจริง
+    const { t } = useLanguage();
+    const { formatMoney } = useCurrency();
+    const { categories } = useCategory();
     const [popupMoney, setPopupMoney] = useState(null); // ป้อปอัพรายรับ-รายจ่าย
     const [popupGroup, setPopupGroup] = useState(null); // ป้อปอัพหมวดหมู่เงิน
     const { isOpen, closePopup } = usePopup();
@@ -80,9 +86,9 @@ export default function Home() {
 
         // คำนวณสถิติแต่ละหมวดหมู่
         const categoryStats = {};
-        ['เงินจำเป็น', 'เงินตามใจ', 'เงินลงทุน', 'เงินออม'].forEach(cat => {
-            const catTx = monthlyTx.filter(t => t.category === cat);
-            categoryStats[cat] = {
+        categories.forEach(cat => {
+            const catTx = monthlyTx.filter(t => t.category === cat.name);
+            categoryStats[cat.name] = {
                 income: catTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
                 expense: catTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
             };
@@ -125,28 +131,14 @@ export default function Home() {
         }
 
         // ข้อมูลสำหรับ PieChart แสดงรายจ่ายแต่ละหมวดหมู่
-        const expenseByCategory = [
-            {
-                label: 'เงินจำเป็น',
-                value: categoryStats['เงินจำเป็น']?.expense || 0,
-                color: '#375fff'
-            },
-            {
-                label: 'เงินตามใจ',
-                value: categoryStats['เงินตามใจ']?.expense || 0,
-                color: '#28fff4'
-            },
-            {
-                label: 'เงินลงทุน',
-                value: categoryStats['เงินลงทุน']?.expense || 0,
-                color: '#17c800'
-            },
-            {
-                label: 'เงินออม',
-                value: categoryStats['เงินออม']?.expense || 0,
-                color: '#ff00a1'
-            },
-        ].filter(item => item.value > 0); // แสดงเฉพาะหมวดหมู่ที่มีรายจ่าย
+        const expenseByCategory = categories.map((cat, index) => {
+            const colorsList = ['#375fff', '#28fff4', '#17c800', '#ff00a1'];
+            return {
+                label: cat.name,
+                value: categoryStats[cat.name]?.expense || 0,
+                color: colorsList[index % colorsList.length]
+            };
+        }).filter(item => item.value > 0);
 
         return {
             totalIncome,
@@ -164,17 +156,17 @@ export default function Home() {
             expenseCategories,
             categoryPercent,
         };
-    }, [transactions]);
+    }, [transactions, categories]);
 
     // ฟอร์แมตเงิน
-    const fmt = (n) => `฿ ${n.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
+    const fmt = (n) => formatMoney(n);
 
     // ข้อมูลหมวดหมู่
-    const categories = [
-        { id: 1, name: "เงินจำเป็น", icon: <ShoppingCart size={18} color={colors.background} /> },
-        { id: 2, name: "เงินตามใจ", icon: <ShoppingBag size={18} color={colors.background} /> },
-        { id: 3, name: "เงินลงทุน", icon: <ChartColumnBig size={18} color={colors.background} /> },
-        { id: 4, name: "เงินออม", icon: <PiggyBank size={18} color={colors.background} /> },
+    const displayCategories = [
+        { id: 1, name: categories.find(c=>c.id==='essentials')?.name || 'เงินจำเป็น', icon: <ShoppingCart size={18} color={colors.background} /> },
+        { id: 2, name: categories.find(c=>c.id==='wants')?.name || 'เงินตามใจ', icon: <ShoppingBag size={18} color={colors.background} /> },
+        { id: 3, name: categories.find(c=>c.id==='investment')?.name || 'เงินลงทุน', icon: <ChartColumnBig size={18} color={colors.background} /> },
+        { id: 4, name: categories.find(c=>c.id==='savings')?.name || 'เงินออม', icon: <PiggyBank size={18} color={colors.background} /> },
     ];
 
     // กล่องหมวดหมู่
@@ -222,9 +214,9 @@ export default function Home() {
                 </View>
             </View>
 
-            <Text style={[styles.textSmInPopup, { color: colors.text, marginVertical: 20 }]}>ข้อมูลประจำเดือน : {new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}</Text>
+            <Text style={[styles.textSmInPopup, { color: colors.text, marginVertical: 20 }]}>{t('monthlyData')} : {new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}</Text>
             <ChartIncomeExpense
-                title="รายรับ"
+                title={t('income')}
                 money={stats.categoryStats[groupName]?.income || 0}
                 color="white"
                 income={stats.categoryStats[groupName]?.income || 0}
@@ -234,7 +226,7 @@ export default function Home() {
             />
 
             <ChartIncomeExpense
-                title="รายจ่าย"
+                title={t('expense')}
                 money={stats.categoryStats[groupName]?.expense || 0}
                 color="white"
                 income={stats.categoryStats[groupName]?.expense || 0}
@@ -245,7 +237,7 @@ export default function Home() {
 
             <View style={{ borderLeftWidth: 3, borderLeftColor: colors.text, flexDirection: "row", justifyContent: "space-between", alignItems: 'center', paddingLeft: 10, marginBottom: 20 }}>
                 <View>
-                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold' }}>สัดส่วนทั้งหมด</Text>
+                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold' }}>{t('totalRatio')}</Text>
                     <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>{stats.categoryPercent[groupName]?.toFixed(1) || 0}%</Text>
                 </View>
                 <PieChartComponent
@@ -263,9 +255,9 @@ export default function Home() {
     const ChartIncomeExpense = ({ title, money, color, income, expense, percent, background }) => {
         return (
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <View style={{ borderLeftWidth: 3, borderLeftColor: title === "รายรับ" ? colors.accent : colors.red, paddingLeft: 10 }}>
-                    <Text style={{ color: title === "รายรับ" ? colors.accent : colors.red, fontSize: 16, fontWeight: 'bold' }}>{title}</Text>
-                    <Text style={{ color: title === "รายรับ" ? colors.accent : colors.red, fontSize: 18, fontWeight: 'bold' }}>{fmt(money)}</Text>
+                <View style={{ borderLeftWidth: 3, borderLeftColor: title === t('income') ? colors.accent : colors.red, paddingLeft: 10 }}>
+                    <Text style={{ color: title === t('income') ? colors.accent : colors.red, fontSize: 16, fontWeight: 'bold' }}>{title}</Text>
+                    <Text style={{ color: title === t('income') ? colors.accent : colors.red, fontSize: 18, fontWeight: 'bold' }}>{fmt(money)}</Text>
                     <Text style={{ color: colors.gray, fontSize: 14 }}>{percent}%</Text>
                 </View>
                 <PieChartComponent
@@ -316,7 +308,7 @@ export default function Home() {
             {/* list */}
             <View style={[styles.cardList, { backgroundColor: colors.cardBg }]}>
                 <FlatList
-                    data={categories}
+                    data={displayCategories}
                     scrollEnabled={false}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
@@ -354,9 +346,9 @@ export default function Home() {
                                 />
 
                                 <View>
-                                    <Text style={[styles.textSmInPopup, { color: colors.text, marginBottom: 20 }]}>ข้อมูลประจำเดือน : {new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}</Text>
+                                    <Text style={[styles.textSmInPopup, { color: colors.text, marginBottom: 20 }]}>{t('monthlyData')} : {new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}</Text>
                                     <ChartIncomeExpense
-                                        title="รายรับ"
+                                        title={t('income')}
                                         money={stats.totalIncome || 0}
                                         color="white"
                                         income={stats.totalIncome || 0}
@@ -365,7 +357,7 @@ export default function Home() {
                                         background={colors.accent}
                                     />
                                     <ChartIncomeExpense
-                                        title="รายจ่าย"
+                                        title={t('expense')}
                                         money={stats.totalExpense || 0}
                                         color="white"
                                         income={stats.totalExpense || 0}
@@ -373,7 +365,7 @@ export default function Home() {
                                         percent={stats.expensePercent.toFixed(1)}
                                         background={colors.red}
                                     />
-                                    <Text style={{ color: colors.text, marginBottom: 10, marginTop: 20, textAlign: 'center', fontWeight: 'bold' }}>สัดส่วนรายจ่ายหมวดหมู่</Text>
+                                    <Text style={{ color: colors.text, marginBottom: 10, marginTop: 20, textAlign: 'center', fontWeight: 'bold' }}>{t('expenseByCat')}</Text>
                                     <PieChartGroup data={stats.expenseByCategory || []} />
                                 </View>
                             </View>
@@ -415,17 +407,17 @@ export default function Home() {
                         />
                         <View style={[dialogStyles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
                             <View>
-                                <Text style={[dialogStyles.title, { color: colors.text }]}>เกี่ยวกับ MyBank</Text>
+                                <Text style={[dialogStyles.title, { color: colors.text }]}>{t('aboutTitle')}</Text>
                                 <Text style={[dialogStyles.message, { color: colors.textSecondary }]}>
-                                    แอปสำหรับบันทึกและวิเคราะห์รายรับ-รายจ่ายของคุณ{'\n'}
-                                    เวอร์ชัน 1.0.0
+                                    {t('aboutDesc')}{'\n'}
+                                    {t('version')} 1.0.0
                                 </Text>
                                 <TouchableOpacity
                                     style={[dialogStyles.primaryButton, { backgroundColor: colors.accent }]}
                                     onPress={closePopup}
                                     activeOpacity={0.9}
                                 >
-                                    <Text style={[dialogStyles.primaryButtonText, { color: colors.background }]}>ปิด</Text>
+                                    <Text style={[dialogStyles.primaryButtonText, { color: colors.background }]}>{t('close')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>

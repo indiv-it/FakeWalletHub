@@ -7,16 +7,21 @@ import {
     Animated,
     Easing,
     Platform,
+    Modal,
 } from "react-native"
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useNavigation, useFocusEffect } from "@react-navigation/native"
 import DateTimePicker from "@react-native-community/datetimepicker"
-import { SIZES, FONTS, CARD_SHADOW, COLORS } from "../style/Theme"
+import { BlurView } from 'expo-blur';
 
 // components
-import Footer from "../components/Footer"
+import { SIZES, FONTS, CARD_SHADOW, COLORS } from "../style/Theme"
 import { useTheme } from "../context/ThemeContext"
 import { useTransaction } from "../context/TransactionContext"
+import { useLanguage } from "../context/LanguageContext"
+import { useCurrency } from "../context/CurrencyContext"
+import ConfirmPopup from "../components/ConfirmPopup";
+import Footer from "../components/Footer";
 
 // icons
 import {
@@ -30,21 +35,6 @@ import {
     Archive
 } from 'lucide-react-native';
 
-// filters
-const FILTERS = [
-    { id: "all", label: "ทั้งหมด" },
-    { id: "income", label: "รายรับ" },
-    { id: "expense", label: "รายจ่าย" },
-]
-
-
-// แปลงวันที่เป็นรูปแบบ "DD MMM YYYY"
-function formatDate(dateStr) {
-    const [y, m, d] = dateStr.split("-")
-    const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."]
-    return `${Number(d)} ${months[Number(m) - 1]} ${Number(y) + 543}`
-}
-
 // แปลงวันที่เป็นรูปแบบ "YYYY-MM-DD"
 function dateToYYYYMMDD(date) {
     const y = date.getFullYear()
@@ -53,25 +43,53 @@ function dateToYYYYMMDD(date) {
     return `${y}-${m}-${d}`
 }
 
-// รูปแบบจำนวนเงิน
-function formatAmount(amount, type) {
-    const sign = type === "income" ? "+" : "-"
-    return `${sign}${Number(amount).toLocaleString("th-TH", { minimumFractionDigits: 2 })} ฿`
+// แปลงวันที่เป็นรูปแบบ "DD MMM YYYY"
+function formatDate(dateStr) {
+    const [y, m, d] = dateStr.split("-")
+    const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."]
+    return `${Number(d)} ${months[Number(m) - 1]} ${Number(y) + 543}`
 }
 
 export default function Record() {
-    const navigation = useNavigation() // การนำทาง
-    const [filter, setFilter] = useState("all") // ตัวกรอง
-    const [dateFilter, setDateFilter] = useState(null) // "YYYY-MM-DD" or null
-    const [pickerDate, setPickerDate] = useState(() => new Date()) // วันที่
-    const [showDatePicker, setShowDatePicker] = useState(false) // แสดงวันที่
-    const [showActionModal, setShowActionModal] = useState(false) // แสดงหน้าต่างแก้ไข/ลบ
-    const [popupDelete, setPopupDelete] = useState(false) // แสดงหน้าต่างลบ
-    const [actionItem, setActionItem] = useState(null) // ข้อมูลรายการ
-    const scaleAnim = useRef(new Animated.Value(0)).current // การขยายของ
-    const listEntranceAnim = useRef(new Animated.Value(0)).current // แอนิเมชันรายการตอนเข้า
-    const { colors } = useTheme()
-    const { transactions, loadTransactions, removeTransaction } = useTransaction()
+    const navigation = useNavigation(); // การนำทาง
+    const [filter, setFilter] = useState("all"); // ตัวกรอง
+    const [dateFilter, setDateFilter] = useState(null); // "YYYY-MM-DD" or null
+    const [pickerDate, setPickerDate] = useState(() => new Date()); // วันที่
+    const [showDatePicker, setShowDatePicker] = useState(false); // แสดงวันที่
+    const [showActionModal, setShowActionModal] = useState(false); // แสดงหน้าต่างแก้ไข/ลบ
+    const [popupDelete, setPopupDelete] = useState(false); // แสดงหน้าต่างลบ
+    const [actionItem, setActionItem] = useState(null); // ข้อมูลรายการ
+    const scaleAnim = useRef(new Animated.Value(0)).current; // การขยายของ
+    const listEntranceAnim = useRef(new Animated.Value(0)).current; // แอนิเมชันรายการตอนเข้า
+    const { colors } = useTheme();
+    const { transactions, loadTransactions, removeTransaction } = useTransaction();
+    const { t } = useLanguage();
+    const { formatMoney } = useCurrency();
+    const [transactionToDelete, setTransactionToDelete] = useState(null);
+
+    const FILTERS = [
+        { id: "all", label: t('all') || "ทั้งหมด" },
+        { id: "income", label: t('income') },
+        { id: "expense", label: t('expense') },
+    ]
+
+    const formatAmount = (amount, type) => {
+        const sign = type === "income" ? "+" : "-"
+        return `${sign} ${formatMoney(amount)}`
+    }
+
+    const handleDeleteClick = (item) => {
+        setTransactionToDelete(item);
+        setPopupDelete(true);
+    };
+
+    const confirmDelete = async () => {
+        if (transactionToDelete) {
+            await removeTransaction(transactionToDelete.id);
+            setTransactionToDelete(null);
+            setPopupDelete(false);
+        }
+    };
 
     // Reload data when screen comes into focus
     useFocusEffect(
@@ -134,13 +152,13 @@ export default function Record() {
         if (actionItem) {
             await removeTransaction(actionItem.id)
         }
-        closeAction()
         setPopupDelete(false)
+        setActionItem(null)
     }
 
     // แสดงหน้าต่างลบ
     const showPopupDelete = () => {
-        setPopupDelete(true)
+        handleDeleteClick(actionItem)
         setShowActionModal(false)
         Animated.spring(scaleAnim, {
             toValue: 1,
@@ -148,11 +166,6 @@ export default function Record() {
             friction: 8,
             tension: 80,
         }).start()
-    }
-
-    // ปิดหน้าต่างลบ
-    const closePopupDelete = () => {
-        setPopupDelete(false)
     }
 
     // เลือกวันที่
@@ -195,9 +208,9 @@ export default function Record() {
     // icon ตาม listType (เงินสด / เงินในบัญชี)
     function iconMoney(listType, isIncome) {
         return (
-            listType === "เงินสด"
+            listType === t('cash') || listType === 'เงินสด'
                 ? <Banknote size={24} color={isIncome ? colors.accent : colors.red} />
-                : listType === "เงินในบัญชี"
+                : listType === t('accountInBank') || listType === 'เงินในบัญชี'
                     ? <Landmark size={24} color={isIncome ? colors.accent : colors.red} />
                     : <Archive size={24} color={isIncome ? colors.accent : colors.red} />
         )
@@ -233,7 +246,7 @@ export default function Record() {
                             <Text style={[styles.textMoney, { color: isIncome ? colors.accent : colors.red }]}>
                                 {formatAmount(item.amount, item.type)}
                             </Text>
-                            <Text style={[styles.textList, { color: colors.text }]}>{isIncome ? "รายรับ" : "รายจ่าย"}</Text>
+                            <Text style={[styles.textList, { color: colors.text }]}>{isIncome ? t('income') : t('expense')}</Text>
                         </View>
                         <View style={styles.list_text}>
                             <Text style={[styles.textAbout, { color: colors.gray }]}>{formatDate(item.date)}</Text>
@@ -261,11 +274,11 @@ export default function Record() {
                 <View style={[styles.emptyIconWrap, { backgroundColor: colors.chart }]}>
                     <Scroll size={48} color={colors.text} />
                 </View>
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>ยังไม่มีรายการ</Text>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('noTransaction')}</Text>
                 <Text style={[styles.emptySub, { color: colors.gray }]}>
                     {filter === "all" && !dateFilter
-                        ? "เพิ่มรายการแรกของคุณได้ที่หน้าหลัก"
-                        : "ลองเปลี่ยนตัวกรองหรือวันที่"}
+                        ? t('add')
+                        : t('noTransaction')}
                 </Text>
                 {(filter !== "all" || dateFilter) && (
                     <TouchableOpacity
@@ -275,7 +288,7 @@ export default function Record() {
                             setDateFilter(null)
                         }}
                     >
-                        <Text style={[styles.emptyButtonText, { color: colors.background }]}>แสดงทั้งหมด</Text>
+                        <Text style={[styles.emptyButtonText, { color: colors.background }]}>{t('all') || "แสดงทั้งหมด"}</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -284,7 +297,7 @@ export default function Record() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <Text style={[styles.textHeader, { color: colors.text }]}>ประวัติ</Text>
+            <Text style={[styles.textHeader, { color: colors.text }]}>{t('record')}</Text>
 
             {/* ตัวกรอง */}
             <View style={styles.filterRow}>
@@ -306,7 +319,7 @@ export default function Record() {
                         style={{ marginRight: 6 }}
                     />
                     <Text style={[styles.filterChipText, { color: dateFilter ? colors.background : colors.text }]}>
-                        {dateFilter ? formatDate(dateFilter) : "เลือกวันที่"}
+                        {dateFilter ? formatDate(dateFilter) : t('date')}
                     </Text>
                 </TouchableOpacity>
 
@@ -338,7 +351,7 @@ export default function Record() {
             {Platform.OS === "ios" && showDatePicker && (
                 <View style={styles.datePickerActions}>
                     <TouchableOpacity onPress={() => setShowDatePicker(false)} style={styles.datePickerBtn}>
-                        <Text style={styles.datePickerBtnText}>ยกเลิก</Text>
+                        <Text style={styles.datePickerBtnText}>{t('cancel')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={() => {
@@ -373,85 +386,75 @@ export default function Record() {
 
             {/* Modal แก้ไข / ลบ */}
             {showActionModal && actionItem && (
-                <View style={styles.modalOverlay}>
-                    <TouchableOpacity
-                        style={styles.modalBackdrop}
-                        activeOpacity={1}
-                        onPress={closeAction}
-                    />
-                    <Animated.View
-                        style={[
-                            styles.actionModal,
-                            {
-                                transform: [{ scale: scaleAnim }],
-                                backgroundColor: colors.cardBg
-                            },
-                        ]}
-                    >
+                <Modal visible={showActionModal} transparent={true} animationType="fade">
+                    <BlurView blurAmount={10} style={styles.modalOverlay}>
                         <TouchableOpacity
-                            style={styles.modalClose}
+                            style={styles.modalBackdrop}
+                            activeOpacity={1}
                             onPress={closeAction}
+                        />
+                        <Animated.View
+                            style={[
+                                styles.actionModal,
+                                {
+                                    transform: [{ scale: scaleAnim }],
+                                    backgroundColor: colors.cardBg
+                                },
+                            ]}
                         >
-                            <X size={24} color={colors.text} />
-                        </TouchableOpacity>
-                        <Text style={[styles.actionModalTitle, { color: colors.text, marginBottom: 15 }]}>{actionItem.title}</Text>
-                        <Text style={[styles.actionModalAmount, { color: actionItem.type === "income" ? colors.accent : colors.red }]}>
-                            {formatAmount(actionItem.amount, actionItem.type)}
-                        </Text>
-                        <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                            รายการ : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.type === "income" ? "รายรับ" : "รายจ่าย"}</Text>
-                        </Text>
-                        <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                            ประเภท : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.listType}</Text>
-                        </Text>
-                        <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                            หมวดหมู่ : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.category}</Text>
-                        </Text>
-                        <Text style={[styles.actionModalMeta, { marginTop: 20, fontWeight: FONTS.bold, color: colors.text }]}>
-                            วันที่ : <Text style={{ fontWeight: FONTS.normal }}>{formatDate(actionItem.date)}</Text>
-                        </Text>
-                        <View style={styles.actionButtons}>
-                            <TouchableOpacity style={[styles.actionBtnEdit, { backgroundColor: colors.accent }]} onPress={handleEdit}>
-                                <Pencil size={20} color={colors.background} />
-                                <Text style={[styles.actionBtnEditText, { color: colors.background }]}>แก้ไข</Text>
+                            <TouchableOpacity
+                                style={styles.modalClose}
+                                onPress={closeAction}
+                            >
+                                <X size={24} color={colors.text} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={[styles.actionBtnDelete, { backgroundColor: colors.red }]} onPress={() => showPopupDelete()}>
-                                <Trash2 size={20} color={colors.white} />
-                                <Text style={[styles.actionBtnDeleteText, { color: colors.white }]}>ลบ</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </Animated.View>
-                </View>
+                            <Text style={[styles.actionModalTitle, { color: colors.text, marginBottom: 15 }]}>{actionItem.title}</Text>
+                            <Text style={[styles.actionModalAmount, { color: actionItem.type === "income" ? colors.accent : colors.red }]}>
+                                {formatAmount(actionItem.amount, actionItem.type)}
+                            </Text>
+                            <Text style={[styles.actionModalMeta, { color: colors.text }]}>
+                                {t('title')} : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.type === "income" ? t('income') : t('expense')}</Text>
+                            </Text>
+                            <Text style={[styles.actionModalMeta, { color: colors.text }]}>
+                                {t('listTypeTitle')} : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.listType}</Text>
+                            </Text>
+                            <Text style={[styles.actionModalMeta, { color: colors.text }]}>
+                                {t('category')} : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.category}</Text>
+                            </Text>
+                            <Text style={[styles.actionModalMeta, { marginTop: 20, fontWeight: FONTS.bold, color: colors.text }]}>
+                                {t('date')} : <Text style={{ fontWeight: FONTS.normal }}>{formatDate(actionItem.date)}</Text>
+                            </Text>
+                            <View style={styles.actionButtons}>
+                                <TouchableOpacity
+                                    style={[styles.actionBtnEdit, { backgroundColor: colors.accent }]}
+                                    onPress={handleEdit}
+                                    activeOpacity={0.8}
+                                >
+                                    <Pencil size={20} color={colors.background} />
+                                    <Text style={[styles.actionBtnEditText, { color: colors.background }]}>{t('edit')}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.actionBtnDelete, { backgroundColor: colors.red }]}
+                                    onPress={showPopupDelete}
+                                    activeOpacity={0.8}
+                                >
+                                    <Trash2 size={20} color={colors.white} />
+                                    <Text style={[styles.actionBtnDeleteText, { color: colors.white }]}>{t('delete')}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </Animated.View>
+                    </BlurView>
+                </Modal>
             )}
 
-            {/* Popup Delete */}
-            {popupDelete && (
-                <View style={styles.modalOverlay}>
-                    <TouchableOpacity
-                        style={styles.modalBackdrop}
-                        activeOpacity={1}
-                        onPress={closePopupDelete}
-                    />
-                    <Animated.View
-                        style={[
-                            styles.actionModal,
-                            {
-                                transform: [{ scale: scaleAnim }], backgroundColor: colors.cardBg
-                            },
-                        ]}
-                    >
-                        <Trash2 size={60} color={colors.red} style={{ marginHorizontal: "auto", marginBottom: 20 }} />
-                        <Text style={[styles.actionModalTitle, { color: colors.text }]}>ยืนยันการลบรายการ</Text>
-                        <Text style={{ color: colors.gray, textAlign: "center", marginBottom: 20, }}>คุณต้องการลบรายการนี้จริงหรือไม่</Text>
-                        <TouchableOpacity style={[styles.actionBtnDelete, { backgroundColor: colors.red }]} onPress={handleDelete}>
-                            <Text style={[styles.actionBtnDeleteText, { color: colors.white }]}>ลบ</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={closePopupDelete}>
-                            <Text style={[styles.actionBtnDeleteText, { marginTop: 15, color: colors.text, marginBottom: 10 }]}>ยกเลิก</Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-                </View>
-            )}
+            <ConfirmPopup
+                visible={popupDelete}
+                onCancel={() => {
+                    setPopupDelete(false);
+                    // setNoteToDelete(null);
+                }}
+                onConfirm={confirmDelete}
+            />
         </View>
     )
 }
@@ -622,11 +625,12 @@ const styles = StyleSheet.create({
     },
     modalOverlay: {
         ...StyleSheet.absoluteFillObject,
-        zIndex: 100,
+        zIndex: 1000,
     },
     modalBackdrop: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: "rgba(0,0,0,0.5)",
+        zIndex: 1,
     },
     actionModal: {
         position: "absolute",
@@ -637,6 +641,15 @@ const styles = StyleSheet.create({
         padding: 24,
         borderWidth: 1,
         borderColor: COLORS.border,
+        zIndex: 2,
+        elevation: 5,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
     },
     modalClose: {
         position: "absolute",
@@ -672,6 +685,8 @@ const styles = StyleSheet.create({
         gap: 8,
         paddingVertical: 14,
         borderRadius: 12,
+        zIndex: 3,
+        elevation: 3,
     },
     actionBtnEditText: {
         fontSize: SIZES.sm,
@@ -685,6 +700,8 @@ const styles = StyleSheet.create({
         gap: 8,
         paddingVertical: 14,
         borderRadius: 12,
+        zIndex: 3,
+        elevation: 3,
     },
     actionBtnDeleteText: {
         fontSize: SIZES.sm,

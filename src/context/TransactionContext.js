@@ -26,6 +26,18 @@ export const TransactionProvider = ({ children }) => {
     const [transactions, setTransactions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // ------ Load Data from DB ------
+    const loadTransactions = useCallback(async () => {
+        try {
+            await initDatabase();
+            const rows = await getAllTransactions();
+            setTransactions(rows);
+        } catch (error) {
+            console.error('Error loading transactions:', error);
+            setTransactions([]);
+        }
+    }, []);
+
     // ------ Load Data on Mount ------
     useEffect(() => {
         (async () => {
@@ -38,17 +50,7 @@ export const TransactionProvider = ({ children }) => {
                 setIsLoading(false);
             }
         })();
-    }, []);
-
-    // ------ Load Data from DB ------
-    const loadTransactions = useCallback(async () => {
-        try {
-            const rows = await getAllTransactions();
-            setTransactions(rows);
-        } catch (error) {
-            console.error('Error loading transactions:', error);
-        }
-    }, []);
+    }, [loadTransactions]);
 
     // ------ Add Data ------
     const addTransaction = useCallback(async (data) => {

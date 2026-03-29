@@ -1,0 +1,183 @@
+import React, { useEffect, useRef } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    Modal,
+    Animated,
+    Dimensions
+} from 'react-native';
+import { BlurView } from 'expo-blur';
+import { AlertCircle } from 'lucide-react-native';
+import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
+import { useTheme } from '../context/ThemeContext';
+
+const { width } = Dimensions.get('window');
+
+export default function ConfirmPopup({
+    visible,
+    title = 'ยืนยันการลบ',
+    description = 'คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? ถ้าลบแล้วจะไม่สามารถกู้คืนได้',
+    onCancel,
+    onConfirm,
+    confirmText = 'ลบข้อมูล',
+    cancelText = 'ยกเลิก'
+}) {
+    const { colors } = useTheme();
+    const scaleValue = useRef(new Animated.Value(0)).current;
+    const opacityValue = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (visible) {
+            Animated.parallel([
+                Animated.spring(scaleValue, {
+                    toValue: 1,
+                    useNativeDriver: true,
+                    tension: 50,
+                    friction: 7
+                }),
+                Animated.timing(opacityValue, {
+                    toValue: 1,
+                    duration: 200,
+                    useNativeDriver: true
+                })
+            ]).start();
+        } else {
+            Animated.parallel([
+                Animated.timing(scaleValue, {
+                    toValue: 0.8,
+                    duration: 200,
+                    useNativeDriver: true
+                }),
+                Animated.timing(opacityValue, {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: true
+                })
+            ]).start();
+        }
+    }, [visible]);
+
+    if (!visible) return null;
+
+    // Use a slightly varied blur tint based on theme, or force "dark" 
+    const blurTint = colors.background === '#111827' ? 'dark' : 'dark'; // Always keep dark blur background
+
+    return (
+        <Modal transparent visible={visible} animationType="fade" hardwareAccelerated>
+            <BlurView intensity={30} tint={blurTint} style={styles.blurContainer}>
+                <Animated.View
+                    style={[
+                        styles.popupCard,
+                        {
+                            backgroundColor: colors.cardBg,
+                            transform: [{ scale: scaleValue }],
+                            opacity: opacityValue
+                        }
+                    ]}
+                >
+                    {/* Icon section */}
+                    <View style={styles.iconContainer}>
+                        <View style={[styles.iconCircle, { backgroundColor: colors.red + '15' }]}>
+                            <AlertCircle size={36} color={colors.red} strokeWidth={2.5} />
+                        </View>
+                    </View>
+                    
+                    {/* Texts section */}
+                    <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+                    <Text style={[styles.description, { color: colors.gray }]}>{description}</Text>
+                    
+                    {/* Buttons section */}
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity
+                            style={[styles.button, styles.cancelBtn, { borderColor: colors.border }]}
+                            onPress={onCancel}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={[styles.btnText, { color: colors.text }]}>{cancelText}</Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity
+                            style={[styles.button, styles.confirmBtn, { backgroundColor: colors.red }]}
+                            onPress={onConfirm}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={[styles.btnText, styles.confirmBtnText]}>{confirmText}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </Animated.View>
+            </BlurView>
+        </Modal>
+    );
+}
+
+const styles = StyleSheet.create({
+    blurContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)', // light black background
+    },
+    popupCard: {
+        width: width * 0.82,
+        maxWidth: 340,
+        borderRadius: 24,
+        padding: 24,
+        alignItems: 'center',
+        ...CARD_SHADOW,
+        elevation: 10,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    iconContainer: {
+        marginBottom: 20,
+    },
+    iconCircle: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: SIZES.lg,
+        fontWeight: FONTS.bold,
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    description: {
+        fontSize: SIZES.sm,
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
+        paddingHorizontal: 8,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    button: {
+        flex: 1,
+        height: 52,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    cancelBtn: {
+        borderWidth: 1.5,
+        backgroundColor: 'transparent',
+    },
+    confirmBtn: {
+        // backgroundColor set by inline style
+    },
+    btnText: {
+        fontSize: 15,
+        fontWeight: FONTS.bold,
+    },
+    confirmBtnText: {
+        color: '#FFFFFF',
+    }
+});
