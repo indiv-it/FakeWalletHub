@@ -3,6 +3,40 @@ import * as SQLite from 'expo-sqlite';
 let db = null;
 let initPromise = null;
 
+// listType constants — stored in database
+export const LIST_TYPE_CASH = 'cash';
+export const LIST_TYPE_BANK = 'bank';
+
+// Legacy listType Thai name → constant key mapping
+const LEGACY_LISTTYPE_MAP = {
+    'เงินสด': LIST_TYPE_CASH,
+    'เงินในบัญชี': LIST_TYPE_BANK,
+    'Cash': LIST_TYPE_CASH,
+    'In Bank': LIST_TYPE_BANK,
+    '现金': LIST_TYPE_CASH,
+    '银行账户': LIST_TYPE_BANK,
+    '現金': LIST_TYPE_CASH,
+    '銀行口座': LIST_TYPE_BANK,
+};
+
+// Legacy category Thai name → ID mapping
+const LEGACY_CATEGORY_MAP = {
+    'เงินจำเป็น': 'essentials',
+    'เงินตามใจ': 'wants',
+    'เงินลงทุน': 'investment',
+    'เงินออม': 'savings',
+    'Essentials': 'essentials',
+    'Wants': 'wants',
+    'Investment': 'investment',
+    'Savings': 'savings',
+    '必需品': 'essentials',
+    '个人消费': 'wants',
+    '投资': 'investment',
+    '储蓄': 'savings',
+    '個人消費': 'wants',
+    '貯蓄': 'savings',
+};
+
 // ----- Connect database ------
 export async function getDatabase() {
     if (!db) {
@@ -43,6 +77,10 @@ export async function initDatabase() {
                     custom_name TEXT NOT NULL
                 );
             `);
+            
+            // Run migration for legacy data
+            await migrateTransactionData(database);
+            
             console.log('Database initialized successfully');
         } catch (error) {
             console.error('Database initialization failed:', error);
@@ -54,6 +92,29 @@ export async function initDatabase() {
     return initPromise;
 }
 
+// ------ Migrate legacy Thai names to constant keys ------
+async function migrateTransactionData(database) {
+    try {
+        // Migrate listType: Thai names → constant keys
+        for (const [oldName, newKey] of Object.entries(LEGACY_LISTTYPE_MAP)) {
+            await database.runAsync(
+                `UPDATE transactions SET listType = ? WHERE listType = ?`,
+                [newKey, oldName]
+            );
+        }
+
+        // Migrate category: Thai/translated names → constant IDs
+        for (const [oldName, newId] of Object.entries(LEGACY_CATEGORY_MAP)) {
+            await database.runAsync(
+                `UPDATE transactions SET category = ? WHERE category = ?`,
+                [newId, oldName]
+            );
+        }
+    } catch (error) {
+        console.log('Migration warning (non-critical):', error);
+    }
+}
+
 // ------ Insert Data ------
 export async function insertTransaction(data) {
     await initDatabase();
@@ -61,11 +122,11 @@ export async function insertTransaction(data) {
 
     // Setting Default Data
     const transactionData = {
-        title: data.title || 'ไม่ระบุชื่อ',
+        title: data.title || 'Untitled',
         amount: data.amount || 0,
         type: data.type || 'expense',
-        category: data.category || 'ไม่ระบุหมวดหมู่',
-        listType: data.listType || 'ไม่ระบุประเภทเงิน',
+        category: data.category || 'essentials',
+        listType: data.listType || LIST_TYPE_CASH,
         date: data.date || new Date().toISOString().split('T')[0],
         created_at: data.created_at || new Date().toISOString(),
     };
@@ -108,11 +169,11 @@ export async function updateTransaction(id, data) {
 
     // Setting Default Data
     const transactionData = {
-        title: data.title || 'ไม่ระบุชื่อ',
+        title: data.title || 'Untitled',
         amount: data.amount || 0,
         type: data.type || 'expense',
-        category: data.category || 'ไม่ระบุหมวดหมู่',
-        listType: data.listType || 'ไม่ระบุประเภทเงิน',
+        category: data.category || 'essentials',
+        listType: data.listType || LIST_TYPE_CASH,
         date: data.date || new Date().toISOString().split('T')[0],
         created_at: data.created_at || new Date().toISOString(),
     };
@@ -153,7 +214,7 @@ export async function insertNote(data) {
         `INSERT INTO notes (title, content, color, date, created_at)
         VALUES (?, ?, ?, ?, ?)`,
         [
-            data.title || 'ไม่มีหัวข้อ',
+            data.title || 'Untitled',
             data.content || '',
             data.color || '#FBBF24',
             data.date || new Date().toISOString().split('T')[0],
@@ -182,7 +243,7 @@ export async function updateNote(id, data) {
         `UPDATE notes SET title = ?, content = ?, color = ?, date = ?
         WHERE id = ?`,
         [
-            data.title || 'ไม่มีหัวข้อ',
+            data.title || 'Untitled',
             data.content || '',
             data.color || '#FBBF24',
             data.date || new Date().toISOString().split('T')[0],
@@ -215,13 +276,4 @@ export async function updateCustomCategory(id, oldName, newName) {
         `INSERT OR REPLACE INTO custom_categories (id, custom_name) VALUES (?, ?)`,
         [id, newName]
     );
-
-    // Update existing transactions to reflect the new category name
-    if (oldName && newName && oldName !== newName) {
-        await database.runAsync(
-            `UPDATE transactions SET category = ? WHERE category = ?`,
-            [newName, oldName]
-        );
-    }
 }
-

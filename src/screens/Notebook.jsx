@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { BlurView } from 'expo-blur';
 import { FileEdit, Trash2, ListPlus, X } from 'lucide-react-native';
 
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
@@ -159,7 +160,7 @@ export default function Notebook() {
                 ListEmptyComponent={
                     !isLoading && (
                         <View style={styles.emptyContainer}>
-                            <Text style={[styles.emptyText, { color: colors.gray }]}>{t('noNote') || 'ยังไม่มีบันทึกช่วยจำ'}</Text>
+                            <Text style={[styles.emptyText, { color: colors.gray }]}>{t('noNote')}</Text>
                         </View>
                     )
                 }
@@ -185,11 +186,11 @@ export default function Notebook() {
                 transparent={true}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <View style={styles.modalOverlay}>
+                <BlurView intensity={30} tint="dark" style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.cardBg }]}>
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.text }]}>
-                                {isEditMode ? t('editNote') || 'แก้ไขบันทึก' : t('addNote')}
+                                {isEditMode ? t('editNote') : t('addNote')}
                             </Text>
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
                                 <X size={24} color={colors.text} />
@@ -200,20 +201,20 @@ export default function Notebook() {
                         <Text style={[styles.inputLabel, { color: colors.text }]}>{t('noteTitle')}</Text>
                         <TextInput
                             style={[styles.textInput, { color: colors.text, backgroundColor: colors.background }]}
-                            placeholder={t('noteTitlePlaceholder') || "พิมพ์หัวข้อ..."}
+                            placeholder={t('noteTitlePlaceholder')}
                             placeholderTextColor={colors.gray}
                             value={title}
                             onChangeText={setTitle}
                         />
 
-                        <Text style={[styles.inputLabel, { color: colors.text }]}>{t('noteDetail') || 'รายละเอียด (ไม่บังคับ)'}</Text>
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>{t('noteDetail')}</Text>
                         <TextInput
                             style={[
                                 styles.textInput,
                                 styles.textArea,
                                 { color: colors.text, backgroundColor: colors.background }
                             ]}
-                            placeholder={t('noteDetailPlaceholder') || "พิมพ์รายละเอียดเพิ่มเติม..."}
+                            placeholder={t('noteDetailPlaceholder')}
                             placeholderTextColor={colors.gray}
                             value={content}
                             onChangeText={setContent}
@@ -261,11 +262,11 @@ export default function Notebook() {
                             onPress={handleSave}
                         >
                             <Text style={[styles.saveBtnText, { color: colors.background }]}>
-                                {isEditMode ? t('saveEdit') || 'บันทึกการแก้ไข' : t('save')}
+                                {isEditMode ? t('saveEdit') : t('save')}
                             </Text>
                         </TouchableOpacity>
                     </View>
-                </View>
+                </BlurView>
             </Modal>
 
             {/* Confirm Delete Popup */}
@@ -280,8 +281,8 @@ export default function Notebook() {
 
             <AlertPopup
                 visible={popupAlert}
-                title={t('ok') || "แจ้งเตือน"}
-                description={t('amountAlertDesc') || "โปรดระบุข้อมูลให้ครบถ้วน"}
+                title={t('noteAlert')}
+                description={t('noteAlertDesc')}
                 onClose={() => {setPopupAlert(false)}}
                 buttonText={t('ok')}
                 type="warning"
@@ -366,7 +367,7 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0,0,0,0.1)',
     },
     modalContent: {
         borderTopLeftRadius: 24,

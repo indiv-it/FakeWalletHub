@@ -13,6 +13,7 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from "react-native";
+import { BlurView } from 'expo-blur';
 
 // components
 import { useTheme } from '../context/ThemeContext';
@@ -20,6 +21,7 @@ import { usePopup } from "../context/PopupContext";
 import { useLanguage, LANGUAGES } from "../context/LanguageContext";
 import { useCurrency, CURRENCIES } from "../context/CurrencyContext";
 import { useCategory } from "../context/CategoryContext";
+import { CARD_SHADOW } from "../style/Theme";
 
 // icons
 import {
@@ -40,7 +42,7 @@ export default function Nav() {
     const { openPopup } = usePopup();
     const { currentLang, changeLanguage, t, languages } = useLanguage();
     const { currentCurrency, changeCurrency } = useCurrency();
-    const { categories, updateCategoryName } = useCategory();
+    const { categories, editCategory } = useCategory();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -172,7 +174,7 @@ export default function Nav() {
     // Handle editing category
     const handleSaveCategory = async () => {
         if (editingCategory && newCategoryName.trim()) {
-            await updateCategoryName(editingCategory.id, newCategoryName.trim());
+            await editCategory(editingCategory.id, newCategoryName.trim());
             setEditingCategory(null);
             setNewCategoryName('');
             setShowCategoryModal(false);
@@ -201,10 +203,10 @@ export default function Nav() {
         outputRange: ['0deg', '180deg'],
     });
 
-    // ✅ Lang submenu height
+    // Lang submenu height
     const langHeight = langMenuAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, Object.keys(LANGUAGES).length * 48 + 8],
+        outputRange: [0, Object.keys(LANGUAGES).length * 53 + 8],
     });
 
     // fade submenu
@@ -220,7 +222,7 @@ export default function Nav() {
 
     const curHeight = curMenuAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, Object.keys(CURRENCIES).length * 48 + 8],
+        outputRange: [0, Object.keys(CURRENCIES).length * 53 + 8],
     });
 
     const curOpacity = curMenuAnim.interpolate({
@@ -320,7 +322,7 @@ export default function Nav() {
             onPress={() => handleCurSelect(cur.code)}
             activeOpacity={0.6}
         >
-            <Text style={styles.langFlag}>{cur.symbol}</Text>
+            <Text style={[styles.langFlag, { color: colors.text }]}>{cur.symbol}</Text>
             <View style={{ flex: 1 }}>
                 <Text style={[styles.langName, { color: colors.text }]}>
                     {cur.name}
@@ -341,7 +343,7 @@ export default function Nav() {
                 <Modal transparent visible={menuOpen} animationType="none" onRequestClose={closeMenu}>
                     <View style={{ flex: 1 }}>
                         <TouchableWithoutFeedback onPress={closeMenu}>
-                            <View style={styles.backdrop} />
+                            <BlurView intensity={20} tint={isDarkMode ? "dark" : "dark"} style={styles.backdrop} />
                         </TouchableWithoutFeedback>
 
                         {/* Dropdown Menu */}
@@ -359,15 +361,16 @@ export default function Nav() {
                             },
                         ]}
                     >
-                        {/* Menu Header */}
-                        <View style={[styles.menuHeader, { borderBottomColor: colors.border }]}>
-                            <View style={[styles.menuHeaderIconBg, { backgroundColor: colors.accent + '20' }]}>
-                                <Settings size={16} color={colors.accent} />
-                            </View>
-                            <Text style={[styles.menuHeaderText, { color: colors.text }]}>
-                                {t('settings')}
-                            </Text>
-                        </View>
+                        {/* Edit Categories */}
+                        <MenuItem
+                            index={4}
+                            icon={<Edit3 size={18} color={colors.accent} />}
+                            label={t('editCategory')}
+                            onPress={() => {
+                                closeMenu();
+                                setShowCategoryModal(true);
+                            }}
+                        />
 
                         {/* Theme Toggle */}
                         <MenuItem
@@ -448,7 +451,7 @@ export default function Nav() {
                             onPress={toggleCurMenu}
                             rightContent={
                                 <View style={styles.langBadgeContainer}>
-                                    <Text style={styles.langBadgeFlag}>{CURRENCIES[currentCurrency].symbol}</Text>
+                                    <Text style={[styles.langBadgeFlag, { color: colors.text }]}>{CURRENCIES[currentCurrency].symbol}</Text>
                                     <Animated.View style={{
                                         transform: [{ rotate: curRotate }],
                                     }}>
@@ -466,7 +469,6 @@ export default function Nav() {
                                     height: curHeight,
                                     opacity: curOpacity,
                                     backgroundColor: colors.background + '80',
-                                    borderColor: curMenuOpen ? colors.border : 'transparent',
                                     overflow: 'hidden',
                                 },
                             ]}
@@ -480,16 +482,6 @@ export default function Nav() {
                             ))}
                         </Animated.View>
 
-                        {/* Edit Categories */}
-                        <MenuItem
-                            index={4}
-                            icon={<Edit3 size={18} color={colors.accent} />}
-                            label={t('editCategory')}
-                            onPress={() => {
-                                closeMenu();
-                                setShowCategoryModal(true);
-                            }}
-                        />
 
                         {/* About */}
                         <MenuItem
@@ -524,7 +516,7 @@ export default function Nav() {
                         {
                             backgroundColor: menuOpen
                                 ? colors.accent + '20'
-                                : isDarkMode ? colors.cardBg : colors.background,
+                                : colors.cardBg,
                             borderColor: menuOpen ? colors.accent + '50' : colors.border,
                         },
                     ]}
@@ -548,14 +540,14 @@ export default function Nav() {
             <Modal transparent visible={showCategoryModal} animationType="fade" onRequestClose={() => setShowCategoryModal(false)}>
                 <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
                     <TouchableWithoutFeedback onPress={() => { setShowCategoryModal(false); setEditingCategory(null); setNewCategoryName(''); }}>
-                        <View style={styles.backdrop} />
+                        <BlurView intensity={30} tint="dark" style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.1)' }]} />
                     </TouchableWithoutFeedback>
                     <View style={[styles.categoryModal, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
                         <Text style={[styles.categoryModalTitle, { color: colors.text }]}>{t('editCategory')}</Text>
                         
                         {editingCategory ? (
                             <View>
-                                <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>แก้ไขชื่อใหม่</Text>
+                                <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>{t('editNewName')}</Text>
                                 <TextInput
                                     style={[styles.categoryInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                                     value={newCategoryName}
@@ -568,7 +560,7 @@ export default function Nav() {
                                         <Text style={{ color: colors.text, fontWeight: 'bold' }}>{t('cancel')}</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={[styles.categoryBtn, { backgroundColor: colors.accent }]} onPress={handleSaveCategory}>
-                                        <Text style={{ color: colors.white, fontWeight: 'bold' }}>{t('save')}</Text>
+                                        <Text style={{ color: colors.background, fontWeight: 'bold' }}>{t('save')}</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -625,6 +617,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingHorizontal: 12,
         paddingVertical: 8,
+        ...CARD_SHADOW,
     },
     menuButtonInner: {
         flexDirection: 'row',
@@ -638,7 +631,7 @@ const styles = StyleSheet.create({
     // Backdrop
     backdrop: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.25)',
+        backgroundColor: 'rgba(0,0,0,0.1)',
     },
 
     // Dropdown menu
@@ -737,10 +730,9 @@ const styles = StyleSheet.create({
 
     // Language submenu
     langSubmenu: {
-        marginHorizontal: 12,
+        paddingHorizontal: 12,
         borderRadius: 12,
         overflow: 'hidden',
-        borderWidth: 1,
         marginBottom: 4,
     },
     langItem: {

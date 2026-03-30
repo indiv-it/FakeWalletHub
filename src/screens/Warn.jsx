@@ -13,67 +13,15 @@ import { useNavigation } from "@react-navigation/native";
 // components
 import { COLORS, SIZES, FONTS, CARD_SHADOW } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 // icons
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
-// ประเภทการแจ้งเตือน
-const NOTIFICATION_TYPES = {
-    transaction: { icon: 'arrow-right-left', color: COLORS.accent, label: 'ธุรกรรม' },
-    budget: { icon: 'piggy-bank-outline', color: '#F59E0B', label: 'งบประมาณ' },
-    reminder: { icon: 'bell', color: '#8B5CF6', label: 'เตือนความจำ' },
-    system: { icon: 'information-outline', color: COLORS.gray, label: 'ระบบ' },
-};
-
-// ข้อมูลการแจ้งเตือนตัวอย่าง
-const MOCK_NOTIFICATIONS = [
-    {
-        id: '1',
-        type: 'transaction',
-        title: 'บันทึกรายจ่ายสำเร็จ',
-        message: 'คุณบันทึกการซื้ออาหาร ฿150',
-        time: '10 นาที',
-        read: false,
-    },
-    {
-        id: '2',
-        type: 'budget',
-        title: 'ใกล้ถึงวงเงิน',
-        message: 'หมวด "เงินตามใจ" เหลืออีก ฿200',
-        time: '1 ชม.',
-        read: false,
-    },
-    {
-        id: '3',
-        type: 'reminder',
-        title: 'เตือนบันทึกรายการ',
-        message: 'อย่าลืมบันทึกรายรับ-รายจ่ายวันนี้',
-        time: '2 ชม.',
-        read: true,
-    },
-    {
-        id: '4',
-        type: 'transaction',
-        title: 'รายรับใหม่',
-        message: 'บันทึกรายรับ ฿5,000 จากเงินเดือน',
-        time: 'เมื่อวาน',
-        read: true,
-    },
-    {
-        id: '5',
-        type: 'system',
-        title: 'อัปเดตแอป',
-        message: 'MyBank v1.0.0 พร้อมใช้งานแล้ว',
-        time: '2 วัน',
-        read: true,
-    },
-];
-
 const NotificationItem = ({ item, index, onPress }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const translateY = useRef(new Animated.Value(24)).current;
-    const config = NOTIFICATION_TYPES[item.type] || NOTIFICATION_TYPES.system;
     const {colors} = useTheme();
 
     useEffect(() => {
@@ -102,11 +50,11 @@ const NotificationItem = ({ item, index, onPress }) => {
                 onPress={() => onPress?.(item)}
                 activeOpacity={0.85}
             >
-                <View style={[styles.notifIconWrap, { backgroundColor: config.color + '40' }]}>
+                <View style={[styles.notifIconWrap, { backgroundColor: item.color + '40' }]}>
                     <MaterialCommunityIcons
-                        name={config.icon}
+                        name={item.icon}
                         size={22}
-                        color={config.color}
+                        color={item.color}
                     />
                 </View>
                 <View style={styles.notifContent}>
@@ -124,9 +72,76 @@ const NotificationItem = ({ item, index, onPress }) => {
 
 export default function Warn() {
     const navigation = useNavigation();
-    const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
-    const unreadCount = notifications.filter(n => !n.read).length;
     const {colors} = useTheme();
+    const { t } = useLanguage();
+
+    // Build notification data using translations
+    const buildNotifications = () => [
+        {
+            id: '1',
+            type: 'transaction',
+            icon: 'arrow-right-left',
+            color: COLORS.accent,
+            title: t('notifTitle1'),
+            message: t('notifMsg1'),
+            time: t('notifTime1'),
+            read: false,
+        },
+        {
+            id: '2',
+            type: 'budget',
+            icon: 'piggy-bank-outline',
+            color: '#F59E0B',
+            title: t('notifTitle2'),
+            message: t('notifMsg2'),
+            time: t('notifTime2'),
+            read: false,
+        },
+        {
+            id: '3',
+            type: 'reminder',
+            icon: 'bell',
+            color: '#8B5CF6',
+            title: t('notifTitle3'),
+            message: t('notifMsg3'),
+            time: t('notifTime3'),
+            read: true,
+        },
+        {
+            id: '4',
+            type: 'transaction',
+            icon: 'arrow-right-left',
+            color: COLORS.accent,
+            title: t('notifTitle4'),
+            message: t('notifMsg4'),
+            time: t('notifTime4'),
+            read: true,
+        },
+        {
+            id: '5',
+            type: 'system',
+            icon: 'information-outline',
+            color: COLORS.gray,
+            title: t('notifTitle5'),
+            message: t('notifMsg5'),
+            time: t('notifTime5'),
+            read: true,
+        },
+    ];
+
+    const [notifications, setNotifications] = useState(buildNotifications());
+    const unreadCount = notifications.filter(n => !n.read).length;
+
+    // Update notifications when language changes
+    useEffect(() => {
+        setNotifications(prev => {
+            const fresh = buildNotifications();
+            return fresh.map((n, i) => ({
+                ...n,
+                read: prev[i]?.read ?? n.read,
+            }));
+        });
+    }, [t]);
 
     const markAllRead = () => {
         setNotifications(prev =>
@@ -145,10 +160,10 @@ export default function Warn() {
                 >
                     <Feather name="arrow-left" size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>การแจ้งเตือน</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('notifications')}</Text>
                 {unreadCount > 0 && (
                     <TouchableOpacity style={styles.markReadBtn} onPress={markAllRead}>
-                        <Text style={[styles.markReadText, { color: colors.accent_black }]}>อ่านทั้งหมด</Text>
+                        <Text style={[styles.markReadText, { color: colors.accent_black }]}>{t('markAllRead')}</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -159,9 +174,9 @@ export default function Warn() {
                     <View style={[styles.emptyIconWrap, { backgroundColor: colors.chart }]}>
                         <Feather name="bell-off" size={48} color={colors.text} />
                     </View>
-                    <Text style={[styles.emptyTitle, { color: colors.gray }]}>ไม่มีการแจ้งเตือน</Text>
+                    <Text style={[styles.emptyTitle, { color: colors.gray }]}>{t('noNotification')}</Text>
                     <Text style={[styles.emptyMessage, { color: colors.gray }]}>
-                        เมื่อมีการเคลื่อนไหวในบัญชีของคุณ{'\n'}การแจ้งเตือนจะแสดงที่นี่
+                        {t('noNotificationDesc')}
                     </Text>
                 </View>
             ) : (

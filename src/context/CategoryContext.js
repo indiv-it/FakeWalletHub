@@ -1,5 +1,6 @@
 import { initDatabase, getAllCustomCategories, updateCustomCategory } from '../server/database';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useLanguage } from './LanguageContext';
 
 const CategoryContext = createContext();
 
@@ -11,15 +12,25 @@ export const useCategory = () => {
     return context;
 };
 
-export const DEFAULT_CATEGORIES = [
-    { id: 'essentials', defaultName: 'เงินจำเป็น' },
-    { id: 'wants', defaultName: 'เงินตามใจ' },
-    { id: 'investment', defaultName: 'เงินลงทุน' },
-    { id: 'savings', defaultName: 'เงินออม' },
-];
+// Category IDs — these are the constant keys stored in the database
+export const CATEGORY_IDS = ['essentials', 'wants', 'investment', 'savings'];
+
+// Legacy Thai name → ID mapping for migration
+export const LEGACY_CATEGORY_MAP = {
+    'เงินจำเป็น': 'essentials',
+    'เงินตามใจ': 'wants',
+    'เงินลงทุน': 'investment',
+    'เงินออม': 'savings',
+    // English (in case)
+    'Essentials': 'essentials',
+    'Wants': 'wants',
+    'Investment': 'investment',
+    'Savings': 'savings',
+};
 
 export const CategoryProvider = ({ children }) => {
-    const [categories, setCategories] = useState([]);
+    const { t } = useLanguage();
+    const [customNames, setCustomNames] = useState({}); // { id: customName }
     const [isCategoriesReady, setIsCategoriesReady] = useState(false);
 
     useEffect(() => {
@@ -34,24 +45,73 @@ export const CategoryProvider = ({ children }) => {
             if (rows) {
                 rows.forEach(r => customMap[r.id] = r.custom_name);
             }
-            
-            const updated = DEFAULT_CATEGORIES.map(c => ({
-                ...c,
-                name: customMap[c.id] || c.defaultName
-            }));
-            setCategories(updated);
+            setCustomNames(customMap);
         } catch (e) {
             console.log("Error loading categories", e);
-            setCategories(DEFAULT_CATEGORIES.map(c => ({ ...c, name: c.defaultName })));
+            setCustomNames({});
         } finally {
             setIsCategoriesReady(true);
         }
     }, []);
 
+    // Get display name for a category: custom name > translation > id
+    const getCategoryDisplayName = (categoryId) => {
+        if (!categoryId) return '';
+        
+        // If it's a legacy Thai name, resolve to ID first
+        const resolvedId = LEGACY_CATEGORY_MAP[categoryId] || categoryId;
+        
+        // Check if there's a custom name from DB
+        if (customNames[resolvedId]) {
+            return customNames[resolvedId];
+        }
+        
+        // Use translation
+        if (CATEGORY_IDS.includes(resolvedId)) {
+            return t(resolvedId);
+        }
+        
+        // Fallback: return original
+        return categoryId;
+    };
+
+    // Resolve any category identifier (legacy name, translated name, or ID) to its constant ID
+    const resolveCategoryId = (categoryNameOrId) => {
+        if (!categoryNameOrId) return 'essentials';
+        
+        // Already an ID?
+        if (CATEGORY_IDS.includes(categoryNameOrId)) {
+            return categoryNameOrId;
+        }
+        
+        // Legacy name?
+        if (LEGACY_CATEGORY_MAP[categoryNameOrId]) {
+            return LEGACY_CATEGORY_MAP[categoryNameOrId];
+        }
+        
+        // Custom name? Check reverse map
+        for (const [id, name] of Object.entries(customNames)) {
+            if (name === categoryNameOrId) return id;
+        }
+
+        // Try matching current translation
+        for (const id of CATEGORY_IDS) {
+            if (t(id) === categoryNameOrId) return id;
+        }
+        
+        return categoryNameOrId; // fallback
+    };
+
+    // categories array for display
+    const categories = CATEGORY_IDS.map(id => ({
+        id,
+        name: getCategoryDisplayName(id),
+    }));
+
     const editCategory = async (id, newName) => {
         try {
-            const currentCat = categories.find(c => c.id === id);
-            await updateCustomCategory(id, currentCat?.name || currentCat?.defaultName, newName);
+            const oldName = getCategoryDisplayName(id);
+            await updateCustomCategory(id, oldName, newName);
             await loadCategories();
         } catch (e) {
             console.log("Error editing category", e);
@@ -59,7 +119,15 @@ export const CategoryProvider = ({ children }) => {
     };
 
     return (
-        <CategoryContext.Provider value={{ categories, editCategory, isCategoriesReady, loadCategories }}>
+        <CategoryContext.Provider value={{
+            categories,
+            editCategory,
+            isCategoriesReady,
+            loadCategories,
+            getCategoryDisplayName,
+            resolveCategoryId,
+            CATEGORY_IDS,
+        }}>
             {children}
         </CategoryContext.Provider>
     );

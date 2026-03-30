@@ -12,18 +12,25 @@ import { BlurView } from 'expo-blur';
 import { AlertCircle, CheckCircle2, AlertTriangle, Info } from 'lucide-react-native';
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
 export default function AlertPopup({
     visible,
-    title = 'แจ้งเตือน',
-    description = 'โปรดระบุข้อมูลให้ครบถ้วน',
+    title,
+    description,
     onClose,
-    buttonText = 'ตกลง',
+    buttonText,
     type = 'warning' // 'success', 'warning', 'error', 'info'
 }) {
     const { colors } = useTheme();
+    const { t } = useLanguage();
+    
+    // Use translations as defaults
+    const displayTitle = title || t('notifications');
+    const displayDescription = description || '';
+    const displayButtonText = buttonText || t('ok');
     const scaleValue = useRef(new Animated.Value(0)).current;
     const opacityValue = useRef(new Animated.Value(0)).current;
 
@@ -99,8 +106,8 @@ export default function AlertPopup({
                     </View>
                     
                     {/* Texts section */}
-                    <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-                    <Text style={[styles.description, { color: colors.gray }]}>{description}</Text>
+                    <Text style={[styles.title, { color: colors.text }]}>{displayTitle}</Text>
+                    <Text style={[styles.description, { color: colors.gray }]}>{displayDescription}</Text>
                     
                     {/* Button section */}
                     <View style={styles.buttonContainer}>
@@ -109,7 +116,7 @@ export default function AlertPopup({
                             onPress={onClose}
                             activeOpacity={0.7}
                         >
-                            <Text style={[styles.btnText, styles.confirmBtnText]}>{buttonText}</Text>
+                            <Text style={[styles.btnText, styles.confirmBtnText]}>{displayButtonText}</Text>
                         </TouchableOpacity>
                     </View>
                 </Animated.View>
@@ -123,7 +130,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0,0,0,0.1)',
     },
     popupCard: {
         width: width * 0.82,

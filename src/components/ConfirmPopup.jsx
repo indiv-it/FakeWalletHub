@@ -12,19 +12,27 @@ import { BlurView } from 'expo-blur';
 import { AlertCircle } from 'lucide-react-native';
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
 export default function ConfirmPopup({
     visible,
-    title = 'ยืนยันการลบ',
-    description = 'คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? ถ้าลบแล้วจะไม่สามารถกู้คืนได้',
+    title,
+    description,
     onCancel,
     onConfirm,
-    confirmText = 'ลบข้อมูล',
-    cancelText = 'ยกเลิก'
+    confirmText,
+    cancelText
 }) {
     const { colors } = useTheme();
+    const { t } = useLanguage();
+    
+    // Use translations as defaults
+    const displayTitle = title || t('confirmDelete');
+    const displayDescription = description || t('confirmDeleteDesc');
+    const displayConfirmText = confirmText || t('deleteData');
+    const displayCancelText = cancelText || t('cancel');
     const scaleValue = useRef(new Animated.Value(0)).current;
     const opacityValue = useRef(new Animated.Value(0)).current;
 
@@ -85,8 +93,8 @@ export default function ConfirmPopup({
                     </View>
                     
                     {/* Texts section */}
-                    <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-                    <Text style={[styles.description, { color: colors.gray }]}>{description}</Text>
+                    <Text style={[styles.title, { color: colors.text }]}>{displayTitle}</Text>
+                    <Text style={[styles.description, { color: colors.gray }]}>{displayDescription}</Text>
                     
                     {/* Buttons section */}
                     <View style={styles.buttonContainer}>
@@ -95,7 +103,7 @@ export default function ConfirmPopup({
                             onPress={onCancel}
                             activeOpacity={0.7}
                         >
-                            <Text style={[styles.btnText, { color: colors.text }]}>{cancelText}</Text>
+                            <Text style={[styles.btnText, { color: colors.text }]}>{displayCancelText}</Text>
                         </TouchableOpacity>
                         
                         <TouchableOpacity
@@ -103,7 +111,7 @@ export default function ConfirmPopup({
                             onPress={onConfirm}
                             activeOpacity={0.7}
                         >
-                            <Text style={[styles.btnText, styles.confirmBtnText]}>{confirmText}</Text>
+                            <Text style={[styles.btnText, styles.confirmBtnText]}>{displayConfirmText}</Text>
                         </TouchableOpacity>
                     </View>
                 </Animated.View>
@@ -117,7 +125,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)', // light black background
+        backgroundColor: 'rgba(0,0,0,0.1)', // transparent enough for blur
     },
     popupCard: {
         width: width * 0.82,

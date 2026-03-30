@@ -20,16 +20,15 @@ import { useTheme } from "../context/ThemeContext"
 import { useTransaction } from "../context/TransactionContext"
 import { useLanguage } from "../context/LanguageContext"
 import { useCategory } from "../context/CategoryContext"
+import { LIST_TYPE_CASH, LIST_TYPE_BANK } from "../server/database"
 import AlertPopup from "../components/AlertPopup";
 
 // custom type button
 const CustomTypeButton = ({ label, isActive, activeColor, activeTextColor, inactiveTextColor = COLORS.white, onPress }) => {
     const { colors } = useTheme()
 
-    // animation value
     const animatedValue = useRef(new Animated.Value(isActive ? 1 : 0)).current;
 
-    // animation button
     useEffect(() => {
         Animated.timing(animatedValue, {
             toValue: isActive ? 1 : 0,
@@ -39,19 +38,16 @@ const CustomTypeButton = ({ label, isActive, activeColor, activeTextColor, inact
         }).start();
     }, [isActive]);
 
-    // animation background color
     const backgroundColor = animatedValue.interpolate({
         inputRange: [0, 1],
         outputRange: [colors.cardBg, activeColor]
     });
 
-    // animation text color
     const textColor = animatedValue.interpolate({
         inputRange: [0, 1],
         outputRange: [inactiveTextColor, activeTextColor]
     });
 
-    // return button
     return (
         <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
             <Animated.View style={[styles.typeButton, { backgroundColor }]}>
@@ -71,20 +67,19 @@ export default function AddList() {
     const isEditMode = !!editItem
     const { colors } = useTheme()
     const { addTransaction, editTransaction } = useTransaction()
-    const { t, currentLang } = useLanguage()
-    const { categories } = useCategory()
+    const { t } = useLanguage()
+    const { categories, resolveCategoryId } = useCategory()
 
-    const mappedType =
-        editItem?.type === "income"
-            ? t('income')
-            : editItem?.type === "expense"
-                ? t('expense')
-                : t('expense')
+    // Map edit item type to internal keys
+    const mappedType = editItem?.type || 'expense';
 
-    const mappedGroup = editItem?.category || categories.find(c=>c.id==='essentials')?.name || "เงินจำเป็น"
-    const mappedAccountRaw = editItem?.listType || t('cash')
-    const mappedAccount =
-        mappedAccountRaw === "เงินในบัญชี" ? t('accountInBank') : mappedAccountRaw
+    // Map edit item category (could be legacy name or ID)
+    const mappedGroup = editItem?.category 
+        ? resolveCategoryId(editItem.category) 
+        : 'essentials';
+
+    // Map edit item listType (could be legacy name or constant)
+    const mappedAccount = editItem?.listType || LIST_TYPE_CASH;
 
     const initialDateTime =
         editItem && editItem.date
@@ -106,6 +101,7 @@ export default function AddList() {
     // popup alert
     const [showAmountAlert, setShowAmountAlert] = useState(false);
     const [showCompleteAlert, setShowCompleteAlert] = useState(false);
+    const [showTypeAlert, setShowTypeAlert] = useState(false);
 
     // on date change
     const onDateChange = (event, selectedDate) => {
@@ -124,27 +120,18 @@ export default function AddList() {
         }
 
         if (!listType) {
-            alert('กรุณาเลือกประเภทรายการ');
+            setShowTypeAlert(true);
             return;
         }
-
-        // Map type to English for database
-        const curIncome = t('income');
-        const curExpense = t('expense');
-
-        const typeMapping = {
-            [curIncome]: 'income',
-            [curExpense]: 'expense',
-        };
 
         const dateStr = `${dateTime.getFullYear()}-${String(dateTime.getMonth() + 1).padStart(2, '0')}-${String(dateTime.getDate()).padStart(2, '0')}`;
 
         const transactionData = {
             title,
             amount: numericAmount,
-            type: typeMapping[listType] || 'expense',
-            category: listGroup || 'ไม่ระบุหมวดหมู่',
-            listType: listAccount || 'ไม่ระบุประเภทเงิน',
+            type: listType, // 'income' or 'expense'
+            category: listGroup || 'essentials', // category ID
+            listType: listAccount || LIST_TYPE_CASH, // constant key
             date: dateStr,
             created_at: new Date().toISOString(),
         };
@@ -159,7 +146,7 @@ export default function AddList() {
             }
         } catch (error) {
             console.error('Error saving transaction:', error);
-            alert('Error', 'เกิดข้อผิดพลาดในการบันทึกรายการ กรุณาลองใหม่');
+            alert(t('saveError'));
         }
     };
 
@@ -167,9 +154,9 @@ export default function AddList() {
         setShowCompleteAlert(false);
         setTitle('');
         setAmount('');
-        setListType('');
-        setListGroup('');
-        setListAccount('');
+        setListType('expense');
+        setListGroup('essentials');
+        setListAccount(LIST_TYPE_CASH);
         setDateTime(new Date());
         navigation.navigate("Home");
     };
@@ -200,7 +187,7 @@ export default function AddList() {
                     {/* note */}
                     <TextInput
                         keyboardType="default"
-                        placeholder="ชื่อรายการ"
+                        placeholder={t('itemName')}
                         placeholderTextColor={colors.gray}
                         style={[styles.textInput, { width: "63%", color: colors.text, backgroundColor: colors.cardBg }]}
                         value={title}
@@ -227,60 +214,60 @@ export default function AddList() {
                     )}
                 </View>
 
-                {/* list type */}
+                {/* list type — income/expense */}
                 <Text style={[styles.textForm, { color: colors.text }]}>{t('listTypeTitle')}</Text>
                 <View style={styles.typeContainer}>
                     <CustomTypeButton
                         label={t('income')}
-                        isActive={listType === t('income')}
+                        isActive={listType === 'income'}
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListType(t('income'))}
+                        onPress={() => setListType('income')}
                     />
                     <CustomTypeButton
                         label={t('expense')}
-                        isActive={listType === t('expense')}
+                        isActive={listType === 'expense'}
                         activeColor={colors.red}
                         activeTextColor={colors.white}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListType(t('expense'))}
+                        onPress={() => setListType('expense')}
                     />
                 </View>
 
-                {/* list account */}
+                {/* list account — cash/bank */}
                 <Text style={[styles.textForm, { color: colors.text }]}>{t('accountTypeTitle')}</Text>
                 <View style={styles.typeContainer}>
                     <CustomTypeButton
                         label={t('accountInBank')}
-                        isActive={listAccount === t('accountInBank')}
+                        isActive={listAccount === LIST_TYPE_BANK}
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListAccount(listAccount === t('accountInBank') ? '' : t('accountInBank'))}
+                        onPress={() => setListAccount(listAccount === LIST_TYPE_BANK ? '' : LIST_TYPE_BANK)}
                     />
                     <CustomTypeButton
                         label={t('cash')}
-                        isActive={listAccount === t('cash')}
+                        isActive={listAccount === LIST_TYPE_CASH}
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListAccount(listAccount === t('cash') ? '' : t('cash'))}
+                        onPress={() => setListAccount(listAccount === LIST_TYPE_CASH ? '' : LIST_TYPE_CASH)}
                     />
                 </View>
 
-                {/* list group */}
+                {/* list group — category */}
                 <Text style={[styles.textForm, { color: colors.text }]}>{t('category')}</Text>
                 <View style={styles.typeContainer}>
                     {categories.map((c) => (
                         <CustomTypeButton
                             key={c.id}
                             label={c.name}
-                            isActive={listGroup === c.name}
+                            isActive={listGroup === c.id}
                             activeColor={colors.accent}
                             activeTextColor={colors.background}
                             inactiveTextColor={colors.text}
-                            onPress={() => setListGroup(listGroup === c.name ? '' : c.name)}
+                            onPress={() => setListGroup(listGroup === c.id ? '' : c.id)}
                         />
                     ))}
                 </View>
@@ -313,6 +300,15 @@ export default function AddList() {
                 title={t('amountAlert')}
                 description={t('amountAlertDesc')}
                 onClose={() => setShowAmountAlert(false)}
+                buttonText={t('ok')}
+                type="warning"
+            />
+
+            <AlertPopup
+                visible={showTypeAlert}
+                title={t('selectListType')}
+                description={t('selectListType')}
+                onClose={() => setShowTypeAlert(false)}
                 buttonText={t('ok')}
                 type="warning"
             />
@@ -404,48 +400,6 @@ const styles = StyleSheet.create({
         borderWidth: 2,
     },
     textBack: {
-        fontSize: SIZES.sm,
-        fontWeight: FONTS.bold,
-    },
-    alertOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "rgba(0,0,0,0.5)",
-
-    },
-    alertBackdrop: {
-        ...StyleSheet.absoluteFillObject,
-    },
-    alertBox: {
-        width: "82%",
-        borderRadius: 18,
-        paddingVertical: 24,
-        paddingHorizontal: 20,
-        borderWidth: 1,
-        alignItems: "center",
-        borderColor: COLORS.border,
-    },
-    alertTitle: {
-        fontSize: SIZES.base,
-        fontWeight: FONTS.bold,
-        marginBottom: 8,
-    },
-    alertMessage: {
-        fontSize: SIZES.sm,
-        textAlign: "center",
-        marginBottom: 20,
-        lineHeight: 20,
-    },
-    alertButton: {
-        minWidth: 140,
-        paddingVertical: 10,
-        paddingHorizontal: 24,
-        borderRadius: 999,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    alertButtonText: {
         fontSize: SIZES.sm,
         fontWeight: FONTS.bold,
     },

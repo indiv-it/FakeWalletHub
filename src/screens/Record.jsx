@@ -20,6 +20,8 @@ import { useTheme } from "../context/ThemeContext"
 import { useTransaction } from "../context/TransactionContext"
 import { useLanguage } from "../context/LanguageContext"
 import { useCurrency } from "../context/CurrencyContext"
+import { useCategory } from "../context/CategoryContext"
+import { LIST_TYPE_CASH, LIST_TYPE_BANK } from "../server/database"
 import ConfirmPopup from "../components/ConfirmPopup";
 import Footer from "../components/Footer";
 
@@ -35,40 +37,26 @@ import {
     Archive
 } from 'lucide-react-native';
 
-// แปลงวันที่เป็นรูปแบบ "YYYY-MM-DD"
-function dateToYYYYMMDD(date) {
-    const y = date.getFullYear()
-    const m = String(date.getMonth() + 1).padStart(2, "0")
-    const d = String(date.getDate()).padStart(2, "0")
-    return `${y}-${m}-${d}`
-}
-
-// แปลงวันที่เป็นรูปแบบ "DD MMM YYYY"
-function formatDate(dateStr) {
-    const [y, m, d] = dateStr.split("-")
-    const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."]
-    return `${Number(d)} ${months[Number(m) - 1]} ${Number(y) + 543}`
-}
-
 export default function Record() {
-    const navigation = useNavigation(); // การนำทาง
-    const [filter, setFilter] = useState("all"); // ตัวกรอง
-    const [dateFilter, setDateFilter] = useState(null); // "YYYY-MM-DD" or null
-    const [pickerDate, setPickerDate] = useState(() => new Date()); // วันที่
-    const [showDatePicker, setShowDatePicker] = useState(false); // แสดงวันที่
-    const [showActionModal, setShowActionModal] = useState(false); // แสดงหน้าต่างแก้ไข/ลบ
-    const [popupDelete, setPopupDelete] = useState(false); // แสดงหน้าต่างลบ
-    const [actionItem, setActionItem] = useState(null); // ข้อมูลรายการ
-    const scaleAnim = useRef(new Animated.Value(0)).current; // การขยายของ
-    const listEntranceAnim = useRef(new Animated.Value(0)).current; // แอนิเมชันรายการตอนเข้า
+    const navigation = useNavigation();
+    const [filter, setFilter] = useState("all");
+    const [dateFilter, setDateFilter] = useState(null);
+    const [pickerDate, setPickerDate] = useState(() => new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showActionModal, setShowActionModal] = useState(false);
+    const [popupDelete, setPopupDelete] = useState(false);
+    const [actionItem, setActionItem] = useState(null);
+    const scaleAnim = useRef(new Animated.Value(0)).current;
+    const listEntranceAnim = useRef(new Animated.Value(0)).current;
     const { colors } = useTheme();
     const { transactions, loadTransactions, removeTransaction } = useTransaction();
-    const { t } = useLanguage();
+    const { t, formatDateByLang } = useLanguage();
     const { formatMoney } = useCurrency();
+    const { getCategoryDisplayName } = useCategory();
     const [transactionToDelete, setTransactionToDelete] = useState(null);
 
     const FILTERS = [
-        { id: "all", label: t('all') || "ทั้งหมด" },
+        { id: "all", label: t('all') },
         { id: "income", label: t('income') },
         { id: "expense", label: t('expense') },
     ]
@@ -116,7 +104,6 @@ export default function Record() {
         filteredRecords = filteredRecords.filter((r) => r.date === dateFilter)
     }
 
-    // เปิดหน้าต่างแก้ไข/ลบ
     const openAction = (item) => {
         setActionItem(item)
         setShowActionModal(true)
@@ -128,7 +115,6 @@ export default function Record() {
         }).start()
     }
 
-    // ปิดหน้าต่างแก้ไข/ลบ
     const closeAction = () => {
         Animated.timing(scaleAnim, {
             toValue: 0,
@@ -141,13 +127,11 @@ export default function Record() {
         })
     }
 
-    // แก้ไขรายการ
     const handleEdit = () => {
         closeAction()
         navigation.navigate("AddList", { editItem: actionItem })
     }
 
-    // ลบรายการ
     const handleDelete = async () => {
         if (actionItem) {
             await removeTransaction(actionItem.id)
@@ -156,7 +140,6 @@ export default function Record() {
         setActionItem(null)
     }
 
-    // แสดงหน้าต่างลบ
     const showPopupDelete = () => {
         handleDeleteClick(actionItem)
         setShowActionModal(false)
@@ -168,7 +151,14 @@ export default function Record() {
         }).start()
     }
 
-    // เลือกวันที่
+    // Date picker
+    const dateToYYYYMMDD = (date) => {
+        const y = date.getFullYear()
+        const m = String(date.getMonth() + 1).padStart(2, "0")
+        const d = String(date.getDate()).padStart(2, "0")
+        return `${y}-${m}-${d}`
+    }
+
     const onDatePickerChange = (event, selectedDate) => {
         if (Platform.OS === "android") setShowDatePicker(false)
         if (event.type === "set") {
@@ -178,15 +168,20 @@ export default function Record() {
         }
     }
 
-    // เลือกวันที่
     const openDatePicker = () => {
         setPickerDate(dateFilter ? new Date(dateFilter + "T12:00:00") : new Date())
         setShowDatePicker(true)
     }
 
-    // ล้างตัวกรองวันที่
     const clearDateFilter = () => {
         setDateFilter(null)
+    }
+
+    // Get display name for listType constant
+    const getListTypeDisplay = (listType) => {
+        if (listType === LIST_TYPE_CASH) return t('cash');
+        if (listType === LIST_TYPE_BANK) return t('accountInBank');
+        return listType;
     }
 
     // ลิสต์ตัวกรอง
@@ -205,21 +200,21 @@ export default function Record() {
         )
     }
 
-    // icon ตาม listType (เงินสด / เงินในบัญชี)
+    // icon ตาม listType
     function iconMoney(listType, isIncome) {
         return (
-            listType === t('cash') || listType === 'เงินสด'
+            listType === LIST_TYPE_CASH
                 ? <Banknote size={24} color={isIncome ? colors.accent : colors.red} />
-                : listType === t('accountInBank') || listType === 'เงินในบัญชี'
+                : listType === LIST_TYPE_BANK
                     ? <Landmark size={24} color={isIncome ? colors.accent : colors.red} />
                     : <Archive size={24} color={isIncome ? colors.accent : colors.red} />
         )
     }
 
-    // รายการ พร้อมแอนิเมชัน (เล่นครั้งเดียวตอนเข้า)
+    // รายการ
     function RecordRow({ item, index, entranceAnim, openAction }) {
         const isIncome = item.type === "income"
-        const listType = item.listType || "ไม่ระบุ"
+        const listType = item.listType || LIST_TYPE_CASH
 
         const opacity = entranceAnim.interpolate({
             inputRange: [0, 1],
@@ -249,11 +244,11 @@ export default function Record() {
                             <Text style={[styles.textList, { color: colors.text }]}>{isIncome ? t('income') : t('expense')}</Text>
                         </View>
                         <View style={styles.list_text}>
-                            <Text style={[styles.textAbout, { color: colors.gray }]}>{formatDate(item.date)}</Text>
-                            <Text style={[styles.textGroup, { color: colors.gray }]}>{item.category}</Text>
+                            <Text style={[styles.textAbout, { color: colors.gray }]}>{formatDateByLang(item.date)}</Text>
+                            <Text style={[styles.textGroup, { color: colors.gray }]}>{getCategoryDisplayName(item.category)}</Text>
                         </View>
                         <Text style={[styles.textAbout, { color: colors.text }]} numberOfLines={1}>
-                            {item.title}
+                            {item.title === 'ไม่ระบุชื่อ' ? t('anonymous') : item.title}
                         </Text>
                     </View>
                     <View style={[styles.listLogo, {
@@ -267,7 +262,7 @@ export default function Record() {
         )
     }
 
-    // หน้าต่างว่าง
+    // Empty state
     function EmptyState({ filter, dateFilter, setFilter, setDateFilter }) {
         return (
             <View style={styles.emptyState}>
@@ -288,7 +283,7 @@ export default function Record() {
                             setDateFilter(null)
                         }}
                     >
-                        <Text style={[styles.emptyButtonText, { color: colors.background }]}>{t('all') || "แสดงทั้งหมด"}</Text>
+                        <Text style={[styles.emptyButtonText, { color: colors.background }]}>{t('all')}</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -319,7 +314,7 @@ export default function Record() {
                         style={{ marginRight: 6 }}
                     />
                     <Text style={[styles.filterChipText, { color: dateFilter ? colors.background : colors.text }]}>
-                        {dateFilter ? formatDate(dateFilter) : t('date')}
+                        {dateFilter ? formatDateByLang(dateFilter) : t('date')}
                     </Text>
                 </TouchableOpacity>
 
@@ -331,7 +326,7 @@ export default function Record() {
                         style={[styles.dateFilterClear, { backgroundColor: colors.red }]}
                     >
                         <X size={18} color={colors.white} />
-                        <Text style={[styles.dateFilterClearText, { color: colors.white }]}>ล้าง</Text>
+                        <Text style={[styles.dateFilterClearText, { color: colors.white }]}>{t('clear')}</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -360,7 +355,7 @@ export default function Record() {
                         }}
                         style={[styles.datePickerBtn, styles.datePickerBtnConfirm]}
                     >
-                        <Text style={[styles.datePickerBtnText]}>ตกลง</Text>
+                        <Text style={[styles.datePickerBtnText]}>{t('ok')}</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -387,7 +382,7 @@ export default function Record() {
             {/* Modal แก้ไข / ลบ */}
             {showActionModal && actionItem && (
                 <Modal visible={showActionModal} transparent={true} animationType="fade">
-                    <BlurView blurAmount={10} style={styles.modalOverlay}>
+                    <BlurView intensity={30} tint="dark" style={styles.modalOverlay}>
                         <TouchableOpacity
                             style={styles.modalBackdrop}
                             activeOpacity={1}
@@ -416,13 +411,13 @@ export default function Record() {
                                 {t('title')} : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.type === "income" ? t('income') : t('expense')}</Text>
                             </Text>
                             <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                                {t('listTypeTitle')} : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.listType}</Text>
+                                {t('listTypeTitle')} : <Text style={{ fontWeight: FONTS.normal }}>{getListTypeDisplay(actionItem.listType)}</Text>
                             </Text>
                             <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                                {t('category')} : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.category}</Text>
+                                {t('category')} : <Text style={{ fontWeight: FONTS.normal }}>{getCategoryDisplayName(actionItem.category)}</Text>
                             </Text>
                             <Text style={[styles.actionModalMeta, { marginTop: 20, fontWeight: FONTS.bold, color: colors.text }]}>
-                                {t('date')} : <Text style={{ fontWeight: FONTS.normal }}>{formatDate(actionItem.date)}</Text>
+                                {t('date')} : <Text style={{ fontWeight: FONTS.normal }}>{formatDateByLang(actionItem.date)}</Text>
                             </Text>
                             <View style={styles.actionButtons}>
                                 <TouchableOpacity
@@ -451,7 +446,6 @@ export default function Record() {
                 visible={popupDelete}
                 onCancel={() => {
                     setPopupDelete(false);
-                    // setNoteToDelete(null);
                 }}
                 onConfirm={confirmDelete}
             />
@@ -514,9 +508,10 @@ const styles = StyleSheet.create({
         fontWeight: FONTS.semibold,
     },
     filterChip: {
+        flex: 1,
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
+        justifyContent: "center",
         paddingVertical: 10,
         paddingHorizontal: 18,
         borderRadius: 20,
@@ -525,7 +520,7 @@ const styles = StyleSheet.create({
         ...CARD_SHADOW
     },
     filterChipText: {
-        fontSize: SIZES.sm,
+        fontSize: SIZES.xs,
         fontWeight: FONTS.semibold,
     },
     listContentContainer: {
@@ -629,7 +624,7 @@ const styles = StyleSheet.create({
     },
     modalBackdrop: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.5)",
+        backgroundColor: "rgba(0,0,0,0.1)",
         zIndex: 1,
     },
     actionModal: {
