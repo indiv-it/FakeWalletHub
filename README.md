@@ -1,5 +1,13 @@
 # 💰 FakeWalletHub: Your Smart Financial Companion
 
+## 📲 Download the App
+
+| Platform | Download Link |
+| :--- | :--- |
+| **Direct APK** | [![Download APK (V1.0.0)](https://img.shields.io/badge/Download_APK-000000?style=for-the-badge&logo=android&logoColor=green)](https://expo.dev/artifacts/eas/nnaUnGPbvydW177PxUuKT4.apk) |
+
+---
+
 ## 🌟 Simplify Your Wealth Management
 **FakeWalletHub** is a premium, high-performance financial management application built with **React Native** and **Expo**. Designed for individuals who value precision and elegance, it offers a seamless way to track expenses, manage multiple accounts, and gain deep insights into your spending habits.
 
@@ -23,14 +31,6 @@
 - **Database**: [SQLite](https://docs.expo.dev/versions/latest/sdk/sqlite/)
 - **Icons**: [Lucide React Native](https://lucide.dev/)
 - **Animations**: [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/)
-
----
-
-## 📲 Download the App
-
-| Platform | Download Link |
-| :--- | :--- |
-| **Direct APK** | [![Download APK (V1.0.0)](https://img.shields.io/badge/Download_APK-000000?style=for-the-badge&logo=android&logoColor=green)](https://expo.dev/artifacts/eas/nnaUnGPbvydW177PxUuKT4.apk) |
 
 ---
 
