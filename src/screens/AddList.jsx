@@ -13,6 +13,7 @@ import { useNavigation, useRoute } from "@react-navigation/native"
 import { useState, useRef, useEffect } from "react"
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { BlurView } from 'expo-blur';
+import { horizontalScale, verticalScale, moderateScale } from "../utils/responsive";
 
 // components
 import { COLORS, SIZES, FONTS, CARD_SHADOW } from "../style/Theme"
@@ -102,6 +103,7 @@ export default function AddList() {
     const [showAmountAlert, setShowAmountAlert] = useState(false);
     const [showCompleteAlert, setShowCompleteAlert] = useState(false);
     const [showTypeAlert, setShowTypeAlert] = useState(false);
+    const [showSaveErrorAlert, setShowSaveErrorAlert] = useState(false);
 
     // on date change
     const onDateChange = (event, selectedDate) => {
@@ -146,7 +148,7 @@ export default function AddList() {
             }
         } catch (error) {
             console.error('Error saving transaction:', error);
-            alert(t('saveError'));
+            setShowSaveErrorAlert(true);
         }
     };
 
@@ -312,6 +314,15 @@ export default function AddList() {
                 buttonText={t('ok')}
                 type="warning"
             />
+
+            <AlertPopup
+                visible={showSaveErrorAlert}
+                title={t('saveError')}
+                description={t('saveError')}
+                onClose={() => setShowSaveErrorAlert(false)}
+                buttonText={t('ok')}
+                type="danger"
+            />
         </View>
     )
 }
@@ -319,27 +330,27 @@ export default function AddList() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
+        padding: horizontalScale(20),
     },
     textHeader: {
         fontSize: SIZES.xl,
         fontWeight: FONTS.bold,
         textAlign: "center",
-        marginTop: 30,
-        marginBottom: 10,
+        marginTop: verticalScale(30),
+        marginBottom: verticalScale(10),
     },
     textForm: {
         fontSize: SIZES.sm,
         fontWeight: FONTS.normal,
-        marginTop: 20,
+        marginTop: verticalScale(20),
     },
     textInput: {
         fontSize: SIZES.sm,
         fontWeight: FONTS.bold,
-        paddingHorizontal: 20,
-        height: 50,
-        borderRadius: 15,
-        marginTop: 10,
+        paddingHorizontal: horizontalScale(20),
+        height: verticalScale(50),
+        borderRadius: moderateScale(15),
+        marginTop: verticalScale(10),
         borderWidth: 1,
         borderColor: COLORS.border,
         ...CARD_SHADOW
@@ -347,15 +358,15 @@ const styles = StyleSheet.create({
     typeContainer: {
         flexDirection: "row",
         flexWrap: "wrap",
-        gap: 10,
+        gap: horizontalScale(10),
         justifyContent: "center",
         alignItems: "center",
-        marginTop: 10,
+        marginTop: verticalScale(10),
     },
     dateButton: {
-        height: 50,
-        borderRadius: 15,
-        marginTop: 10,
+        height: verticalScale(50),
+        borderRadius: moderateScale(15),
+        marginTop: verticalScale(10),
         width: "33%",
         justifyContent: "center",
         alignItems: "center",
@@ -368,9 +379,9 @@ const styles = StyleSheet.create({
         fontWeight: FONTS.bold,
     },
     typeButton: {
-        width: 155,
-        height: 50,
-        borderRadius: 15,
+        width: horizontalScale(155),
+        height: verticalScale(50),
+        borderRadius: moderateScale(15),
         alignItems: "center",
         justifyContent: "center",
         borderWidth: 1,
@@ -386,15 +397,15 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         position: "absolute",
-        gap: 10,
-        bottom: 54,
-        left: 20,
-        right: 20,
+        gap: horizontalScale(10),
+        bottom: verticalScale(54),
+        left: horizontalScale(20),
+        right: horizontalScale(20),
     },
     backButton: {
-        width: 155,
-        height: 50,
-        borderRadius: 15,
+        width: horizontalScale(155),
+        height: verticalScale(50),
+        borderRadius: moderateScale(15),
         alignItems: "center",
         justifyContent: "center",
         borderWidth: 2,
@@ -403,4 +414,4 @@ const styles = StyleSheet.create({
         fontSize: SIZES.sm,
         fontWeight: FONTS.bold,
     },
-})
+});

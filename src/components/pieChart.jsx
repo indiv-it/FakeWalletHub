@@ -3,20 +3,23 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated';
 import { useTheme } from '../context/ThemeContext';
+import { moderateScale } from '../utils/responsive';
+
 
 // Animated Circle Component
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 // Pie Chart Component
 const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, color = "red", background }) => {
+    const scaledSize = moderateScale(size);
     const total = income + expense;                         // Total amount
     const { colors } = useTheme();                          // Theme colors
-    const radius = size * 0.375;                            // outerRadius equivalent
-    const innerRadius = size * 0.25;                        // innerRadius equivalent
+    const radius = scaledSize * 0.375;                            // outerRadius equivalent
+    const innerRadius = scaledSize * 0.25;                        // innerRadius equivalent
     const strokeWidth = radius - innerRadius;               // Stroke width
     const adjustedRadius = (radius + innerRadius) / 2;      // Adjusted radius
     const circumference = 2 * Math.PI * adjustedRadius;     // Circumference
-    const center = size / 2;                                // Center of the pie chart
+    const center = scaledSize / 2;                                // Center of the pie chart
 
     // Calculate stroke dash for income (green) portion
     const incomeRatio = total > 0 ? income / total : 0.5;
@@ -42,8 +45,8 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
 
     // Render the pie chart
     const content = (
-        <View style={[styles.container, { width: size, height: size }]}>
-            <Svg width={size} height={size} viewBox={`0 0 ${size} ${size} `} pointerEvents="none">
+        <View style={[styles.container, { width: scaledSize, height: scaledSize }]}>
+            <Svg width={scaledSize} height={scaledSize} viewBox={`0 0 ${scaledSize} ${scaledSize} `} pointerEvents="none">
 
                 {/* Expense (red) - full circle background */}
                 <Circle
@@ -79,7 +82,7 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
             <TouchableOpacity
                 onPress={onPieClick}
                 activeOpacity={0.7}
-                style={{ width: size, height: size }}
+                style={{ width: scaledSize, height: scaledSize }}
             >
                 {content}
             </TouchableOpacity>

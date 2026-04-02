@@ -9,6 +9,8 @@ import {
     Linking,
     Image,
 } from 'react-native';
+import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -20,11 +22,12 @@ import { useTheme } from '../context/ThemeContext';
 
 // Icons
 import { Check, ChevronRight, ChevronLeft, Github, Mail, Globe, Sparkles } from 'lucide-react-native';
+import { COLORS } from '../style/Theme';
 
 const { width, height } = Dimensions.get('window');
 
-const GITHUB_URL = 'https://github.com/';
-const CONTACT_EMAIL = 'contact@fakeWalletHub.app';
+const GITHUB_URL = 'https://github.com/indiv-it/FakeWalletHub';
+const CONTACT_EMAIL = 'indiv.company@gmail.com';
 
 export default function OnboardingScreen() {
     const navigation = useNavigation();
@@ -159,10 +162,6 @@ export default function OnboardingScreen() {
         ? ['#0a0a0a', '#111827', '#1a1a2e']
         : ['#e8edf5', '#f0f4ff', '#e0e8f9'];
 
-    const accentGradient = isDarkMode
-        ? ['#ACF53220', '#ACF53205']
-        : ['#0051ff15', '#0051ff05'];
-
     // Selection card component
     const SelectionCard = ({ item, isSelected, onPress, index, icon }) => {
         const cardAnim = cardAnims[index] || new Animated.Value(1);
@@ -240,7 +239,7 @@ export default function OnboardingScreen() {
             <Animated.View
                 style={[styles.logoContainer, { opacity: logoAnim }]}
             >
-                <View style={[styles.logoCircle, { backgroundColor: colors.accent + '15' }]}>
+                <View style={[styles.logoCircle, { backgroundColor: colors.accent + '35' }]}>
                     <Image source={require('../imgs/Logo_FWH.png')} style={styles.logoImage} />
                 </View>
                 <Text style={[styles.appName, { color: colors.text }]}>
@@ -435,8 +434,8 @@ export default function OnboardingScreen() {
     return (
         <LinearGradient colors={gradientColors} style={styles.container}>
             {/* Decorative accent glow */}
-            <View style={[styles.glowOrb, { backgroundColor: colors.accent + '08' }]} />
-            <View style={[styles.glowOrb2, { backgroundColor: colors.accent + '05' }]} />
+            <View style={[styles.glowOrb, { backgroundColor: colors.accent + '10' }]} />
+            <View style={[styles.glowOrb2, { backgroundColor: colors.accent + '10' }]} />
             
             {step === 0 ? renderSetup() : renderWelcome()}
         </LinearGradient>
@@ -449,74 +448,74 @@ const styles = StyleSheet.create({
     },
     glowOrb: {
         position: 'absolute',
-        width: 300,
-        height: 300,
-        borderRadius: 150,
-        top: -80,
-        right: -80,
+        width: horizontalScale(300),
+        height: horizontalScale(300),
+        borderRadius: moderateScale(150),
+        top: -verticalScale(80),
+        right: -horizontalScale(80),
     },
     glowOrb2: {
         position: 'absolute',
-        width: 250,
-        height: 250,
-        borderRadius: 125,
-        bottom: -60,
-        left: -60,
+        width: horizontalScale(250),
+        height: horizontalScale(250),
+        borderRadius: moderateScale(125),
+        bottom: -verticalScale(10),
+        left: -horizontalScale(60),
     },
     content: {
         flex: 1,
-        paddingHorizontal: 24,
-        paddingTop: 60,
-        paddingBottom: 30,
+        paddingHorizontal: horizontalScale(24),
+        paddingTop: verticalScale(60),
+        paddingBottom: verticalScale(30),
     },
     welcomeContent: {
         justifyContent: 'center',
-        paddingTop: 40,
+        paddingTop: verticalScale(40),
     },
     backButton: {
         position: 'absolute',
-        top: 60,
-        left: 20,
+        top: verticalScale(60),
+        left: horizontalScale(20),
         zIndex: 10,
-        padding: 8,
-        borderRadius: 20,
+        padding: horizontalScale(8),
+        borderRadius: moderateScale(20),
     },
 
     // Logo
     logoContainer: {
         alignItems: 'center',
-        marginBottom: 32,
+        marginBottom: verticalScale(32),
     },
     logoCircle: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
+        width: horizontalScale(72),
+        height: horizontalScale(72),
+        borderRadius: moderateScale(36),
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 12,
+        marginBottom: verticalScale(12),
     },
     logoImage: {
-        width: 44,
-        height: 44,
+        width: horizontalScale(44),
+        height: horizontalScale(44),
     },
     appName: {
-        fontSize: 22,
+        fontSize: moderateScale(22),
         fontWeight: '800',
         letterSpacing: 0.5,
     },
 
     // Sections
     sectionContainer: {
-        marginBottom: 24,
+        marginBottom: verticalScale(24),
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        marginBottom: 12,
+        gap: horizontalScale(8),
+        marginBottom: verticalScale(12),
     },
     sectionTitle: {
-        fontSize: 16,
+        fontSize: moderateScale(16),
         fontWeight: '700',
     },
 
@@ -524,16 +523,16 @@ const styles = StyleSheet.create({
     selectionGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 10,
+        gap: horizontalScale(9),
     },
     selectionCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        borderRadius: 14,
-        width: (width - 58) / 2,
-        gap: 10,
+        paddingHorizontal: horizontalScale(16),
+        paddingVertical: verticalScale(14),
+        borderRadius: moderateScale(14),
+        width: (width - horizontalScale(58)) / 2,
+        gap: horizontalScale(10),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
@@ -541,16 +540,17 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     selectionIcon: {
-        fontSize: 22,
+        fontSize: moderateScale(22),
+        color: COLORS.accent,
     },
     selectionLabel: {
-        fontSize: 14,
+        fontSize: moderateScale(14),
         flex: 1,
     },
     checkCircle: {
-        width: 22,
-        height: 22,
-        borderRadius: 11,
+        width: horizontalScale(22),
+        height: horizontalScale(22),
+        borderRadius: moderateScale(11),
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -560,10 +560,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 16,
-        borderRadius: 16,
-        gap: 8,
-        marginTop: 20,
+        paddingVertical: verticalScale(16),
+        borderRadius: moderateScale(16),
+        gap: horizontalScale(8),
+        marginTop: verticalScale(20),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
@@ -571,10 +571,10 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     getStartedButton: {
-        marginTop: 32,
+        marginTop: verticalScale(32),
     },
     primaryButtonText: {
-        fontSize: 17,
+        fontSize: moderateScale(17),
         fontWeight: '700',
     },
 
@@ -582,55 +582,55 @@ const styles = StyleSheet.create({
     stepIndicator: {
         flexDirection: 'row',
         justifyContent: 'center',
-        gap: 8,
-        marginTop: 20,
+        gap: horizontalScale(8),
+        marginTop: verticalScale(20),
     },
     stepDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
+        width: horizontalScale(8),
+        height: horizontalScale(8),
+        borderRadius: moderateScale(4),
     },
 
     // Welcome
     welcomeHero: {
         alignItems: 'center',
-        marginBottom: 40,
+        marginBottom: verticalScale(40),
     },
     welcomeIconContainer: {
-        width: 96,
-        height: 96,
-        borderRadius: 48,
+        width: horizontalScale(96),
+        height: horizontalScale(96),
+        borderRadius: moderateScale(48),
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 20,
+        marginBottom: verticalScale(20),
     },
     welcomeEmoji: {
-        fontSize: 48,
+        fontSize: moderateScale(48),
     },
     welcomeTitle: {
-        fontSize: 28,
+        fontSize: moderateScale(28),
         fontWeight: '800',
-        marginBottom: 12,
+        marginBottom: verticalScale(12),
         textAlign: 'center',
     },
     welcomeDesc: {
-        fontSize: 15,
-        lineHeight: 22,
+        fontSize: moderateScale(15),
+        lineHeight: moderateScale(22),
         textAlign: 'center',
-        paddingHorizontal: 20,
+        paddingHorizontal: horizontalScale(20),
     },
 
     // Links
     linksContainer: {
-        gap: 12,
+        gap: verticalScale(12),
     },
     linkCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
-        borderRadius: 16,
+        padding: horizontalScale(16),
+        borderRadius: moderateScale(16),
         borderWidth: 1,
-        gap: 14,
+        gap: horizontalScale(14),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.06,
@@ -638,9 +638,9 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     linkIconCircle: {
-        width: 44,
-        height: 44,
-        borderRadius: 12,
+        width: horizontalScale(44),
+        height: horizontalScale(44),
+        borderRadius: moderateScale(12),
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -648,11 +648,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     linkTitle: {
-        fontSize: 15,
+        fontSize: moderateScale(15),
         fontWeight: '600',
-        marginBottom: 2,
+        marginBottom: verticalScale(2),
     },
     linkSubtitle: {
-        fontSize: 12,
+        fontSize: moderateScale(12),
     },
 });

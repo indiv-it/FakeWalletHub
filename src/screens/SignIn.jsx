@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
 import { SIZES, FONTS, COLORS } from "../style/Theme";
 import { useRef, useEffect } from 'react';
+import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
 
 // icons
 import Feather from '@expo/vector-icons/Feather';
@@ -196,36 +197,36 @@ const styles = StyleSheet.create({
     root: {
         flex: 1,
         backgroundColor: COLORS.black,
-        paddingHorizontal: 20,
-        paddingTop: Platform.OS === 'ios' ? 60 : 50,
+        paddingHorizontal: horizontalScale(20),
+        paddingTop: Platform.OS === 'ios' ? verticalScale(60) : verticalScale(50),
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 30,
+        marginBottom: verticalScale(30),
     },
     backButton: {
-        padding: 8,
-        marginLeft: -8,
+        padding: horizontalScale(8),
+        marginLeft: -horizontalScale(8),
     },
     headerTitleContainer: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 40, // offset back button
+        marginRight: horizontalScale(40), // offset back button
     },
     appName: {
-        marginLeft: 10,
+        marginLeft: horizontalScale(10),
         color: COLORS.white,
         fontSize: SIZES['2xl'],
         fontWeight: FONTS.bold,
     },
     card: {
         backgroundColor: COLORS.cardBg,
-        borderRadius: 24,
-        paddingHorizontal: 20,
-        paddingVertical: 24,
+        borderRadius: moderateScale(24),
+        paddingHorizontal: horizontalScale(20),
+        paddingVertical: verticalScale(24),
         borderWidth: 1,
         borderColor: COLORS.chart,
     },
@@ -233,25 +234,25 @@ const styles = StyleSheet.create({
         color: COLORS.accent,
         fontSize: SIZES['2xl'],
         fontWeight: FONTS.bold,
-        marginBottom: 6,
+        marginBottom: verticalScale(6),
     },
     subtitle: {
         color: COLORS.background_White,
         fontSize: SIZES.sm,
-        marginBottom: 10,
+        marginBottom: verticalScale(10),
     },
     label: {
         color: COLORS.white,
         fontSize: SIZES.sm,
         fontWeight: FONTS.bold,
-        marginTop: 14,
-        marginBottom: 6,
+        marginTop: verticalScale(14),
+        marginBottom: verticalScale(6),
     },
     input: {
         backgroundColor: COLORS.chart,
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        height: 48,
+        borderRadius: moderateScale(12),
+        paddingHorizontal: horizontalScale(16),
+        height: verticalScale(48),
         color: COLORS.white,
         fontSize: SIZES.sm,
         fontWeight: FONTS.semibold,
@@ -260,9 +261,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: COLORS.chart,
-        borderRadius: 12,
-        height: 48,
-        paddingHorizontal: 16,
+        borderRadius: moderateScale(12),
+        height: verticalScale(48),
+        paddingHorizontal: horizontalScale(16),
     },
     passwordInput: {
         flex: 1,
@@ -272,19 +273,19 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     eyeIcon: {
-        padding: 4,
+        padding: horizontalScale(4),
     },
     errorText: {
         color: '#ff6b6b',
         fontSize: SIZES.xs,
-        marginTop: 12,
+        marginTop: verticalScale(12),
         textAlign: 'center',
     },
     registerButton: {
-        marginTop: 20,
+        marginTop: verticalScale(20),
         backgroundColor: COLORS.accent,
-        borderRadius: 999,
-        paddingVertical: 14,
+        borderRadius: moderateScale(999),
+        paddingVertical: verticalScale(14),
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
         fontWeight: FONTS.bold,
     },
     helperRow: {
-        marginTop: 20,
+        marginTop: verticalScale(20),
         flexDirection: 'row',
         justifyContent: 'center',
     },

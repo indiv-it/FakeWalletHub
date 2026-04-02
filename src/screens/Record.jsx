@@ -13,6 +13,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { useNavigation, useFocusEffect } from "@react-navigation/native"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { BlurView } from 'expo-blur';
+import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
 
 // components
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from "../style/Theme"
@@ -248,7 +249,7 @@ export default function Record() {
                             <Text style={[styles.textGroup, { color: colors.gray }]}>{getCategoryDisplayName(item.category)}</Text>
                         </View>
                         <Text style={[styles.textAbout, { color: colors.text }]} numberOfLines={1}>
-                            {item.title === 'ไม่ระบุชื่อ' ? t('anonymous') : item.title}
+                            {item.title !== 'Untitled' ? item.title : t(t('anonymous'))}
                         </Text>
                     </View>
                     <View style={[styles.listLogo, {
@@ -456,32 +457,32 @@ export default function Record() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
+        padding: horizontalScale(20),
     },
     textHeader: {
         fontSize: SIZES.xl,
         fontWeight: FONTS.bold,
-        marginVertical: 30,
+        marginVertical: verticalScale(30),
         textAlign: "center",
     },
     filterRow: {
         flexDirection: "row",
-        gap: 10,
-        marginBottom: 12,
+        gap: horizontalScale(10),
+        marginBottom: verticalScale(12),
     },
     dateFilterRow: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 10,
-        marginBottom: 20,
+        gap: horizontalScale(10),
+        marginBottom: verticalScale(20),
     },
     dateFilterClear: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 4,
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        borderRadius: 20,
+        gap: horizontalScale(4),
+        paddingVertical: verticalScale(10),
+        paddingHorizontal: horizontalScale(14),
+        borderRadius: moderateScale(20),
         ...CARD_SHADOW
     },
     dateFilterClearText: {
@@ -491,17 +492,17 @@ const styles = StyleSheet.create({
     datePickerActions: {
         flexDirection: "row",
         justifyContent: "flex-end",
-        gap: 12,
-        paddingHorizontal: 4,
-        paddingVertical: 8,
-        marginBottom: 8,
+        gap: horizontalScale(12),
+        paddingHorizontal: horizontalScale(4),
+        paddingVertical: verticalScale(8),
+        marginBottom: verticalScale(8),
     },
     datePickerBtn: {
-        paddingVertical: 8,
-        paddingHorizontal: 16,
+        paddingVertical: verticalScale(8),
+        paddingHorizontal: horizontalScale(16),
     },
     datePickerBtnConfirm: {
-        borderRadius: 20,
+        borderRadius: moderateScale(20),
     },
     datePickerBtnText: {
         fontSize: SIZES.sm,
@@ -512,9 +513,9 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        paddingVertical: 10,
-        paddingHorizontal: 18,
-        borderRadius: 20,
+        paddingVertical: verticalScale(10),
+        paddingHorizontal: horizontalScale(18),
+        borderRadius: moderateScale(20),
         borderWidth: 1,
         borderColor: COLORS.border,
         ...CARD_SHADOW
@@ -524,8 +525,8 @@ const styles = StyleSheet.create({
         fontWeight: FONTS.semibold,
     },
     listContentContainer: {
-        paddingBottom: 100,
-        gap: 12,
+        paddingBottom: verticalScale(100),
+        gap: verticalScale(12),
     },
     listContentEmpty: {
         flexGrow: 1,
@@ -534,25 +535,25 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        borderRadius: 12,
+        borderRadius: moderateScale(12),
         width: "100%",
-        paddingVertical: 14,
-        paddingLeft: 16,
-        paddingRight: 14,
-        borderLeftWidth: 5,
+        paddingVertical: verticalScale(14),
+        paddingLeft: horizontalScale(16),
+        paddingRight: horizontalScale(14),
+        borderLeftWidth: horizontalScale(5),
         borderWidth: 1,
         borderColor: COLORS.border,
         ...CARD_SHADOW,
     },
     listContent: {
         flex: 1,
-        marginRight: 12,
+        marginRight: horizontalScale(12),
     },
     list_textHead: {
         flexDirection: "row",
         alignItems: "center",
         flexWrap: "wrap",
-        gap: 8,
+        gap: horizontalScale(8),
     },
     textMoney: {
         fontSize: SIZES.sm,
@@ -565,22 +566,22 @@ const styles = StyleSheet.create({
     list_text: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 10,
-        marginTop: 4,
+        gap: horizontalScale(10),
+        marginTop: verticalScale(4),
     },
     textAbout: {
         fontSize: SIZES.xs,
         fontWeight: FONTS.regular,
-        marginTop: 2,
+        marginTop: verticalScale(2),
     },
     textGroup: {
         fontSize: SIZES.xs,
         fontWeight: FONTS.semibold,
     },
     listLogo: {
-        width: 50,
-        height: 50,
-        borderRadius: 50,
+        width: horizontalScale(50),
+        height: horizontalScale(50),
+        borderRadius: moderateScale(25),
         alignItems: "center",
         justifyContent: "center",
         borderWidth: 1,
@@ -589,30 +590,30 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        paddingVertical: 60,
+        paddingVertical: verticalScale(60),
     },
     emptyIconWrap: {
-        width: 88,
-        height: 88,
-        borderRadius: 44,
+        width: horizontalScale(88),
+        height: horizontalScale(88),
+        borderRadius: moderateScale(44),
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: 16,
+        marginBottom: verticalScale(16),
     },
     emptyTitle: {
         fontSize: SIZES.base,
         fontWeight: FONTS.bold,
-        marginBottom: 6,
+        marginBottom: verticalScale(6),
     },
     emptySub: {
         fontSize: SIZES.sm,
         textAlign: "center",
-        marginBottom: 16,
+        marginBottom: verticalScale(16),
     },
     emptyButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 20,
+        paddingVertical: verticalScale(10),
+        paddingHorizontal: horizontalScale(20),
+        borderRadius: moderateScale(20),
     },
     emptyButtonText: {
         fontSize: SIZES.sm,
@@ -629,11 +630,11 @@ const styles = StyleSheet.create({
     },
     actionModal: {
         position: "absolute",
-        left: 24,
-        right: 24,
+        left: horizontalScale(24),
+        right: horizontalScale(24),
         top: "35%",
-        borderRadius: 16,
-        padding: 24,
+        borderRadius: moderateScale(16),
+        padding: horizontalScale(24),
         borderWidth: 1,
         borderColor: COLORS.border,
         zIndex: 2,
@@ -641,15 +642,15 @@ const styles = StyleSheet.create({
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
-            height: 2,
+            height: verticalScale(2),
         },
         shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+        shadowRadius: moderateScale(3.84),
     },
     modalClose: {
         position: "absolute",
-        right: 16,
-        top: 16,
+        right: horizontalScale(16),
+        top: verticalScale(16),
         zIndex: 1,
     },
     actionModalTitle: {
@@ -660,26 +661,26 @@ const styles = StyleSheet.create({
     actionModalAmount: {
         fontSize: SIZES.xl,
         fontWeight: FONTS.bold,
-        marginBottom: 4,
+        marginBottom: verticalScale(4),
     },
     actionModalMeta: {
         fontSize: SIZES.xs,
-        marginBottom: 5,
+        marginBottom: verticalScale(5),
         fontWeight: FONTS.bold,
     },
     actionButtons: {
         flexDirection: "row",
-        gap: 12,
-        marginTop: 20,
+        gap: horizontalScale(12),
+        marginTop: verticalScale(20),
     },
     actionBtnEdit: {
         flex: 1,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: 8,
-        paddingVertical: 14,
-        borderRadius: 12,
+        gap: horizontalScale(8),
+        paddingVertical: verticalScale(14),
+        borderRadius: moderateScale(12),
         zIndex: 3,
         elevation: 3,
     },
@@ -692,9 +693,9 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: 8,
-        paddingVertical: 14,
-        borderRadius: 12,
+        gap: horizontalScale(8),
+        paddingVertical: verticalScale(14),
+        borderRadius: moderateScale(12),
         zIndex: 3,
         elevation: 3,
     },
@@ -704,8 +705,8 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     listContainer: {
-        borderRadius: 10,
+        borderRadius: moderateScale(10),
         overflow: "hidden",
         height: "58%",
     },
-})
+});

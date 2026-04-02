@@ -40,7 +40,7 @@ const LEGACY_CATEGORY_MAP = {
 // ----- Connect database ------
 export async function getDatabase() {
     if (!db) {
-        db = await SQLite.openDatabaseAsync('mybank.db');
+        db = await SQLite.openDatabaseAsync('FWH_Data.db');
     }
     return db;
 }
@@ -74,12 +74,14 @@ export async function initDatabase() {
                 );
                 CREATE TABLE IF NOT EXISTS custom_categories (
                     id TEXT PRIMARY KEY,
-                    custom_name TEXT NOT NULL
+                    custom_name TEXT NOT NULL,
+                    icon TEXT
                 );
             `);
             
             // Run migration for legacy data
             await migrateTransactionData(database);
+            await migrateCategoryIcons(database);
             
             console.log('Database initialized successfully');
         } catch (error) {
@@ -112,6 +114,22 @@ async function migrateTransactionData(database) {
         }
     } catch (error) {
         console.log('Migration warning (non-critical):', error);
+    }
+}
+
+// ------ Migrate category icons (add column if missing) ------
+async function migrateCategoryIcons(database) {
+    try {
+        // Check if icon column exists in custom_categories
+        const tableInfo = await database.getAllAsync(`PRAGMA table_info(custom_categories)`);
+        const hasIcon = tableInfo.some(col => col.name === 'icon');
+        
+        if (!hasIcon) {
+            await database.execAsync(`ALTER TABLE custom_categories ADD COLUMN icon TEXT`);
+            console.log('Added icon column to custom_categories');
+        }
+    } catch (error) {
+        console.log('Category icon migration warning:', error);
     }
 }
 
@@ -270,10 +288,17 @@ export async function getAllCustomCategories() {
     return rows;
 }
 
-export async function updateCustomCategory(id, oldName, newName) {
+export async function updateCustomCategory(id, customName, icon) {
     const database = await getDatabase();
+    
+    // Check if category exists first to preserve custom name or icon if one is omitted
+    const existing = await database.getFirstAsync(`SELECT * FROM custom_categories WHERE id = ?`, [id]);
+    
+    const finalName = customName !== undefined ? customName : (existing ? existing.custom_name : '');
+    const finalIcon = icon !== undefined ? icon : (existing ? existing.icon : null);
+
     await database.runAsync(
-        `INSERT OR REPLACE INTO custom_categories (id, custom_name) VALUES (?, ?)`,
-        [id, newName]
+        `INSERT OR REPLACE INTO custom_categories (id, custom_name, icon) VALUES (?, ?, ?)`,
+        [id, finalName, finalIcon]
     );
 }

@@ -18,24 +18,28 @@ import Home from './src/screens/Home';
 import Record from './src/screens/Record';
 import Notebook from './src/screens/Notebook';
 import AddList from './src/screens/AddList';
-import Warn from './src/screens/Warn';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import { PopupProvider } from './src/context/PopupContext';
 
+// Loading overlay
 import LoadingOverlay from './src/components/LoadingOverlay';
 
+// Stack navigator
 const Stack = createNativeStackNavigator();
 
+// App navigator
 function AppNavigator() {
-  const [initialRoute, setInitialRoute] = useState(null);
+  const [initialRoute, setInitialRoute] = useState(null); // Initial route
 
+  // Check onboarding status on mount
   useEffect(() => {
     checkOnboarding();
   }, []);
 
+  // Check onboarding status
   const checkOnboarding = async () => {
     try {
-      const hasCompleted = await AsyncStorage.getItem('hasCompletedOnboarding');
+      // const hasCompleted = await AsyncStorage.getItem('hasCompletedOnboarding');
       setInitialRoute(hasCompleted === 'true' ? 'Home' : 'Onboarding');
     } catch (e) {
       console.log('Error checking onboarding:', e);
@@ -59,7 +63,6 @@ function AppNavigator() {
         <Stack.Screen name="Record" component={Record} />
         <Stack.Screen name="Notebook" component={Notebook} />
         <Stack.Screen name="AddList" component={AddList} />
-        <Stack.Screen name="Warn" component={Warn} />
       </Stack.Navigator>
     </NavigationContainer>
   );

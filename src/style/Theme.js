@@ -1,4 +1,6 @@
 
+import { moderateScale } from '../utils/responsive';
+
 // Dark theme colors
 export const DARK_COLORS = {
     accent: '#ACF532',
@@ -19,9 +21,9 @@ export const DARK_COLORS = {
 
 // Light theme colors
 export const LIGHT_COLORS = {
-    accent: '#0051ff',
-    accent_black: '#0051ff50',
-    accent_border: '#0051ff60',
+    accent: '#000000',
+    accent_black: '#00000050',
+    accent_border: '#00000060',
     cardBg: '#FFFFFF',
     red: '#ff0000',
     white: '#FFFFFF',
@@ -47,11 +49,11 @@ export const FONTS = {
 
 // Font sizes
 export const SIZES = {
-    xs: 12,
-    sm: 14,
-    base: 16,
-    xl: 20,
-    '2xl': 24,
+    xs: moderateScale(12),
+    sm: moderateScale(14),
+    base: moderateScale(16),
+    xl: moderateScale(20),
+    '2xl': moderateScale(24),
 };
 
 // Card shadow
@@ -60,6 +62,6 @@ export const CARD_SHADOW = {
     shadowOffset: { width: 1, height: 1 },
     shadowOpacity: 1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 1,
 };
 

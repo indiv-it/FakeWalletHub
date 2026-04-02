@@ -5,9 +5,11 @@ import {
     TouchableOpacity,
     FlatList,
     Modal,
+    Image,
 } from "react-native"
 import { useState, useMemo } from "react";
 import { BlurView } from 'expo-blur';
+import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
 
 // components
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
@@ -18,168 +20,146 @@ import { useLanguage } from '../context/LanguageContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useCategory } from '../context/CategoryContext';
 import { LIST_TYPE_CASH, LIST_TYPE_BANK } from '../server/database';
-import Nav from '../components/Nav';
+import Nav, { getIconComponent } from '../components/Nav';
 import Footer from '../components/Footer';
 import PieChartComponent from '../components/pieChart';
 import PieChartGroup from '../components/pieChartGroup';
-
-// icons
-import {
-    Archive,
-    Landmark,
-    Banknote,
-    PiggyBank,
-    ShoppingCart,
-    ShoppingBag,
-    ChartColumnBig,
-    X
-} from 'lucide-react-native';
+import { Mail, Github, Heart, Archive, Landmark, Banknote, X, Settings } from 'lucide-react-native';
 
 export default function Home() {
-    const { colors } = useTheme();
+    const { colors, isDarkMode } = useTheme();
     const { transactions } = useTransaction();
     const { t, formatMonthYear } = useLanguage();
     const { formatMoney } = useCurrency();
-    const { categories, getCategoryDisplayName, CATEGORY_IDS } = useCategory();
+    const { getCategoryDisplayName, CATEGORY_IDS, getCategoryIconName } = useCategory();
     const [popupMoney, setPopupMoney] = useState(null);
     const [popupGroup, setPopupGroup] = useState(null); // stores category ID
     const { isOpen, closePopup } = usePopup();
 
-    // คำนวณค่าสถิติจากข้อมูลจริง
-    const stats = useMemo(() => {
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
+    // แยกการคำนวณสถิติ
+    const { allTimeStats, monthlyStats } = useMemo(() => {
+        const calculateData = (txList) => {
+            const validTx = txList.filter(
+                t => t.listType === LIST_TYPE_CASH || t.listType === LIST_TYPE_BANK
+            );
 
-        // กรองข้อมูลการทำรายการในเดือนปัจจุบัน
-        const monthlyTx = transactions.filter(tx => {
-            const [y, m] = tx.date.split('-').map(Number);
-            return y === currentYear && m === currentMonth + 1;
-        });
+            const totalIncome = validTx
+                .filter(t => t.type === 'income')
+                .reduce((s, t) => s + t.amount, 0);
 
-        const validTx = monthlyTx.filter(
-            t => t.listType === LIST_TYPE_CASH || t.listType === LIST_TYPE_BANK
-        );
+            const totalExpense = validTx
+                .filter(t => t.type === 'expense')
+                .reduce((s, t) => s + t.amount, 0);
 
-        const totalIncome = validTx
-            .filter(t => t.type === 'income')
-            .reduce((s, t) => s + t.amount, 0);
+            const bankIncome = validTx
+                .filter(t => t.type === 'income' && t.listType === LIST_TYPE_BANK)
+                .reduce((s, t) => s + t.amount, 0);
 
-        const totalExpense = validTx
-            .filter(t => t.type === 'expense')
-            .reduce((s, t) => s + t.amount, 0);
+            const bankExpense = validTx
+                .filter(t => t.type === 'expense' && t.listType === LIST_TYPE_BANK)
+                .reduce((s, t) => s + t.amount, 0);
 
-        const bankIncome = validTx
-            .filter(t => t.type === 'income' && t.listType === LIST_TYPE_BANK)
-            .reduce((s, t) => s + t.amount, 0);
+            const cashIncome = validTx
+                .filter(t => t.type === 'income' && t.listType === LIST_TYPE_CASH)
+                .reduce((s, t) => s + t.amount, 0);
 
-        const bankExpense = validTx
-            .filter(t => t.type === 'expense' && t.listType === LIST_TYPE_BANK)
-            .reduce((s, t) => s + t.amount, 0);
+            const cashExpense = validTx
+                .filter(t => t.type === 'expense' && t.listType === LIST_TYPE_CASH)
+                .reduce((s, t) => s + t.amount, 0);
 
-        const cashIncome = validTx
-            .filter(t => t.type === 'income' && t.listType === LIST_TYPE_CASH)
-            .reduce((s, t) => s + t.amount, 0);
+            const categoryStats = {};
+            CATEGORY_IDS.forEach(catId => {
+                const catTx = txList.filter(t => t.category === catId);
+                categoryStats[catId] = {
+                    income: catTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
+                    expense: catTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
+                };
+            });
 
-        const cashExpense = validTx
-            .filter(t => t.type === 'expense' && t.listType === LIST_TYPE_CASH)
-            .reduce((s, t) => s + t.amount, 0);
+            const totalCategoryIncome = Object.values(categoryStats).reduce((s, c) => s + c.income, 0);
+            const totalCategoryExpense = Object.values(categoryStats).reduce((s, c) => s + c.expense, 0);
 
-        // คำนวณสถิติแต่ละหมวดหมู่ using IDs
-        const categoryStats = {};
-        CATEGORY_IDS.forEach(catId => {
-            const catTx = monthlyTx.filter(t => t.category === catId);
-            categoryStats[catId] = {
-                income: catTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
-                expense: catTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
-            };
-        });
+            const sumMoney = totalIncome - totalExpense;
+            const sumCategory = totalCategoryIncome - totalCategoryExpense;
 
-        const totalCategoryIncome = Object.values(categoryStats).reduce((s, c) => s + c.income, 0);
-        const totalCategoryExpense = Object.values(categoryStats).reduce((s, c) => s + c.expense, 0);
-
-        const sumMoney = totalIncome - totalExpense;
-        const sumCategory = totalCategoryIncome - totalCategoryExpense;
-
-        const incomePercent = totalIncome + totalExpense > 0
-            ? (totalIncome / (totalIncome + totalExpense)) * 100
-            : 0;
-
-        const expensePercent = totalIncome + totalExpense > 0
-            ? (totalExpense / (totalIncome + totalExpense)) * 100
-            : 0;
-
-        const incomeCategories = Object.values(categoryStats).reduce((s, c) => s + c.income, 0);
-        const expenseCategories = Object.values(categoryStats).reduce((s, c) => s + c.expense, 0);
-
-        const categoryStatsPercent = {};
-        for (const [cat, stat] of Object.entries(categoryStats)) {
-            const incP = (stat.income / (stat.income + stat.expense)) * 100 || 0;
-            const expP = (stat.expense / (stat.income + stat.expense)) * 100 || 0;
-            categoryStatsPercent[cat] = { incomePercent: incP, expensePercent: expP };
-        }
-
-        const categoryPercent = {};
-        for (const [cat, stat] of Object.entries(categoryStats)) {
-            const percent = ((stat.income + stat.expense) / (totalCategoryIncome + totalCategoryExpense)) * 100 || 0;
-            categoryPercent[cat] = percent;
-        }
-
-        const expenseByCategory = CATEGORY_IDS.map((catId, index) => {
-            const colorsList = ['#375fff', '#28fff4', '#17c800', '#ff00a1'];
-            return {
-                label: getCategoryDisplayName(catId),
-                value: categoryStats[catId]?.expense || 0,
-                color: colorsList[index % colorsList.length]
-            };
-        }).filter(item => item.value > 0);
-
-        const expenseByCategoryPercent = expenseByCategory.map(item => {
-            const percent = totalExpense > 0
-                ? (item.value / totalExpense) * 100
+            const incomePercent = totalIncome + totalExpense > 0
+                ? (totalIncome / (totalIncome + totalExpense)) * 100
                 : 0;
 
-            return {
+            const expensePercent = totalIncome + totalExpense > 0
+                ? (totalExpense / (totalIncome + totalExpense)) * 100
+                : 0;
+
+            const categoryPercent = {};
+            for (const [cat, stat] of Object.entries(categoryStats)) {
+                const totalInCat = stat.income + stat.expense;
+                const totalInAll = totalCategoryIncome + totalCategoryExpense;
+                categoryPercent[cat] = totalInAll > 0 ? (totalInCat / totalInAll) * 100 : 0;
+            }
+
+            const categoryStatsPercent = {};
+            for (const [cat, stat] of Object.entries(categoryStats)) {
+                const total = stat.income + stat.expense;
+                categoryStatsPercent[cat] = {
+                    incomePercent: total > 0 ? (stat.income / total) * 100 : 0,
+                    expensePercent: total > 0 ? (stat.expense / total) * 100 : 0
+                };
+            }
+
+            const expenseByCategory = CATEGORY_IDS.map((catId, index) => {
+                const colorsList = ['#375fff', '#28fff4', '#17c800', '#ff00a1'];
+                return {
+                    label: getCategoryDisplayName(catId),
+                    value: categoryStats[catId]?.expense || 0,
+                    color: colorsList[index % colorsList.length]
+                };
+            }).filter(item => item.value > 0);
+
+            const expenseByCategoryPercent = expenseByCategory.map(item => ({
                 label: item.label,
                 value: item.value,
-                percent
+                percent: totalExpense > 0 ? (item.value / totalExpense) * 100 : 0
+            }));
+
+            return {
+                totalIncome,
+                totalExpense,
+                netProfit: sumMoney,
+                balance: sumMoney,
+                bank: bankIncome - bankExpense,
+                cash: cashIncome - cashExpense,
+                categoryStats,
+                incomePercent,
+                expensePercent,
+                expenseByCategory,
+                expenseByCategoryPercent,
+                categoryStatsPercent,
+                categoryPercent,
             };
+        };
+
+        const now = new Date();
+        const monthlyTx = transactions.filter(tx => {
+            const [y, m] = tx.date.split('-').map(Number);
+            return y === now.getFullYear() && m === now.getMonth() + 1;
         });
 
         return {
-            totalIncome,
-            totalExpense,
-            netProfit: sumMoney - sumCategory,
-            balance: sumMoney,
-            bank: bankIncome - bankExpense,
-            cash: cashIncome - cashExpense,
-            categoryStats,
-            incomePercent,
-            expensePercent,
-            expenseByCategory,
-            expenseByCategoryPercent,
-            categoryStatsPercent,
-            incomeCategories,
-            expenseCategories,
-            categoryPercent,
+            allTimeStats: calculateData(transactions),
+            monthlyStats: calculateData(monthlyTx)
         };
-    }, [transactions, categories]);
+    }, [transactions, CATEGORY_IDS, getCategoryDisplayName]);
 
     const fmt = (n) => formatMoney(n);
 
-    // ข้อมูลหมวดหมู่ — use category IDs
-    const CATEGORY_ICONS = {
-        essentials: <ShoppingCart size={18} color={colors.background} />,
-        wants: <ShoppingBag size={18} color={colors.background} />,
-        investment: <ChartColumnBig size={18} color={colors.background} />,
-        savings: <PiggyBank size={18} color={colors.background} />,
-    };
-
-    const displayCategories = CATEGORY_IDS.map((catId, index) => ({
-        id: catId,
-        name: getCategoryDisplayName(catId),
-        icon: CATEGORY_ICONS[catId],
-    }));
+    const displayCategories = useMemo(() => CATEGORY_IDS.map((catId) => {
+        const iconName = getCategoryIconName(catId);
+        return {
+            id: catId,
+            name: getCategoryDisplayName(catId),
+            icon: getIconComponent(iconName, 18, colors.background) || <Settings size={18} color={colors.background} />,
+        };
+    }), [CATEGORY_IDS, getCategoryDisplayName, getCategoryIconName, colors.background]);
 
     // กล่องหมวดหมู่
     const CategoryCard = ({ catId, icon }) => {
@@ -196,13 +176,13 @@ export default function Home() {
 
                 <View>
                     <Text style={[styles.cradText, { color: colors.text }]}>{displayName}</Text>
-                    <Text style={[styles.cradTextMoney, { color: colors.accent }]}>{fmt((stats.categoryStats[catId]?.income || 0) - (stats.categoryStats[catId]?.expense || 0))}</Text>
+                    <Text style={[styles.cradTextMoney, { color: colors.accent }]}>{fmt((allTimeStats.categoryStats[catId]?.income || 0) - (allTimeStats.categoryStats[catId]?.expense || 0))}</Text>
                 </View>
 
                 <View style={styles.cardPie}>
                     <PieChartComponent
-                        income={stats.categoryStats[catId]?.income || 0}
-                        expense={stats.categoryStats[catId]?.expense || 0}
+                        income={allTimeStats.categoryStats[catId]?.income || 0}
+                        expense={allTimeStats.categoryStats[catId]?.expense || 0}
                         size={60}
                         color="red"
                         background={colors.accent}
@@ -222,10 +202,10 @@ export default function Home() {
                     onPress={() => setPopupGroup(null)}
                     size={24}
                     color={colors.text}
-                    style={{ position: "absolute", right: 15, top: 15 }}
+                    style={{ position: "absolute", right: 15, top: 15, zIndex: 100 }}
                 />
 
-                <View style={{ flex: 1, justifyContent: "center" }}>
+                <View style={{ flex: 1, justifyContent: "center", marginTop: 20 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <Text style={[styles.textHeader, { color: colors.accent }]}>{displayName}</Text>
                     </View>
@@ -234,32 +214,32 @@ export default function Home() {
                 <Text style={[styles.textSmInPopup, { color: colors.text, marginVertical: 20 }]}>{t('monthlyData')} : {formatMonthYear()}</Text>
                 <ChartIncomeExpense
                     title={t('income')}
-                    money={stats.categoryStats[catId]?.income || 0}
+                    money={monthlyStats.categoryStats[catId]?.income || 0}
                     color="white"
-                    income={stats.categoryStats[catId]?.income || 0}
-                    expense={stats.categoryStats[catId]?.expense || 0}
-                    percent={stats.categoryStatsPercent[catId]?.incomePercent.toFixed(1) || 0}
+                    income={monthlyStats.categoryStats[catId]?.income || 0}
+                    expense={monthlyStats.categoryStats[catId]?.expense || 0}
+                    percent={monthlyStats.categoryStatsPercent[catId]?.incomePercent.toFixed(1) || 0}
                     background={colors.accent}
                 />
 
                 <ChartIncomeExpense
                     title={t('expense')}
-                    money={stats.categoryStats[catId]?.expense || 0}
+                    money={monthlyStats.categoryStats[catId]?.expense || 0}
                     color="white"
-                    income={stats.categoryStats[catId]?.expense || 0}
-                    expense={stats.categoryStats[catId]?.income || 0}
-                    percent={stats.categoryStatsPercent[catId]?.expensePercent.toFixed(1) || 0}
+                    income={monthlyStats.categoryStats[catId]?.expense || 0}
+                    expense={monthlyStats.categoryStats[catId]?.income || 0}
+                    percent={monthlyStats.categoryStatsPercent[catId]?.expensePercent.toFixed(1) || 0}
                     background={colors.red}
                 />
 
-                <View style={{ borderLeftWidth: 3, borderLeftColor: colors.text, flexDirection: "row", justifyContent: "space-between", alignItems: 'center', paddingLeft: 10, marginBottom: 20 }}>
+                <View style={{ borderLeftWidth: 3, borderLeftColor: colors.text, flexDirection: "row", justifyContent: "space-between", alignItems: 'center', paddingLeft: 10, marginVertical: 20 }}>
                     <View>
                         <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold' }}>{t('totalRatio')}</Text>
-                        <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>{stats.categoryPercent[catId]?.toFixed(1) || 0}%</Text>
+                        <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>{monthlyStats.categoryPercent[catId]?.toFixed(1) || 0}%</Text>
                     </View>
                     <PieChartComponent
-                        income={stats.categoryPercent[catId] || 0}
-                        expense={100 - (stats.categoryPercent[catId] || 0)}
+                        income={monthlyStats.categoryPercent[catId] || 0}
+                        expense={100 - (monthlyStats.categoryPercent[catId] || 0)}
                         size={80}
                         color="white"
                         background={colors.text}
@@ -295,26 +275,26 @@ export default function Home() {
             <Nav />
 
             {/* card */}
-            <View style={[styles.card, { backgroundColor: colors.cardBg }]}>
+            <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
                 <View>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <Landmark size={14} color={colors.text} />
-                        <Text style={[styles.text, { color: colors.text }]}>{fmt(stats.bank)}</Text>
+                        <Text style={[styles.text, { color: colors.text }]}>{fmt(allTimeStats.bank)}</Text>
                     </View>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <Banknote size={14} color={colors.text} />
-                        <Text style={[styles.text, { color: colors.text }]}>{fmt(stats.cash)}</Text>
+                        <Text style={[styles.text, { color: colors.text }]}>{fmt(allTimeStats.cash)}</Text>
                     </View>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                         <Archive size={14} color={colors.text} />
-                        <Text style={[styles.text, { color: colors.text }]}>{fmt(stats.netProfit)}</Text>
+                        <Text style={[styles.text, { color: colors.text }]}>{fmt(allTimeStats.netProfit)}</Text>
                     </View>
-                    <Text style={[styles.textHeader, { color: colors.accent }]}>{fmt(stats.balance)}</Text>
+                    <Text style={[styles.textHeader, { color: colors.accent }]}>{fmt(allTimeStats.balance)}</Text>
                 </View>
 
                 <PieChartComponent
-                    income={stats.totalIncome}
-                    expense={stats.totalExpense}
+                    income={allTimeStats.totalIncome}
+                    expense={allTimeStats.totalExpense}
                     size={100}
                     color="red"
                     onPieClick={() => setPopupMoney(true)}
@@ -324,7 +304,7 @@ export default function Home() {
 
 
             {/* list */}
-            <View style={[styles.cardList, { backgroundColor: colors.cardBg }]}>
+            <View style={[styles.cardList, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
                 <FlatList
                     data={displayCategories}
                     scrollEnabled={false}
@@ -346,7 +326,7 @@ export default function Home() {
                 <Modal
                     animationType="fade"
                     transparent={true}
-                    visible={popupMoney}
+                    visible={!!popupMoney}
                     onRequestClose={() => setPopupMoney(null)}
                 >
                     <BlurView intensity={30} tint="dark" style={styles.popupContainer}>
@@ -360,33 +340,33 @@ export default function Home() {
                                     onPress={() => setPopupMoney(null)}
                                     size={24}
                                     color={colors.text}
-                                    style={{ position: "absolute", right: 15, top: 15, zIndex: 99 }}
+                                    style={{ position: "absolute", right: 15, top: 15, zIndex: 100 }}
                                 />
 
                                 <View>
                                     <Text style={[styles.textSmInPopup, { color: colors.text, marginBottom: 20 }]}>{t('monthlyData')} : {formatMonthYear()}</Text>
                                     <ChartIncomeExpense
                                         title={t('income')}
-                                        money={stats.totalIncome || 0}
+                                        money={monthlyStats.totalIncome || 0}
                                         color="white"
-                                        income={stats.totalIncome || 0}
-                                        expense={stats.totalExpense || 0}
-                                        percent={stats.incomePercent.toFixed(1)}
+                                        income={monthlyStats.totalIncome || 0}
+                                        expense={monthlyStats.totalExpense || 0}
+                                        percent={monthlyStats.incomePercent.toFixed(1)}
                                         background={colors.accent}
                                     />
                                     <ChartIncomeExpense
                                         title={t('expense')}
-                                        money={stats.totalExpense || 0}
+                                        money={monthlyStats.totalExpense || 0}
                                         color="white"
-                                        income={stats.totalExpense || 0}
-                                        expense={stats.totalIncome || 0}
-                                        percent={stats.expensePercent.toFixed(1)}
+                                        income={monthlyStats.totalExpense || 0}
+                                        expense={monthlyStats.totalIncome || 0}
+                                        percent={monthlyStats.expensePercent.toFixed(1)}
                                         background={colors.red}
                                     />
                                     <Text style={{ color: colors.text, marginBottom: 10, marginTop: 20, textAlign: 'center', fontWeight: 'bold' }}>{t('expenseByCat')}</Text>
-                                    <PieChartGroup 
-                                        data={stats.expenseByCategory || []} 
-                                        expense={stats.expenseByCategoryPercent.map(i => i.percent)} 
+                                    <PieChartGroup
+                                        data={monthlyStats.expenseByCategory || []}
+                                        expense={monthlyStats.expenseByCategoryPercent.map(i => i.percent)}
                                     />
                                 </View>
                             </View>
@@ -415,7 +395,7 @@ export default function Home() {
             )}
 
             {/* popup About */}
-            <Modal visible={isOpen} transparent animationType="fade">
+            <Modal visible={isOpen} transparent animationType="fade" onRequestClose={closePopup}>
                 <BlurView intensity={30} tint="dark" style={styles.popupContainer}>
                     <View style={dialogStyles.overlay}>
                         <TouchableOpacity
@@ -424,20 +404,68 @@ export default function Home() {
                             onPress={closePopup}
                         />
                         <View style={[dialogStyles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-                            <View>
-                                <Text style={[dialogStyles.title, { color: colors.text }]}>{t('aboutTitle')}</Text>
-                                <Text style={[dialogStyles.message, { color: colors.textSecondary }]}>
-                                    {t('aboutDesc')}{'\n'}
-                                    {t('version')} 1.0.0
-                                </Text>
-                                <TouchableOpacity
-                                    style={[dialogStyles.primaryButton, { backgroundColor: colors.accent }]}
-                                    onPress={closePopup}
-                                    activeOpacity={0.9}
-                                >
-                                    <Text style={[dialogStyles.primaryButtonText, { color: colors.background }]}>{t('close')}</Text>
-                                </TouchableOpacity>
+                            <X
+                                onPress={closePopup}
+                                size={24}
+                                color={colors.text}
+                                style={{ position: "absolute", right: 15, top: 15, zIndex: 100 }}
+                            />
+
+                            <View style={dialogStyles.aboutHeader}>
+                                <Image source={require('../imgs/Logo_FWH.png')} style={dialogStyles.aboutLogo} />
+                                <Text style={[dialogStyles.title, { color: colors.text }]}>FakeWalletHub</Text>
+                                <View style={[dialogStyles.versionTag, { backgroundColor: colors.accent + '35' }]}>
+                                    <Text style={{ color: colors.accent, fontSize: 12, fontWeight: 'bold' }}>v1.0.0</Text>
+                                </View>
                             </View>
+
+                            <View style={dialogStyles.aboutContent}>
+                                <Text style={[dialogStyles.aboutDesc, { color: colors.text }]}>
+                                    {t('aboutDescFull')}
+                                </Text>
+
+                                <View style={[dialogStyles.divider, {backgroundColor: colors.text + '50'}]} />
+
+                                <View style={dialogStyles.infoRow}>
+                                    <Text style={[dialogStyles.infoLabel, { color: colors.gray }]}>{t('developer')}</Text>
+                                    <Text style={[dialogStyles.infoValue, { color: colors.text }]}>Chockpipat Kongdee</Text>
+                                </View>
+
+                                <View style={dialogStyles.infoRow}>
+                                    <Text style={[dialogStyles.infoLabel, { color: colors.gray }]}>{t('license')}</Text>
+                                    <Text style={[dialogStyles.infoValue, { color: colors.text }]}>MIT License</Text>
+                                </View>
+
+                                <View style={[dialogStyles.divider, {backgroundColor: colors.text + '50'}]} />
+
+                                <View style={dialogStyles.linksContainer}>
+                                    <TouchableOpacity style={dialogStyles.linkItem}>
+                                        <Github size={20} color={colors.accent} />
+                                        <Text style={{ color: colors.accent, marginLeft: 8 }}>GitHub</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={dialogStyles.linkItem}>
+                                        <Mail size={20} color={colors.accent} />
+                                        <Text style={{ color: colors.accent, marginLeft: 8 }}>Contact</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                <View style={dialogStyles.footer}>
+                                    {/* <Text style={{ color: colors.gray, fontSize: 11 }}>{t('copyright')}</Text> */}
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                                        <Text style={{ color: colors.gray, fontSize: 11 }}>Made with </Text>
+                                        <Heart size={10} color={colors.red} fill={colors.red} />
+                                        <Text style={{ color: colors.gray, fontSize: 11 }}> in Thailand</Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            <TouchableOpacity
+                                style={[dialogStyles.primaryButton, { backgroundColor: colors.accent }]}
+                                onPress={closePopup}
+                                activeOpacity={0.9}
+                            >
+                                <Text style={[dialogStyles.primaryButtonText, { color: colors.background }]}>{t('close')}</Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
                 </BlurView>
@@ -450,17 +478,16 @@ export default function Home() {
 const styles = StyleSheet.create({
     containerBody: {
         flex: 1,
-        padding: 20,
+        padding: horizontalScale(20),
     },
     card: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        borderRadius: 10,
-        height: 150,
-        padding: 20,
-        marginBottom: 15,
-        borderColor: COLORS.border,
+        borderRadius: moderateScale(10),
+        height: verticalScale(150),
+        padding: horizontalScale(20),
+        marginBottom: verticalScale(15),
         borderWidth: 1,
         ...CARD_SHADOW
     },
@@ -475,24 +502,23 @@ const styles = StyleSheet.create({
     list: {
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: 15,
+        paddingVertical: verticalScale(15),
     },
     cardList: {
-        borderRadius: 10,
-        padding: 10,
+        borderRadius: moderateScale(10),
+        padding: horizontalScale(10),
         overflow: "hidden",
-        paddingHorizontal: 20,
-        borderColor: COLORS.border,
+        paddingHorizontal: horizontalScale(20),
         borderWidth: 1,
         ...CARD_SHADOW
     },
     cardIcon: {
         alignItems: "center",
         justifyContent: "center",
-        width: 70,
-        height: 50,
-        borderRadius: 10,
-        marginRight: 10,
+        width: horizontalScale(70),
+        height: verticalScale(50),
+        borderRadius: moderateScale(10),
+        marginRight: horizontalScale(10),
     },
     cradText: {
         fontSize: SIZES.sm,
@@ -518,13 +544,13 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(0,0,0,0.1)",
     },
     popupMoney: {
-        width: 300,
+        width: horizontalScale(300),
         position: "absolute",
         top: "50%",
         left: "50%",
-        transform: [{ translateX: -150 }, { translateY: -220 }],
-        borderRadius: 10,
-        padding: 20,
+        transform: [{ translateX: -horizontalScale(150) }, { translateY: -verticalScale(220) }],
+        borderRadius: moderateScale(10),
+        padding: horizontalScale(20),
         borderWidth: 1,
         borderColor: COLORS.border,
     },
@@ -532,22 +558,6 @@ const styles = StyleSheet.create({
         fontSize: SIZES.xs,
         fontWeight: FONTS.normal,
     },
-    moneyPopup: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 20,
-    },
-    popupMoneyBox: {
-        width: "100%",
-        height: 30,
-        borderRadius: 10,
-        marginTop: 10,
-    },
-    popupLine: {
-        height: 3,
-        marginTop: 5,
-        borderRadius: 50,
-    }
 });
 
 const dialogStyles = StyleSheet.create({
@@ -555,66 +565,88 @@ const dialogStyles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.1)',
     },
     backdrop: {
         ...StyleSheet.absoluteFillObject,
     },
     card: {
-        width: '82%',
-        backgroundColor: COLORS.cardBg,
-        borderRadius: 18,
-        paddingVertical: 20,
-        paddingHorizontal: 18,
+        width: '85%',
+        borderRadius: moderateScale(24),
+        paddingVertical: verticalScale(24),
+        paddingHorizontal: horizontalScale(20),
         borderWidth: 1,
-        borderColor: COLORS.chart,
+        ...CARD_SHADOW,
+    },
+    aboutHeader: {
+        alignItems: 'center',
+        marginBottom: verticalScale(16),
+    },
+    aboutLogo: {
+        width: horizontalScale(60),
+        height: horizontalScale(60),
+        marginBottom: verticalScale(12),
+        backgroundColor: COLORS.black,
+        borderRadius: 10,
     },
     title: {
-        fontSize: SIZES.base,
+        fontSize: moderateScale(20),
         fontWeight: FONTS.bold,
-        color: COLORS.white,
-        marginBottom: 8,
+        marginBottom: verticalScale(4),
+    },
+    versionTag: {
+        paddingHorizontal: horizontalScale(10),
+        paddingVertical: verticalScale(2),
+        borderRadius: moderateScale(20),
+    },
+    aboutContent: {
+        marginTop: verticalScale(10),
+    },
+    aboutDesc: {
+        fontSize: moderateScale(13),
         textAlign: 'center',
+        lineHeight: moderateScale(20),
+        marginBottom: verticalScale(20),
     },
-    message: {
-        fontSize: SIZES.xs,
-        color: COLORS.background_White,
-        textAlign: 'center',
-        lineHeight: 18,
-        marginBottom: 18,
+    divider: {
+        height: 1,
+        marginVertical: verticalScale(12),
+        opacity: 0.5,
     },
-    primaryButton: {
-        backgroundColor: COLORS.accent,
-        borderRadius: 999,
-        paddingVertical: 10,
-        paddingHorizontal: 18,
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'center',
-        minWidth: 140,
-    },
-    primaryButtonText: {
-        fontSize: SIZES.sm,
-        fontWeight: FONTS.bold,
-        color: COLORS.black,
-    },
-    rowButtons: {
+    infoRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: 10,
+        marginBottom: verticalScale(8),
     },
-    secondaryButton: {
-        flex: 1,
-        borderRadius: 999,
-        paddingVertical: 10,
+    infoLabel: {
+        fontSize: moderateScale(13),
+    },
+    infoValue: {
+        fontSize: moderateScale(13),
+        fontWeight: 'bold',
+    },
+    linksContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginVertical: verticalScale(12),
+    },
+    linkItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    footer: {
+        alignItems: 'center',
+        marginTop: verticalScale(16),
+        marginBottom: verticalScale(20),
+    },
+    primaryButton: {
+        borderRadius: moderateScale(12),
+        paddingVertical: verticalScale(12),
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.chart,
+        width: '100%',
     },
-    secondaryButtonText: {
-        fontSize: SIZES.sm,
-        fontWeight: FONTS.semibold,
-        color: COLORS.background_White,
+    primaryButtonText: {
+        fontSize: moderateScale(15),
+        fontWeight: FONTS.bold,
     },
 });

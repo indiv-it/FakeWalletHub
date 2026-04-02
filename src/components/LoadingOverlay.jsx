@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet, Dimensions, Image, Text } from 'react-native';
+import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
+
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
@@ -89,9 +91,9 @@ const styles = StyleSheet.create({
     },
     glowOrb: {
         position: 'absolute',
-        width: 140,
-        height: 140,
-        borderRadius: 70,
+        width: horizontalScale(140),
+        height: horizontalScale(140),
+        borderRadius: moderateScale(70),
         borderWidth: 2,
         borderColor: '#ACF532',
         borderStyle: 'dashed',
@@ -99,15 +101,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     glowInner: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: horizontalScale(100),
+        height: horizontalScale(100),
+        borderRadius: moderateScale(50),
         backgroundColor: '#ACF53215',
     },
     logoContainer: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: horizontalScale(100),
+        height: horizontalScale(100),
+        borderRadius: moderateScale(50),
         backgroundColor: 'rgba(255,255,255,0.05)',
         borderWidth: 2,
         borderColor: 'rgba(255,255,255,0.2)',
@@ -116,13 +118,13 @@ const styles = StyleSheet.create({
         zIndex: 2,
     },
     logoImage: {
-        width: 60,
-        height: 60,
+        width: horizontalScale(60),
+        height: horizontalScale(60),
     },
     loadingText: {
-        marginTop: 50,
+        marginTop: verticalScale(50),
         color: '#ACF532',
-        fontSize: 16,
+        fontSize: moderateScale(16),
         fontWeight: '600',
         letterSpacing: 2,
         zIndex: 2,

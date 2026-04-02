@@ -31,6 +31,7 @@ export const LEGACY_CATEGORY_MAP = {
 export const CategoryProvider = ({ children }) => {
     const { t } = useLanguage();
     const [customNames, setCustomNames] = useState({}); // { id: customName }
+    const [customIcons, setCustomIcons] = useState({}); // { id: iconName }
     const [isCategoriesReady, setIsCategoriesReady] = useState(false);
 
     useEffect(() => {
@@ -42,13 +43,19 @@ export const CategoryProvider = ({ children }) => {
             await initDatabase();
             const rows = await getAllCustomCategories();
             const customMap = {};
+            const iconMap = {};
             if (rows) {
-                rows.forEach(r => customMap[r.id] = r.custom_name);
+                rows.forEach(r => {
+                    customMap[r.id] = r.custom_name;
+                    if (r.icon) iconMap[r.id] = r.icon;
+                });
             }
             setCustomNames(customMap);
+            setCustomIcons(iconMap);
         } catch (e) {
             console.log("Error loading categories", e);
             setCustomNames({});
+            setCustomIcons({});
         } finally {
             setIsCategoriesReady(true);
         }
@@ -73,6 +80,12 @@ export const CategoryProvider = ({ children }) => {
         
         // Fallback: return original
         return categoryId;
+    };
+
+    // Get icon name for a category
+    const getCategoryIconName = (categoryId) => {
+        const resolvedId = resolveCategoryId(categoryId);
+        return customIcons[resolvedId] || null;
     };
 
     // Resolve any category identifier (legacy name, translated name, or ID) to its constant ID
@@ -106,15 +119,24 @@ export const CategoryProvider = ({ children }) => {
     const categories = CATEGORY_IDS.map(id => ({
         id,
         name: getCategoryDisplayName(id),
+        iconName: customIcons[id] || null,
     }));
 
     const editCategory = async (id, newName) => {
         try {
-            const oldName = getCategoryDisplayName(id);
-            await updateCustomCategory(id, oldName, newName);
+            await updateCustomCategory(id, newName, customIcons[id]);
             await loadCategories();
         } catch (e) {
-            console.log("Error editing category", e);
+            console.log("Error editing category name", e);
+        }
+    };
+
+    const editCategoryIcon = async (id, iconName) => {
+        try {
+            await updateCustomCategory(id, customNames[id], iconName);
+            await loadCategories();
+        } catch (e) {
+            console.log("Error editing category icon", e);
         }
     };
 
@@ -122,9 +144,11 @@ export const CategoryProvider = ({ children }) => {
         <CategoryContext.Provider value={{
             categories,
             editCategory,
+            editCategoryIcon,
             isCategoriesReady,
             loadCategories,
             getCategoryDisplayName,
+            getCategoryIconName,
             resolveCategoryId,
             CATEGORY_IDS,
         }}>

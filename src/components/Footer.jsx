@@ -1,4 +1,6 @@
 import { View, TouchableOpacity, Text, StyleSheet, Animated } from "react-native"
+import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
+
 import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useRef, useEffect } from "react";
 
@@ -90,18 +92,18 @@ export default function Footer() {
 
 const styles = StyleSheet.create({
     container: {
-        bottom: 54,
+        bottom: verticalScale(54),
         left: 0,
         right: 0,
         alignSelf: "center",
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        borderRadius: 50,
-        marginHorizontal: 20,
-        height: 60,
-        paddingRight: 5,
-        paddingLeft: 20,
+        borderRadius: moderateScale(50),
+        marginHorizontal: horizontalScale(20),
+        height: verticalScale(60),
+        paddingRight: horizontalScale(5),
+        paddingLeft: horizontalScale(20),
         position: "absolute",
         borderColor: "#ffffff31",
         borderWidth: 1,
@@ -111,18 +113,18 @@ const styles = StyleSheet.create({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        width: 50,
-        height: 50,
+        width: horizontalScale(50),
+        height: horizontalScale(50),
     },
     text: {
-        fontSize: 10,
-        marginTop: 3,
+        fontSize: moderateScale(10),
+        marginTop: verticalScale(3),
     },
     add: {
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 50,
-        width: 85,
-        height: 50,
+        borderRadius: moderateScale(50),
+        width: horizontalScale(85),
+        height: verticalScale(50),
     },
 })

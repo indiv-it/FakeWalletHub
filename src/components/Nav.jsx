@@ -14,6 +14,7 @@ import {
     Platform,
 } from "react-native";
 import { BlurView } from 'expo-blur';
+import { horizontalScale, verticalScale, moderateScale } from "../utils/responsive";
 
 // components
 import { useTheme } from '../context/ThemeContext';
@@ -34,7 +35,52 @@ import {
     Settings,
     Banknote,
     Edit3,
+    ShoppingCart,
+    ShoppingBag,
+    ChartColumnBig,
+    PiggyBank,
+    Heart,
+    Home as HomeIcon,
+    Car,
+    Utensils,
+    Gift,
+    BookOpen,
+    Briefcase,
+    Gamepad2,
+    Plane,
+    Stethoscope,
+    GraduationCap,
+    Dumbbell,
 } from 'lucide-react-native';
+
+const AVAILABLE_ICONS = [
+    { name: 'ShoppingCart', Icon: ShoppingCart },
+    { name: 'ShoppingBag', Icon: ShoppingBag },
+    { name: 'ChartColumnBig', Icon: ChartColumnBig },
+    { name: 'PiggyBank', Icon: PiggyBank },
+    { name: 'Heart', Icon: Heart },
+    { name: 'HomeIcon', Icon: HomeIcon },
+    { name: 'Car', Icon: Car },
+    { name: 'Utensils', Icon: Utensils },
+    { name: 'Gift', Icon: Gift },
+    { name: 'BookOpen', Icon: BookOpen },
+    { name: 'Briefcase', Icon: Briefcase },
+    { name: 'Gamepad2', Icon: Gamepad2 },
+    { name: 'Plane', Icon: Plane },
+    { name: 'Stethoscope', Icon: Stethoscope },
+    { name: 'GraduationCap', Icon: GraduationCap },
+    { name: 'Dumbbell', Icon: Dumbbell },
+];
+
+// Map icon name to component for easy rendering
+export const getIconComponent = (name, size, color) => {
+    const iconObj = AVAILABLE_ICONS.find(i => i.name === name);
+    if (iconObj) {
+        const { Icon } = iconObj;
+        return <Icon size={size} color={color} />;
+    }
+    return null;
+};
 
 // Nav Component
 export default function Nav() {
@@ -42,7 +88,7 @@ export default function Nav() {
     const { openPopup } = usePopup();
     const { currentLang, changeLanguage, t, languages } = useLanguage();
     const { currentCurrency, changeCurrency } = useCurrency();
-    const { categories, editCategory } = useCategory();
+    const { categories, editCategory, editCategoryIcon } = useCategory();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -50,6 +96,7 @@ export default function Nav() {
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [newCategoryName, setNewCategoryName] = useState('');
+    const [selectedIcon, setSelectedIcon] = useState(null);
 
     // Animations
     const menuAnim = useRef(new Animated.Value(0)).current;
@@ -173,10 +220,16 @@ export default function Nav() {
 
     // Handle editing category
     const handleSaveCategory = async () => {
-        if (editingCategory && newCategoryName.trim()) {
-            await editCategory(editingCategory.id, newCategoryName.trim());
+        if (editingCategory) {
+            if (newCategoryName.trim()) {
+                await editCategory(editingCategory.id, newCategoryName.trim());
+            }
+            if (selectedIcon) {
+                await editCategoryIcon(editingCategory.id, selectedIcon);
+            }
             setEditingCategory(null);
             setNewCategoryName('');
+            setSelectedIcon(null);
             setShowCategoryModal(false);
         }
     };
@@ -206,7 +259,7 @@ export default function Nav() {
     // Lang submenu height
     const langHeight = langMenuAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, Object.keys(LANGUAGES).length * 53 + 8],
+        outputRange: [0, Object.keys(LANGUAGES).length * verticalScale(53) + verticalScale(8)],
     });
 
     // fade submenu
@@ -222,7 +275,7 @@ export default function Nav() {
 
     const curHeight = curMenuAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, Object.keys(CURRENCIES).length * 53 + 8],
+        outputRange: [0, Object.keys(CURRENCIES).length * verticalScale(53) + verticalScale(8)],
     });
 
     const curOpacity = curMenuAnim.interpolate({
@@ -501,7 +554,7 @@ export default function Nav() {
 
             {/* Nav Bar */}
             <View style={styles.nav}>
-                <View style={[styles.logoContainer, { backgroundColor: isDarkMode ? colors.background : colors.accent }]}>
+                <View style={[styles.logoContainer, { backgroundColor: isDarkMode ? colors.background : colors.text }]}>
                     <Image source={require('../imgs/Logo_FWH.png')} style={styles.img} />
                     <Text style={{ color: colors.white, fontWeight: 'bold' }}>
                         <Text style={{ color: isDarkMode ? colors.accent : colors.white }}>Fake</Text>
@@ -555,8 +608,26 @@ export default function Nav() {
                                     autoFocus
                                     placeholderTextColor={colors.textSecondary}
                                 />
+
+                                <Text style={{ color: colors.textSecondary, marginBottom: 12, marginTop: 10 }}>{t('editIcon')}</Text>
+                                <View style={styles.iconGrid}>
+                                    {AVAILABLE_ICONS.map((item) => (
+                                        <TouchableOpacity 
+                                            key={item.name}
+                                            style={[
+                                                styles.iconBox, 
+                                                { backgroundColor: colors.background },
+                                                (selectedIcon === item.name || (!selectedIcon && editingCategory.iconName === item.name)) && { borderColor: colors.accent, borderWidth: 2 }
+                                            ]}
+                                            onPress={() => setSelectedIcon(item.name)}
+                                        >
+                                            <item.Icon size={20} color={(selectedIcon === item.name || (!selectedIcon && editingCategory.iconName === item.name)) ? colors.accent : colors.gray} />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+
                                 <View style={styles.categoryActions}>
-                                    <TouchableOpacity style={[styles.categoryBtn, { backgroundColor: colors.border }]} onPress={() => { setEditingCategory(null); setNewCategoryName(''); }}>
+                                    <TouchableOpacity style={[styles.categoryBtn, { backgroundColor: colors.border }]} onPress={() => { setEditingCategory(null); setNewCategoryName(''); setSelectedIcon(null); }}>
                                         <Text style={{ color: colors.text, fontWeight: 'bold' }}>{t('cancel')}</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={[styles.categoryBtn, { backgroundColor: colors.accent }]} onPress={handleSaveCategory}>
@@ -568,9 +639,14 @@ export default function Nav() {
                             <View>
                                 {categories.map(cat => (
                                     <View key={cat.id} style={[styles.categoryRow, { borderBottomColor: colors.border }]}>
-                                        <Text style={{ color: colors.text, fontSize: 16 }}>{cat.name}</Text>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                            <View style={[styles.miniIcon, { backgroundColor: colors.accent + '15' }]}>
+                                                {getIconComponent(cat.iconName, 16, colors.accent) || <Settings size={16} color={colors.accent} />}
+                                            </View>
+                                            <Text style={{ color: colors.text, fontSize: 16 }}>{cat.name}</Text>
+                                        </View>
                                         <TouchableOpacity 
-                                            onPress={() => { setEditingCategory(cat); setNewCategoryName(cat.name); }}
+                                            onPress={() => { setEditingCategory(cat); setNewCategoryName(cat.name); setSelectedIcon(cat.iconName); }}
                                             style={{ padding: 8, backgroundColor: colors.accent + '20', borderRadius: 8 }}
                                         >
                                             <Edit3 size={16} color={colors.accent} />
@@ -594,38 +670,38 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        marginTop: 30,
-        marginBottom: 20,
+        marginTop: verticalScale(30),
+        marginBottom: verticalScale(20),
         zIndex: 1000,
     },
     logoContainer: {
-        paddingHorizontal: 15,
-        paddingVertical: 5,
-        borderRadius: 10,
+        paddingHorizontal: horizontalScale(15),
+        paddingVertical: verticalScale(5),
+        borderRadius: moderateScale(10),
         flexDirection: "row",
         alignItems: "center",
-        gap: 10,
+        gap: horizontalScale(10),
     },
     img: {
-        width: 30,
-        height: 30,
+        width: horizontalScale(30),
+        height: verticalScale(30),
     },
 
     // Menu toggle button
     menuButton: {
-        borderRadius: 12,
+        borderRadius: moderateScale(12),
         borderWidth: 1,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingHorizontal: horizontalScale(12),
+        paddingVertical: verticalScale(8),
         ...CARD_SHADOW,
     },
     menuButtonInner: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: horizontalScale(8),
     },
     menuButtonFlag: {
-        fontSize: 16,
+        fontSize: moderateScale(16),
     },
 
     // Backdrop
@@ -637,16 +713,16 @@ const styles = StyleSheet.create({
     // Dropdown menu
     dropdownMenu: {
         position: 'absolute',
-        top: 70,
-        right: 16,
-        width: 260,
-        borderRadius: 16,
+        top: verticalScale(70),
+        right: horizontalScale(16),
+        width: horizontalScale(260),
+        borderRadius: moderateScale(16),
         borderWidth: 1,
         overflow: 'hidden',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
+        shadowOffset: { width: 0, height: verticalScale(8) },
         shadowOpacity: 0.25,
-        shadowRadius: 16,
+        shadowRadius: moderateScale(16),
         elevation: 12,
     },
 
@@ -654,20 +730,20 @@ const styles = StyleSheet.create({
     menuHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
+        gap: horizontalScale(10),
+        paddingHorizontal: horizontalScale(16),
+        paddingVertical: verticalScale(14),
         borderBottomWidth: 1,
     },
     menuHeaderIconBg: {
-        width: 30,
-        height: 30,
-        borderRadius: 8,
+        width: horizontalScale(30),
+        height: verticalScale(30),
+        borderRadius: moderateScale(8),
         alignItems: 'center',
         justifyContent: 'center',
     },
     menuHeaderText: {
-        fontSize: 15,
+        fontSize: moderateScale(15),
         fontWeight: '700',
     },
 
@@ -676,41 +752,41 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 13,
+        paddingHorizontal: horizontalScale(16),
+        paddingVertical: verticalScale(13),
     },
     menuItemLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: horizontalScale(12),
     },
     menuIconContainer: {
-        width: 34,
-        height: 34,
-        borderRadius: 10,
+        width: horizontalScale(34),
+        height: verticalScale(34),
+        borderRadius: moderateScale(10),
         alignItems: 'center',
         justifyContent: 'center',
     },
     menuItemText: {
-        fontSize: 14,
+        fontSize: moderateScale(14),
         fontWeight: '500',
     },
 
     // Toggle switch
     toggleTrack: {
-        width: 40,
-        height: 22,
-        borderRadius: 11,
+        width: horizontalScale(40),
+        height: verticalScale(22),
+        borderRadius: moderateScale(11),
         justifyContent: 'center',
     },
     toggleThumb: {
-        width: 18,
-        height: 18,
-        borderRadius: 9,
+        width: horizontalScale(18),
+        height: verticalScale(18),
+        borderRadius: moderateScale(9),
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: verticalScale(1) },
         shadowOpacity: 0.2,
-        shadowRadius: 2,
+        shadowRadius: moderateScale(2),
         elevation: 2,
     },
 
@@ -718,43 +794,43 @@ const styles = StyleSheet.create({
     langBadgeContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: horizontalScale(4),
     },
     langBadgeFlag: {
-        fontSize: 14,
+        fontSize: moderateScale(14),
     },
     langBadgeText: {
-        fontSize: 12,
+        fontSize: moderateScale(12),
         fontWeight: '500',
     },
 
     // Language submenu
     langSubmenu: {
-        paddingHorizontal: 12,
-        borderRadius: 12,
+        paddingHorizontal: horizontalScale(12),
+        borderRadius: moderateScale(12),
         overflow: 'hidden',
-        marginBottom: 4,
+        marginBottom: verticalScale(4),
     },
     langItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        gap: 12,
+        paddingHorizontal: horizontalScale(14),
+        paddingVertical: verticalScale(12),
+        gap: horizontalScale(12),
     },
     langFlag: {
-        fontSize: 20,
+        fontSize: moderateScale(20),
     },
     langName: {
-        fontSize: 14,
+        fontSize: moderateScale(14),
         fontWeight: '500',
     },
 
     // Check badge
     checkBadge: {
-        width: 22,
-        height: 22,
-        borderRadius: 11,
+        width: horizontalScale(22),
+        height: verticalScale(22),
+        borderRadius: moderateScale(11),
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -762,52 +838,77 @@ const styles = StyleSheet.create({
     // Category Modal
     categoryModal: {
         position: 'absolute',
-        top: '25%',
-        left: 20,
-        right: 20,
-        borderRadius: 16,
-        padding: 24,
+        top: '15%',
+        left: horizontalScale(20),
+        right: horizontalScale(20),
+        borderRadius: moderateScale(16),
+        padding: horizontalScale(24),
         borderWidth: 1,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
+        shadowOffset: { width: 0, height: verticalScale(4) },
         shadowOpacity: 0.3,
-        shadowRadius: 10,
+        shadowRadius: moderateScale(10),
         elevation: 10,
     },
     categoryModalTitle: {
-        fontSize: 18,
+        fontSize: moderateScale(18),
         fontWeight: 'bold',
-        marginBottom: 20,
+        marginBottom: verticalScale(20),
         textAlign: 'center',
     },
     categoryRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 12,
+        paddingVertical: verticalScale(10),
         borderBottomWidth: 1,
     },
     categoryInput: {
         borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        fontSize: 16,
-        marginBottom: 20,
+        borderRadius: moderateScale(10),
+        paddingHorizontal: horizontalScale(16),
+        paddingVertical: verticalScale(10),
+        fontSize: moderateScale(16),
+        marginBottom: verticalScale(10),
     },
     categoryActions: {
         flexDirection: 'row',
-        gap: 12,
+        justifyContent: 'flex-end',
+        gap: horizontalScale(12),
+        marginTop: verticalScale(20),
     },
     categoryBtn: {
-        flex: 1,
-        paddingVertical: 12,
-        borderRadius: 8,
+        paddingHorizontal: horizontalScale(20),
+        paddingVertical: verticalScale(10),
+        borderRadius: moderateScale(10),
+        minWidth: horizontalScale(80),
         alignItems: 'center',
     },
     categoryCloseBtn: {
-        paddingVertical: 12,
-        borderRadius: 8,
+        paddingVertical: verticalScale(12),
+        borderRadius: moderateScale(10),
         alignItems: 'center',
     },
+    miniIcon: {
+        width: horizontalScale(32),
+        height: horizontalScale(32),
+        borderRadius: moderateScale(8),
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    iconGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: horizontalScale(8),
+        justifyContent: 'center',
+    },
+    iconBox: {
+        width: horizontalScale(42),
+        height: horizontalScale(42),
+        borderRadius: moderateScale(10),
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'transparent',
+    }
 });

@@ -3,6 +3,8 @@ import { View, Text } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
+import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
+
 
 function PieChartGroup({ data, expense }) {
     const { colors } = useTheme();
@@ -26,23 +28,23 @@ function PieChartGroup({ data, expense }) {
     }
 
     return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 20 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: verticalScale(20) }}>
             <PieChart
                 data={pieData}
                 donut
                 // showGradient
-                radius={40}
-                innerRadius={25}
+                radius={moderateScale(40)}
+                innerRadius={moderateScale(25)}
                 innerCircleColor={colors.cardBg}
                 focusOnPress
-                shiftInnerRadiusX={2}
-                shiftInnerRadiusY={2}
+                shiftInnerRadiusX={horizontalScale(2)}
+                shiftInnerRadiusY={verticalScale(2)}
             />
-            <View style={{ marginLeft: 20 }}>
+            <View style={{ marginLeft: horizontalScale(20) }}>
                 {pieData.map((item, index) => (
-                    <View key={index} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, }}>
-                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: item.color }} />
-                        <Text style={{ color: item.color, fontSize: 11, fontWeight: 'bold' }}>{item.label} : {expense[index]}%</Text>
+                    <View key={index} style={{ flexDirection: 'row', alignItems: 'center', gap: horizontalScale(5), }}>
+                        <View style={{ width: horizontalScale(10), height: horizontalScale(10), borderRadius: moderateScale(5), backgroundColor: item.color }} />
+                        <Text style={{ color: item.color, fontSize: moderateScale(11), fontWeight: 'bold' }}>{item.label} : {expense[index]}%</Text>
                     </View>
                 ))}
             </View>

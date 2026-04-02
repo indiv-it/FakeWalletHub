@@ -9,6 +9,8 @@ import {
     Dimensions
 } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
+
 import { AlertCircle } from 'lucide-react-native';
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
@@ -128,10 +130,10 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.1)', // transparent enough for blur
     },
     popupCard: {
-        width: width * 0.82,
-        maxWidth: 340,
-        borderRadius: 24,
-        padding: 24,
+        width: '82%',
+        maxWidth: horizontalScale(340),
+        borderRadius: moderateScale(24),
+        padding: horizontalScale(24),
         alignItems: 'center',
         ...CARD_SHADOW,
         elevation: 10,
@@ -139,38 +141,38 @@ const styles = StyleSheet.create({
         borderColor: COLORS.border,
     },
     iconContainer: {
-        marginBottom: 20,
+        marginBottom: verticalScale(20),
     },
     iconCircle: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
+        width: horizontalScale(72),
+        height: horizontalScale(72),
+        borderRadius: moderateScale(36),
         justifyContent: 'center',
         alignItems: 'center',
     },
     title: {
-        fontSize: SIZES.lg,
+        fontSize: moderateScale(20),
         fontWeight: FONTS.bold,
-        marginBottom: 10,
+        marginBottom: verticalScale(10),
         textAlign: 'center',
     },
     description: {
         fontSize: SIZES.sm,
         textAlign: 'center',
-        marginBottom: 24,
-        lineHeight: 22,
-        paddingHorizontal: 8,
+        marginBottom: verticalScale(24),
+        lineHeight: moderateScale(22),
+        paddingHorizontal: horizontalScale(8),
     },
     buttonContainer: {
         flexDirection: 'row',
         width: '100%',
         justifyContent: 'space-between',
-        gap: 12,
+        gap: horizontalScale(12),
     },
     button: {
         flex: 1,
-        height: 52,
-        borderRadius: 14,
+        height: verticalScale(52),
+        borderRadius: moderateScale(14),
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -182,7 +184,7 @@ const styles = StyleSheet.create({
         // backgroundColor set by inline style
     },
     btnText: {
-        fontSize: 15,
+        fontSize: moderateScale(15),
         fontWeight: FONTS.bold,
     },
     confirmBtnText: {

@@ -72,17 +72,25 @@ const TRANSLATIONS = {
         savings: 'เงินออม',
 
         // About
-        aboutTitle: 'เกี่ยวกับ MyBank',
+        aboutTitle: 'เกี่ยวกับ FakeWalletHub',
         aboutDesc: 'แอปสำหรับบันทึกและวิเคราะห์รายรับ-รายจ่ายของคุณ',
+        aboutDescFull: 'FakeWalletHub คือเครื่องมือจัดการการเงินส่วนบุคคลที่ออกแบบมาเพื่อช่วยให้คุณติดตามรายรับและรายจ่ายได้อย่างง่ายดาย ด้วยอินเทอร์เฟซที่สวยงามและใช้งานง่าย ช่วยให้คุณวางแผนการออมและบรรลุเป้าหมายทางการเงินได้รวดเร็วยิ่งขึ้น',
+        developer: 'พัฒนาโดย',
+        license: 'ลิขสิทธิ์ซอฟต์แวร์',
+        copyright: 'สงวนลิขสิทธิ์โดย FakeWalletHub',
+        contact: 'ติดต่อเรา',
+        github: 'GitHub',
         version: 'เวอร์ชัน',
         close: 'ปิด',
+        editIcon: 'เลือกไอคอน',
+        selectIcon: 'เลือกไอคอนสำหรับหมวดหมู่',
 
         // Footer
         home: 'หน้าหลัก',
         record: 'ประวัติ',
-        add: 'เพิ่ม',
+        add: 'เพิ่มรายการแรกของคุณ',
         notebook: 'บันทึก',
-
+        
         // Record
         transactionHistory: 'ประวัติการทำรายการ',
         noTransaction: 'ยังไม่มีรายการ',
@@ -161,7 +169,7 @@ const TRANSLATIONS = {
         notifMsg4: 'บันทึกรายรับ ฿5,000 จากเงินเดือน',
         notifTime4: 'เมื่อวาน',
         notifTitle5: 'อัปเดตแอป',
-        notifMsg5: 'MyBank v1.0.0 พร้อมใช้งานแล้ว',
+        notifMsg5: 'FakeWalletHub v1.0.0 พร้อมใช้งานแล้ว',
         notifTime5: '2 วัน',
 
         // Onboarding
@@ -205,15 +213,23 @@ const TRANSLATIONS = {
         savings: 'Savings',
 
         // About
-        aboutTitle: 'About MyBank',
+        aboutTitle: 'About FakeWalletHub',
         aboutDesc: 'App for recording and analyzing your income and expenses',
+        aboutDescFull: 'FakeWalletHub is a personal finance tool designed to help you track income and expenses effortlessly. With a beautiful and intuitive interface, we help you plan savings and reach financial goals faster.',
+        developer: 'Developed by',
+        license: 'Software License',
+        copyright: 'All Rights Reserved by FakeWalletHub',
+        contact: 'Contact Us',
+        github: 'GitHub',
         version: 'Version',
         close: 'Close',
+        editIcon: 'Select Icon',
+        selectIcon: 'Select an icon for this category',
 
         // Footer
         home: 'Home',
         record: 'Record',
-        add: 'Add',
+        add: 'Add your first item',
         notebook: 'Notebook',
 
         // Record
@@ -294,7 +310,7 @@ const TRANSLATIONS = {
         notifMsg4: 'Recorded income ฿5,000 from salary',
         notifTime4: 'Yesterday',
         notifTitle5: 'App update',
-        notifMsg5: 'MyBank v1.0.0 is now available',
+        notifMsg5: 'FakeWalletHub v1.0.0 is now available',
         notifTime5: '2 days',
 
         // Onboarding
@@ -338,10 +354,18 @@ const TRANSLATIONS = {
         savings: '储蓄',
 
         // About
-        aboutTitle: '关于 MyBank',
+        aboutTitle: '关于 FakeWalletHub',
         aboutDesc: '用于记录和分析您的收入和支出的应用程序',
+        aboutDescFull: 'FakeWalletHub 是一款旨在帮助您轻松追踪收入和支出的个人理财工具。凭借精美直观的界面，我们协助您规划储蓄，更快速地实现财务目标。',
+        developer: '开发者',
+        license: '软件许可',
+        copyright: 'FakeWalletHub 版权所有',
+        contact: '联系我们',
+        github: 'GitHub',
         version: '版本',
         close: '关闭',
+        editIcon: '选择图标',
+        selectIcon: '为该类别选择一个图标',
 
         // Footer
         home: '首页',
@@ -427,7 +451,7 @@ const TRANSLATIONS = {
         notifMsg4: '记录了工资收入 ฿5,000',
         notifTime4: '昨天',
         notifTitle5: '应用更新',
-        notifMsg5: 'MyBank v1.0.0 已上线',
+        notifMsg5: 'FakeWalletHub v1.0.0 已上线',
         notifTime5: '2 天',
 
         // Onboarding
@@ -471,10 +495,18 @@ const TRANSLATIONS = {
         savings: '貯蓄',
 
         // About
-        aboutTitle: 'MyBankについて',
+        aboutTitle: 'FakeWalletHubについて',
         aboutDesc: '収入と支出を記録・分析するアプリ',
+        aboutDescFull: 'FakeWalletHubは、収支を簡単に追跡できるように設計された個人財務管理ツールです。美しく直感的なインターフェースで、貯蓄計画を立て、財務目標をより早く達成するお手伝いをします。',
+        developer: '開発者',
+        license: 'ソフトウェアライセンス',
+        copyright: '© FakeWalletHub 全著作権所有',
+        contact: 'お問い合わせ',
+        github: 'GitHub',
         version: 'バージョン',
         close: '閉じる',
+        editIcon: 'アイコンを選択',
+        selectIcon: 'このカテゴリーのアイコンを選択してください',
 
         // Footer
         home: 'ホーム',
@@ -560,7 +592,7 @@ const TRANSLATIONS = {
         notifMsg4: '給与からの収入 ฿5,000 を記録しました',
         notifTime4: '昨日',
         notifTitle5: 'アプリ更新',
-        notifMsg5: 'MyBank v1.0.0 が利用可能になりました',
+        notifMsg5: 'FakeWalletHub v1.0.0 が利用可能になりました',
         notifTime5: '2 日前',
 
         // Onboarding

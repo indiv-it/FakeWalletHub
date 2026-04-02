@@ -6,13 +6,14 @@ import {
     FlatList,
     Modal,
     TextInput,
-    Platform,
-    Alert
+    Platform
 } from 'react-native';
 import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { BlurView } from 'expo-blur';
 import { FileEdit, Trash2, ListPlus, X } from 'lucide-react-native';
+import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
+
 
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
@@ -294,20 +295,20 @@ export default function Notebook() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
+        padding: horizontalScale(20),
     },
     textHeader: {
         fontSize: SIZES.xl,
         fontWeight: FONTS.bold,
-        marginTop: 30,
-        marginBottom: 20,
+        marginTop: verticalScale(30),
+        marginBottom: verticalScale(20),
         textAlign: "center",
     },
     listContent: {
-        paddingBottom: 20,
+        paddingBottom: verticalScale(20),
     },
     emptyContainer: {
-        marginTop: 50,
+        marginTop: verticalScale(50),
         alignItems: 'center',
     },
     emptyText: {
@@ -316,20 +317,20 @@ const styles = StyleSheet.create({
     },
     fab: {
         position: 'absolute',
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+        width: horizontalScale(60),
+        height: horizontalScale(60),
+        borderRadius: moderateScale(30),
         justifyContent: 'center',
         alignItems: 'center',
-        right: 20,
-        bottom: 130,
+        right: horizontalScale(20),
+        bottom: verticalScale(130),
         ...CARD_SHADOW,
     },
     // Card styles
     noteCard: {
-        padding: 16,
-        borderRadius: 16,
-        marginBottom: 16,
+        padding: horizontalScale(16),
+        borderRadius: moderateScale(16),
+        marginBottom: verticalScale(16),
         ...CARD_SHADOW,
     },
     cardHeader: {
@@ -338,30 +339,30 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     cardTitle: {
-        fontSize: SIZES.medium,
+        fontSize: moderateScale(18),
         fontWeight: FONTS.bold,
         color: '#1F2937',
         flex: 1,
-        marginRight: 10,
+        marginRight: horizontalScale(10),
     },
     cardActions: {
         flexDirection: 'row',
-        gap: 12,
+        gap: horizontalScale(12),
     },
     actionBtn: {
-        padding: 4,
+        padding: horizontalScale(4),
     },
     cardDate: {
-        fontSize: SIZES.small,
+        fontSize: moderateScale(12),
         color: '#4B5563',
-        marginTop: 4,
-        marginBottom: 8,
+        marginTop: verticalScale(4),
+        marginBottom: verticalScale(8),
         fontWeight: FONTS.medium,
     },
     cardContent: {
         fontSize: SIZES.sm,
         color: '#374151',
-        lineHeight: 20,
+        lineHeight: moderateScale(20),
     },
     // Modal Styles
     modalOverlay: {
@@ -370,44 +371,44 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.1)',
     },
     modalContent: {
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        padding: 24,
-        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+        borderTopLeftRadius: moderateScale(24),
+        borderTopRightRadius: moderateScale(24),
+        padding: horizontalScale(24),
+        paddingBottom: Platform.OS === 'ios' ? verticalScale(40) : verticalScale(24),
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: verticalScale(20),
     },
     modalTitle: {
-        fontSize: SIZES.lg,
+        fontSize: moderateScale(20),
         fontWeight: FONTS.bold,
     },
     inputLabel: {
         fontSize: SIZES.sm,
         fontWeight: FONTS.bold,
-        marginBottom: 8,
-        marginTop: 16,
+        marginBottom: verticalScale(8),
+        marginTop: verticalScale(16),
     },
     textInput: {
-        height: 50,
-        borderRadius: 12,
-        paddingHorizontal: 16,
+        height: verticalScale(50),
+        borderRadius: moderateScale(12),
+        paddingHorizontal: horizontalScale(16),
         fontSize: SIZES.sm,
         borderWidth: 1,
         borderColor: COLORS.border,
     },
     textArea: {
-        height: 100,
-        paddingTop: 16,
+        height: verticalScale(100),
+        paddingTop: verticalScale(16),
     },
     dateButton: {
-        height: 50,
-        borderRadius: 12,
+        height: verticalScale(50),
+        borderRadius: moderateScale(12),
         justifyContent: 'center',
-        paddingHorizontal: 16,
+        paddingHorizontal: horizontalScale(16),
         borderWidth: 1,
         borderColor: COLORS.border,
     },
@@ -417,27 +418,27 @@ const styles = StyleSheet.create({
     },
     colorPalette: {
         flexDirection: 'row',
-        gap: 12,
+        gap: horizontalScale(12),
         flexWrap: 'wrap',
     },
     colorCircle: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: horizontalScale(40),
+        height: horizontalScale(40),
+        borderRadius: moderateScale(20),
     },
     colorCircleSelected: {
         borderWidth: 3,
         borderColor: '#111827',
     },
     saveBtn: {
-        height: 50,
-        borderRadius: 12,
+        height: verticalScale(50),
+        borderRadius: moderateScale(12),
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 30,
+        marginTop: verticalScale(30),
     },
     saveBtnText: {
         fontSize: SIZES.base,
         fontWeight: FONTS.bold,
     },
-});
+});;
