@@ -4,8 +4,6 @@ import { moderateScale } from '../utils/responsive';
 // Dark theme colors
 export const DARK_COLORS = {
     accent: '#ACF532',
-    accent_black: '#ACF53250',
-    accent_border: '#ACF53260',
     cardBg: '#141414',
     red: '#ff0000',
     white: '#FFFFFF',
@@ -22,9 +20,7 @@ export const DARK_COLORS = {
 
 // Light theme colors
 export const LIGHT_COLORS = {
-    accent: '#000000',
-    accent_black: '#00000050',
-    accent_border: '#00000060',
+    accent: '#8cdd00',
     cardBg: '#FFFFFF',
     red: '#ff0000',
     white: '#FFFFFF',

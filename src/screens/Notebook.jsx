@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.1)',
+        backgroundColor: 'rgba(0,0,0,0.4)',
     },
     modalContent: {
         borderTopLeftRadius: moderateScale(24),

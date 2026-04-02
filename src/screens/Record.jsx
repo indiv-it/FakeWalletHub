@@ -253,8 +253,8 @@ export default function Record() {
                         </Text>
                     </View>
                     <View style={[styles.listLogo, {
-                        backgroundColor: isIncome ? colors.accent_black : "#ff000040",
-                        borderColor: isIncome ? colors.accent_border : "#ff000050"
+                        backgroundColor: isIncome ? colors.accent + '50' : "#ff000040",
+                        borderColor: isIncome ? colors.accent + '60' : "#ff000050"
                     }]}>
                         {iconMoney(listType, isIncome)}
                     </View>
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
     },
     modalBackdrop: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.1)",
+        backgroundColor: "rgba(0,0,0,0.4)",
         zIndex: 1,
     },
     actionModal: {

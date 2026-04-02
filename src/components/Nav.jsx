@@ -50,7 +50,6 @@ import {
     Plane,
     Stethoscope,
     GraduationCap,
-    Dumbbell,
 } from 'lucide-react-native';
 
 const AVAILABLE_ICONS = [
@@ -69,7 +68,6 @@ const AVAILABLE_ICONS = [
     { name: 'Plane', Icon: Plane },
     { name: 'Stethoscope', Icon: Stethoscope },
     { name: 'GraduationCap', Icon: GraduationCap },
-    { name: 'Dumbbell', Icon: Dumbbell },
 ];
 
 // Map icon name to component for easy rendering

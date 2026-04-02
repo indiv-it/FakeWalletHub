@@ -14,12 +14,12 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
     const scaledSize = moderateScale(size);
     const total = income + expense;                         // Total amount
     const { colors } = useTheme();                          // Theme colors
-    const radius = scaledSize * 0.375;                            // outerRadius equivalent
-    const innerRadius = scaledSize * 0.25;                        // innerRadius equivalent
+    const radius = scaledSize * 0.375;                      // outerRadius equivalent
+    const innerRadius = scaledSize * 0.25;                  // innerRadius equivalent
     const strokeWidth = radius - innerRadius;               // Stroke width
     const adjustedRadius = (radius + innerRadius) / 2;      // Adjusted radius
     const circumference = 2 * Math.PI * adjustedRadius;     // Circumference
-    const center = scaledSize / 2;                                // Center of the pie chart
+    const center = scaledSize / 2;                          // Center of the pie chart
 
     // Calculate stroke dash for income (green) portion
     const incomeRatio = total > 0 ? income / total : 0.5;

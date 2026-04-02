@@ -24,7 +24,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Check, ChevronRight, ChevronLeft, Github, Mail, Globe, Sparkles } from 'lucide-react-native';
 import { COLORS } from '../style/Theme';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const GITHUB_URL = 'https://github.com/indiv-it/FakeWalletHub';
 const CONTACT_EMAIL = 'indiv.company@gmail.com';

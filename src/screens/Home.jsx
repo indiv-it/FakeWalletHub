@@ -6,6 +6,7 @@ import {
     FlatList,
     Modal,
     Image,
+    Linking,
 } from "react-native"
 import { useState, useMemo } from "react";
 import { BlurView } from 'expo-blur';
@@ -39,6 +40,9 @@ export default function Home() {
     const { allTimeStats, monthlyStats } = useTransactionStats();
 
     const fmt = (n) => formatMoney(n);
+
+    const GITHUB_URL = 'https://github.com/indiv-it/FakeWalletHub';
+    const CONTACT_EMAIL = 'indiv.company@gmail.com';
 
     const displayCategories = useMemo(() => CATEGORY_IDS.map((catId) => {
         const iconName = getCategoryIconName(catId);
@@ -103,7 +107,7 @@ export default function Home() {
                 <ChartIncomeExpense
                     title={t('income')}
                     money={monthlyStats.categoryStats[catId]?.income || 0}
-                    color={colors.white}
+                    color='white'
                     income={monthlyStats.categoryStats[catId]?.income || 0}
                     expense={monthlyStats.categoryStats[catId]?.expense || 0}
                     percent={monthlyStats.categoryStatsPercent[catId]?.incomePercent.toFixed(1) || 0}
@@ -113,7 +117,7 @@ export default function Home() {
                 <ChartIncomeExpense
                     title={t('expense')}
                     money={monthlyStats.categoryStats[catId]?.expense || 0}
-                    color={colors.white}
+                    color='white'
                     income={monthlyStats.categoryStats[catId]?.expense || 0}
                     expense={monthlyStats.categoryStats[catId]?.income || 0}
                     percent={monthlyStats.categoryStatsPercent[catId]?.expensePercent.toFixed(1) || 0}
@@ -129,7 +133,7 @@ export default function Home() {
                         income={monthlyStats.categoryPercent[catId] || 0}
                         expense={100 - (monthlyStats.categoryPercent[catId] || 0)}
                         size={80}
-                        color={colors.white}
+                        color='white'
                         background={colors.text}
                     />
                 </View>
@@ -235,7 +239,7 @@ export default function Home() {
                                     <ChartIncomeExpense
                                         title={t('income')}
                                         money={monthlyStats.totalIncome || 0}
-                                        color={colors.white}
+                                        color='white'
                                         income={monthlyStats.totalIncome || 0}
                                         expense={monthlyStats.totalExpense || 0}
                                         percent={monthlyStats.incomePercent.toFixed(1)}
@@ -244,7 +248,7 @@ export default function Home() {
                                     <ChartIncomeExpense
                                         title={t('expense')}
                                         money={monthlyStats.totalExpense || 0}
-                                        color={colors.white}
+                                        color='white'
                                         income={monthlyStats.totalExpense || 0}
                                         expense={monthlyStats.totalIncome || 0}
                                         percent={monthlyStats.expensePercent.toFixed(1)}
@@ -262,8 +266,7 @@ export default function Home() {
                 </Modal>
             )}
 
-
-
+            {/* popup Group */}
             {popupGroup && (
                 <Modal
                     transparent={true}
@@ -312,7 +315,7 @@ export default function Home() {
                                     {t('aboutDescFull')}
                                 </Text>
 
-                                <View style={[dialogStyles.divider, {backgroundColor: colors.text + '50'}]} />
+                                <View style={[dialogStyles.divider, { backgroundColor: colors.text + '50' }]} />
 
                                 <View style={dialogStyles.infoRow}>
                                     <Text style={[dialogStyles.infoLabel, { color: colors.gray }]}>{t('developer')}</Text>
@@ -324,21 +327,20 @@ export default function Home() {
                                     <Text style={[dialogStyles.infoValue, { color: colors.text }]}>MIT License</Text>
                                 </View>
 
-                                <View style={[dialogStyles.divider, {backgroundColor: colors.text + '50'}]} />
+                                <View style={[dialogStyles.divider, { backgroundColor: colors.text + '50' }]} />
 
                                 <View style={dialogStyles.linksContainer}>
-                                    <TouchableOpacity style={dialogStyles.linkItem}>
+                                    <TouchableOpacity style={dialogStyles.linkItem} onPress={() => Linking.openURL(GITHUB_URL)}>
                                         <Github size={20} color={colors.accent} />
                                         <Text style={{ color: colors.accent, marginLeft: 8 }}>GitHub</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={dialogStyles.linkItem}>
+                                    <TouchableOpacity style={dialogStyles.linkItem} onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)}>
                                         <Mail size={20} color={colors.accent} />
                                         <Text style={{ color: colors.accent, marginLeft: 8 }}>Contact</Text>
                                     </TouchableOpacity>
                                 </View>
 
                                 <View style={dialogStyles.footer}>
-                                    {/* <Text style={{ color: colors.gray, fontSize: 11 }}>{t('copyright')}</Text> */}
                                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                                         <Text style={{ color: colors.gray, fontSize: 11 }}>Made with </Text>
                                         <Heart size={10} color={colors.red} fill={colors.red} />
@@ -429,7 +431,7 @@ const styles = StyleSheet.create({
     },
     popupshadow: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.1)",
+        backgroundColor: "rgba(0,0,0,0.4)",
     },
     popupMoney: {
         width: horizontalScale(300),
