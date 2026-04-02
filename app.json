@@ -1,14 +1,13 @@
 {
   "expo": {
-    "name": "TR Money",
-    "slug": "tr-money",
+    "name": "FakeWalletHub",
+    "slug": "fakewallethub",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/Logo_FWH.png",
+    "icon": "./assets/Logo_FWH2.png",
     "userInterfaceStyle": "light",
-    "scheme": "trmoney",
     "splash": {
-      "image": "./assets/Logo_FWH.png",
+      "image": "./assets/Logo_FWH2.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,18 +17,24 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#000000",
-        "foregroundImage": "./assets/Logo_FWH.png",
-        "backgroundImage": "./assets/Logo_FWH.png",
-        "monochromeImage": "./assets/Logo_FWH.png"
-      }
+        "foregroundImage": "./assets/Logo_FWH2.png",
+        "backgroundImage": "./assets/Logo_FWH2.png",
+        "monochromeImage": "./assets/Logo_FWH2.png"
+      },
+      "package": "com.chockpipat.fakewallethub"
     },
     "web": {
-      "favicon": "./assets/Logo_FWH.png"
+      "favicon": "./assets/Logo_FWH2.png"
     },
     "plugins": [
       "@react-native-community/datetimepicker",
       "expo-web-browser",
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1e90108f-4141-46e6-8d76-455924e7cfb8"
+      }
+    }
   }
 }
