@@ -17,6 +17,7 @@ export const DARK_COLORS = {
     text: '#FFFFFF',
     textSecondary: '#dddddd',
     border: '#ffffff31',
+    chartColors: ['#375fff', '#28fff4', '#17c800', '#ff00a1', '#fcd34d', '#fca5a5'],
 };
 
 // Light theme colors
@@ -35,6 +36,7 @@ export const LIGHT_COLORS = {
     text: '#000000',
     textSecondary: '#666666',
     border: '#E5E5E5',
+    chartColors: ['#375fff', '#28fff4', '#17c800', '#ff00a1', '#fcd34d', '#fca5a5'],
 };
 
 // Default to dark theme for backward compatibility

@@ -80,7 +80,7 @@ export default function Record() {
         }
     };
 
-    // Reload data when screen comes into focus
+    // Reload transaction data when the screen comes into focus
     useFocusEffect(
         useCallback(() => {
             loadTransactions();
@@ -96,7 +96,7 @@ export default function Record() {
         }).start()
     }, [])
 
-    // กรองรายการ
+    // Filter records based on transaction type and date
     let filteredRecords =
         filter === "all"
             ? transactions
@@ -178,14 +178,14 @@ export default function Record() {
         setDateFilter(null)
     }
 
-    // Get display name for listType constant
+    // Get display name for list type constants (Cash vs Bank)
     const getListTypeDisplay = (listType) => {
         if (listType === LIST_TYPE_CASH) return t('cash');
         if (listType === LIST_TYPE_BANK) return t('accountInBank');
         return listType;
     }
 
-    // ลิสต์ตัวกรอง
+    // Component for individual filter chips
     function FilterChip({ item, filter, setFilter }) {
         const isActive = filter === item.id
         return (
@@ -201,7 +201,7 @@ export default function Record() {
         )
     }
 
-    // icon ตาม listType
+    // Helper to render the appropriate icon based on account type
     function iconMoney(listType, isIncome) {
         return (
             listType === LIST_TYPE_CASH
@@ -212,7 +212,7 @@ export default function Record() {
         )
     }
 
-    // รายการ
+    // Individual record row component with entry animations
     function RecordRow({ item, index, entranceAnim, openAction }) {
         const isIncome = item.type === "income"
         const listType = item.listType || LIST_TYPE_CASH
@@ -263,7 +263,7 @@ export default function Record() {
         )
     }
 
-    // Empty state
+    // Component to show when no transactions match the filters
     function EmptyState({ filter, dateFilter, setFilter, setDateFilter }) {
         return (
             <View style={styles.emptyState}>
@@ -295,14 +295,14 @@ export default function Record() {
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <Text style={[styles.textHeader, { color: colors.text }]}>{t('record')}</Text>
 
-            {/* ตัวกรอง */}
+            {/* Filters */}
             <View style={styles.filterRow}>
                 {FILTERS.map((f) => (
                     <FilterChip key={f.id} item={f} filter={filter} setFilter={setFilter} />
                 ))}
             </View>
 
-            {/* เลือกวันที่ */}
+            {/* Date filter selection */}
             <View style={styles.dateFilterRow}>
                 <TouchableOpacity
                     activeOpacity={0.8}
@@ -361,7 +361,7 @@ export default function Record() {
                 </View>
             )}
 
-            {/* รายการ */}
+            {/* Transaction list */}
             <Animated.View style={styles.listContainer}>
                 <FlatList
                     data={filteredRecords}
@@ -380,7 +380,7 @@ export default function Record() {
 
             <Footer />
 
-            {/* Modal แก้ไข / ลบ */}
+            {/* Edit / Delete action modal */}
             {showActionModal && actionItem && (
                 <Modal visible={showActionModal} transparent={true} animationType="fade">
                     <BlurView intensity={30} tint="dark" style={styles.modalOverlay}>

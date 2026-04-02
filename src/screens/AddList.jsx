@@ -165,12 +165,12 @@ export default function AddList() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            {/* header */}
+            {/* Header */}
             <Text style={[styles.textHeader, { color: colors.text }]}>{isEditMode ? t('editItem') : t('addItem')}</Text>
 
             {/* Form */}
             <View>
-                {/* money */}
+                {/* Amount input */}
                 <Text style={[styles.textForm, { color: colors.text }]}>{t('amount')}</Text>
                 <TextInput
                     keyboardType="number-pad"
@@ -186,7 +186,7 @@ export default function AddList() {
                     <Text style={[styles.textForm, { width: "30%", color: colors.text }]}>{t('date')}</Text>
                 </View>
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    {/* note */}
+                    {/* Title / Note input */}
                     <TextInput
                         keyboardType="default"
                         placeholder={t('itemName')}
@@ -196,7 +196,7 @@ export default function AddList() {
                         onChangeText={setTitle}
                     />
 
-                    {/* date */}
+                    {/* Date picker trigger */}
                     <TouchableOpacity
                         onPress={() => setShowDatePicker(true)}
                         style={[styles.dateButton, { backgroundColor: colors.cardBg }]}
@@ -216,7 +216,7 @@ export default function AddList() {
                     )}
                 </View>
 
-                {/* list type — income/expense */}
+                {/* Transaction type (Income/Expense) */}
                 <Text style={[styles.textForm, { color: colors.text }]}>{t('listTypeTitle')}</Text>
                 <View style={styles.typeContainer}>
                     <CustomTypeButton
@@ -237,7 +237,7 @@ export default function AddList() {
                     />
                 </View>
 
-                {/* list account — cash/bank */}
+                {/* Account type (Cash/Bank) */}
                 <Text style={[styles.textForm, { color: colors.text }]}>{t('accountTypeTitle')}</Text>
                 <View style={styles.typeContainer}>
                     <CustomTypeButton
@@ -258,7 +258,7 @@ export default function AddList() {
                     />
                 </View>
 
-                {/* list group — category */}
+                {/* Category selection */}
                 <Text style={[styles.textForm, { color: colors.text }]}>{t('category')}</Text>
                 <View style={styles.typeContainer}>
                     {categories.map((c) => (
@@ -275,7 +275,7 @@ export default function AddList() {
                 </View>
             </View>
 
-            {/* button */}
+            {/* Action buttons */}
             <View style={styles.buttonContainer}>
                 <TouchableOpacity onPress={() => navigation.navigate("Home")} style={[styles.backButton, { backgroundColor: colors.background, borderColor: colors.accent }]}>
                     <Text style={[styles.textBack, { color: colors.accent }]}>{t('cancel')}</Text>

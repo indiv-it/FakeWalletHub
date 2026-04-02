@@ -1,13 +1,21 @@
 import * as SQLite from 'expo-sqlite';
 
+/**
+ * @file database.js
+ * @description Local SQLite database management for the FakeWalletHub application.
+ * Handles transactions, notes, and custom categories using expo-sqlite.
+ */
+
 let db = null;
 let initPromise = null;
 
-// listType constants — stored in database
+// Constants for list types
 export const LIST_TYPE_CASH = 'cash';
 export const LIST_TYPE_BANK = 'bank';
 
-// Legacy listType Thai name → constant key mapping
+/** 
+ * Legacy listType mapping for backward compatibility with older data versions.
+ */
 const LEGACY_LISTTYPE_MAP = {
     'เงินสด': LIST_TYPE_CASH,
     'เงินในบัญชี': LIST_TYPE_BANK,
@@ -19,7 +27,9 @@ const LEGACY_LISTTYPE_MAP = {
     '銀行口座': LIST_TYPE_BANK,
 };
 
-// Legacy category Thai name → ID mapping
+/** 
+ * Legacy category mapping for backward compatibility.
+ */
 const LEGACY_CATEGORY_MAP = {
     'เงินจำเป็น': 'essentials',
     'เงินตามใจ': 'wants',
@@ -37,23 +47,39 @@ const LEGACY_CATEGORY_MAP = {
     '貯蓄': 'savings',
 };
 
-// ----- Connect database ------
+/**
+ * Initializes and returns the database connection.
+ * @returns {Promise<SQLite.SQLiteDatabase>}
+ */
 export async function getDatabase() {
-    if (!db) {
-        db = await SQLite.openDatabaseAsync('FWH_Data.db');
+    try {
+        if (!db) {
+            db = await SQLite.openDatabaseAsync('FWH_Data.db');
+        }
+        return db;
+    } catch (error) {
+        console.error('Failed to open database:', error);
+        throw error;
     }
-    return db;
 }
 
-// ------ Create a database table ------
+/**
+ * Initializes the database schema and performs necessary migrations.
+ * Uses a singleton promise to prevent concurrent initialization.
+ * @returns {Promise<void>}
+ */
 export async function initDatabase() {
     if (initPromise) return initPromise;
 
     initPromise = (async () => {
         try {
             const database = await getDatabase();
+            
+            // Enable WAL mode for better performance
+            await database.execAsync(`PRAGMA journal_mode = WAL;`);
+
+            // Create tables if they don't exist
             await database.execAsync(`
-                PRAGMA journal_mode = WAL;
                 CREATE TABLE IF NOT EXISTS transactions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL,
@@ -79,14 +105,14 @@ export async function initDatabase() {
                 );
             `);
             
-            // Run migration for legacy data
+            // Run migrations
             await migrateTransactionData(database);
             await migrateCategoryIcons(database);
             
             console.log('Database initialized successfully');
         } catch (error) {
             console.error('Database initialization failed:', error);
-            initPromise = null; // Allow retry if it fails
+            initPromise = null; // Reset promise to allow retry
             throw error;
         }
     })();
@@ -94,10 +120,13 @@ export async function initDatabase() {
     return initPromise;
 }
 
-// ------ Migrate legacy Thai names to constant keys ------
+/**
+ * Migrates legacy string values in the database to standardized keys.
+ * @param {SQLite.SQLiteDatabase} database 
+ */
 async function migrateTransactionData(database) {
     try {
-        // Migrate listType: Thai names → constant keys
+        // Migrate listTypes
         for (const [oldName, newKey] of Object.entries(LEGACY_LISTTYPE_MAP)) {
             await database.runAsync(
                 `UPDATE transactions SET listType = ? WHERE listType = ?`,
@@ -105,7 +134,7 @@ async function migrateTransactionData(database) {
             );
         }
 
-        // Migrate category: Thai/translated names → constant IDs
+        // Migrate categories
         for (const [oldName, newId] of Object.entries(LEGACY_CATEGORY_MAP)) {
             await database.runAsync(
                 `UPDATE transactions SET category = ? WHERE category = ?`,
@@ -113,59 +142,76 @@ async function migrateTransactionData(database) {
             );
         }
     } catch (error) {
-        console.log('Migration warning (non-critical):', error);
+        console.warn('Migration warning (non-critical):', error);
     }
 }
 
-// ------ Migrate category icons (add column if missing) ------
+/**
+ * Ensures the custom_categories table has the required columns.
+ * @param {SQLite.SQLiteDatabase} database 
+ */
 async function migrateCategoryIcons(database) {
     try {
-        // Check if icon column exists in custom_categories
         const tableInfo = await database.getAllAsync(`PRAGMA table_info(custom_categories)`);
         const hasIcon = tableInfo.some(col => col.name === 'icon');
         
         if (!hasIcon) {
             await database.execAsync(`ALTER TABLE custom_categories ADD COLUMN icon TEXT`);
-            console.log('Added icon column to custom_categories');
+            console.log('Successfully added icon column to custom_categories');
         }
     } catch (error) {
-        console.log('Category icon migration warning:', error);
+        console.warn('Category icon migration warning:', error);
     }
 }
 
-// ------ Insert Data ------
+// ==========================================
+//              TRANSACTIONS
+// ==========================================
+
+/**
+ * Inserts a new transaction into the database.
+ * @param {Object} data - Transaction data
+ * @returns {Promise<number>} Last inserted row ID
+ */
 export async function insertTransaction(data) {
-    await initDatabase();
-    const database = await getDatabase();
+    try {
+        await initDatabase();
+        const database = await getDatabase();
 
-    // Setting Default Data
-    const transactionData = {
-        title: data.title || 'Untitled',
-        amount: data.amount || 0,
-        type: data.type || 'expense',
-        category: data.category || 'essentials',
-        listType: data.listType || LIST_TYPE_CASH,
-        date: data.date || new Date().toISOString().split('T')[0],
-        created_at: data.created_at || new Date().toISOString(),
-    };
+        const transactionData = {
+            title: data.title || 'Untitled',
+            amount: data.amount || 0,
+            type: data.type || 'expense',
+            category: data.category || 'essentials',
+            listType: data.listType || LIST_TYPE_CASH,
+            date: data.date || new Date().toISOString().split('T')[0],
+            created_at: data.created_at || new Date().toISOString(),
+        };
 
-    const result = await database.runAsync(
-        `INSERT INTO transactions (title, amount, type, category, listType, date, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-            transactionData.title,
-            transactionData.amount,
-            transactionData.type,
-            transactionData.category,
-            transactionData.listType,
-            transactionData.date,
-            transactionData.created_at,
-        ]
-    );
-    return result.lastInsertRowId;
+        const result = await database.runAsync(
+            `INSERT INTO transactions (title, amount, type, category, listType, date, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+                transactionData.title,
+                transactionData.amount,
+                transactionData.type,
+                transactionData.category,
+                transactionData.listType,
+                transactionData.date,
+                transactionData.created_at,
+            ]
+        );
+        return result.lastInsertRowId;
+    } catch (error) {
+        console.error('insertTransaction error:', error);
+        throw error;
+    }
 }
 
-// ------ Retrieve information ------
+/**
+ * Retrieves all transactions ordered by date descending.
+ * @returns {Promise<Array>} Array of transaction objects
+ */
 export async function getAllTransactions() {
     try {
         await initDatabase();
@@ -180,125 +226,194 @@ export async function getAllTransactions() {
     }
 }
 
-// ------ Update Data ------
+/**
+ * Updates an existing transaction.
+ * @param {number} id - Transaction ID
+ * @param {Object} data - Updated data
+ */
 export async function updateTransaction(id, data) {
-    await initDatabase();
-    const database = await getDatabase();
+    try {
+        await initDatabase();
+        const database = await getDatabase();
 
-    // Setting Default Data
-    const transactionData = {
-        title: data.title || 'Untitled',
-        amount: data.amount || 0,
-        type: data.type || 'expense',
-        category: data.category || 'essentials',
-        listType: data.listType || LIST_TYPE_CASH,
-        date: data.date || new Date().toISOString().split('T')[0],
-        created_at: data.created_at || new Date().toISOString(),
-    };
+        const transactionData = {
+            title: data.title || 'Untitled',
+            amount: data.amount || 0,
+            type: data.type || 'expense',
+            category: data.category || 'essentials',
+            listType: data.listType || LIST_TYPE_CASH,
+            date: data.date || new Date().toISOString().split('T')[0],
+            created_at: data.created_at || new Date().toISOString(),
+        };
 
-    await database.runAsync(
-        `UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, listType = ?, date = ?, created_at = ?
-        WHERE id = ?`,
-        [
-            transactionData.title,
-            transactionData.amount,
-            transactionData.type,
-            transactionData.category,
-            transactionData.listType,
-            transactionData.date,
-            transactionData.created_at,
-            id,
-        ]
-    );
+        await database.runAsync(
+            `UPDATE transactions SET title = ?, amount = ?, type = ?, category = ?, listType = ?, date = ?, created_at = ?
+            WHERE id = ?`,
+            [
+                transactionData.title,
+                transactionData.amount,
+                transactionData.type,
+                transactionData.category,
+                transactionData.listType,
+                transactionData.date,
+                transactionData.created_at,
+                id,
+            ]
+        );
+    } catch (error) {
+        console.error('updateTransaction error:', error);
+        throw error;
+    }
 }
 
-// ------ Delete Data ------
+/**
+ * Deletes a transaction by ID.
+ * @param {number} id 
+ */
 export async function deleteTransaction(id) {
-    await initDatabase();
-    const database = await getDatabase();
-    await database.runAsync(`DELETE FROM transactions WHERE id = ?`, [id]);
+    try {
+        await initDatabase();
+        const database = await getDatabase();
+        await database.runAsync(`DELETE FROM transactions WHERE id = ?`, [id]);
+    } catch (error) {
+        console.error('deleteTransaction error:', error);
+        throw error;
+    }
 }
 
 // ==========================================
 //                 NOTES
 // ==========================================
 
-// ------ Insert Note ------
+/**
+ * Inserts a new note.
+ * @param {Object} data - Note data
+ * @returns {Promise<number>} Last inserted row ID
+ */
 export async function insertNote(data) {
-    await initDatabase();
-    const database = await getDatabase();
+    try {
+        await initDatabase();
+        const database = await getDatabase();
 
-    const result = await database.runAsync(
-        `INSERT INTO notes (title, content, color, date, created_at)
-        VALUES (?, ?, ?, ?, ?)`,
-        [
-            data.title || 'Untitled',
-            data.content || '',
-            data.color || '#FBBF24',
-            data.date || new Date().toISOString().split('T')[0],
-            data.created_at || new Date().toISOString(),
-        ]
-    );
-    return result.lastInsertRowId;
+        const result = await database.runAsync(
+            `INSERT INTO notes (title, content, color, date, created_at)
+            VALUES (?, ?, ?, ?, ?)`,
+            [
+                data.title || 'Untitled',
+                data.content || '',
+                data.color || '#FBBF24',
+                data.date || new Date().toISOString().split('T')[0],
+                data.created_at || new Date().toISOString(),
+            ]
+        );
+        return result.lastInsertRowId;
+    } catch (error) {
+        console.error('insertNote error:', error);
+        throw error;
+    }
 }
 
-// ------ Retrieve Notes ------
+/**
+ * Retrieves all notes from the database.
+ * @returns {Promise<Array>} Array of note objects
+ */
 export async function getAllNotes() {
-    await initDatabase();
-    const database = await getDatabase();
-    const rows = await database.getAllAsync(
-        `SELECT * FROM notes ORDER BY date DESC, id DESC`
-    );
-    return rows;
+    try {
+        await initDatabase();
+        const database = await getDatabase();
+        const rows = await database.getAllAsync(
+            `SELECT * FROM notes ORDER BY date DESC, id DESC`
+        );
+        return rows || [];
+    } catch (error) {
+        console.error('getAllNotes error:', error);
+        return [];
+    }
 }
 
-// ------ Update Note ------
+/**
+ * Updates a note by ID.
+ * @param {number} id 
+ * @param {Object} data 
+ */
 export async function updateNote(id, data) {
-    await initDatabase();
-    const database = await getDatabase();
+    try {
+        await initDatabase();
+        const database = await getDatabase();
 
-    await database.runAsync(
-        `UPDATE notes SET title = ?, content = ?, color = ?, date = ?
-        WHERE id = ?`,
-        [
-            data.title || 'Untitled',
-            data.content || '',
-            data.color || '#FBBF24',
-            data.date || new Date().toISOString().split('T')[0],
-            id,
-        ]
-    );
+        await database.runAsync(
+            `UPDATE notes SET title = ?, content = ?, color = ?, date = ?
+            WHERE id = ?`,
+            [
+                data.title || 'Untitled',
+                data.content || '',
+                data.color || '#FBBF24',
+                data.date || new Date().toISOString().split('T')[0],
+                id,
+            ]
+        );
+    } catch (error) {
+        console.error('updateNote error:', error);
+        throw error;
+    }
 }
 
-// ------ Delete Note ------
+/**
+ * Deletes a note by ID.
+ * @param {number} id 
+ */
 export async function deleteNote(id) {
-    await initDatabase();
-    const database = await getDatabase();
-    await database.runAsync(`DELETE FROM notes WHERE id = ?`, [id]);
+    try {
+        await initDatabase();
+        const database = await getDatabase();
+        await database.runAsync(`DELETE FROM notes WHERE id = ?`, [id]);
+    } catch (error) {
+        console.error('deleteNote error:', error);
+        throw error;
+    }
 }
-
 
 // ==========================================
 //             CUSTOM CATEGORIES
 // ==========================================
 
+/**
+ * Retrieves all custom categories.
+ * @returns {Promise<Array>}
+ */
 export async function getAllCustomCategories() {
-    const database = await getDatabase();
-    const rows = await database.getAllAsync(`SELECT * FROM custom_categories`);
-    return rows;
+    try {
+        const database = await getDatabase();
+        const rows = await database.getAllAsync(`SELECT * FROM custom_categories`);
+        return rows || [];
+    } catch (error) {
+        console.error('getAllCustomCategories error:', error);
+        return [];
+    }
 }
 
+/**
+ * Updates or inserts a custom category.
+ * @param {string} id 
+ * @param {string} customName 
+ * @param {string} icon 
+ */
 export async function updateCustomCategory(id, customName, icon) {
-    const database = await getDatabase();
-    
-    // Check if category exists first to preserve custom name or icon if one is omitted
-    const existing = await database.getFirstAsync(`SELECT * FROM custom_categories WHERE id = ?`, [id]);
-    
-    const finalName = customName !== undefined ? customName : (existing ? existing.custom_name : '');
-    const finalIcon = icon !== undefined ? icon : (existing ? existing.icon : null);
+    try {
+        const database = await getDatabase();
+        
+        // Fetch existing to handle optional parameters
+        const existing = await database.getFirstAsync(`SELECT * FROM custom_categories WHERE id = ?`, [id]);
+        
+        const finalName = customName !== undefined ? customName : (existing ? existing.custom_name : '');
+        const finalIcon = icon !== undefined ? icon : (existing ? existing.icon : null);
 
-    await database.runAsync(
-        `INSERT OR REPLACE INTO custom_categories (id, custom_name, icon) VALUES (?, ?, ?)`,
-        [id, finalName, finalIcon]
-    );
+        await database.runAsync(
+            `INSERT OR REPLACE INTO custom_categories (id, custom_name, icon) VALUES (?, ?, ?)`,
+            [id, finalName, finalIcon]
+        );
+    } catch (error) {
+        console.error('updateCustomCategory error:', error);
+        throw error;
+    }
 }

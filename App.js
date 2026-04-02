@@ -39,7 +39,7 @@ function AppNavigator() {
   // Check onboarding status
   const checkOnboarding = async () => {
     try {
-      // const hasCompleted = await AsyncStorage.getItem('hasCompletedOnboarding');
+      const hasCompleted = await AsyncStorage.getItem('hasCompletedOnboarding');
       setInitialRoute(hasCompleted === 'true' ? 'Home' : 'Onboarding');
     } catch (e) {
       console.log('Error checking onboarding:', e);

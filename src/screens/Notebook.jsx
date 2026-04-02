@@ -45,11 +45,18 @@ export default function Notebook() {
     const [noteToDelete, setNoteToDelete] = useState(null);
     const [popupAlert, setPopupAlert] = useState(false);
 
+    /**
+     * Handles the delete button click
+     * @param {Object} note - The note to delete
+     */
     const handleDeleteClick = (note) => {
         setNoteToDelete(note);
         setPopup(true);
     };
 
+    /**
+     * Confirms and executes note deletion
+     */
     const confirmDelete = async () => {
         if (noteToDelete) {
             await deleteNote(noteToDelete.id);
@@ -69,6 +76,9 @@ export default function Notebook() {
     const [dateText, setDateText] = useState(initialDate.toLocaleDateString());
     const [showDatePicker, setShowDatePicker] = useState(false);
 
+    /**
+     * Opens modal in "Add" mode
+     */
     const openAddModal = () => {
         setIsEditMode(false);
         setEditId(null);
@@ -80,6 +90,10 @@ export default function Notebook() {
         setModalVisible(true);
     };
 
+    /**
+     * Opens modal in "Edit" mode with pre-filled data
+     * @param {Object} note - Note to edit
+     */
     const openEditModal = (note) => {
         setIsEditMode(true);
         setEditId(note.id);
@@ -126,6 +140,9 @@ export default function Notebook() {
         setDateText(currentDate.toLocaleDateString());
     };
 
+    /**
+     * Renders an individual note card
+     */
     const renderNoteCard = ({ item }) => (
         <View style={[styles.noteCard, { backgroundColor: item.color }]}>
             <View style={styles.cardHeader}>
