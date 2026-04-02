@@ -30,7 +30,7 @@
 
 | Platform | Download Link |
 | :--- | :--- |
-| **Direct APK** | [![Download APK](https://img.shields.io/badge/Download_APK-000000?style=for-the-badge&logo=android&logoColor=green)](#) |
+| **Direct APK** | [![Download APK](https://img.shields.io/badge/Download_APK-000000?style=for-the-badge&logo=android&logoColor=green)](https://expo.dev/artifacts/eas/7f2nUkjBTYFBpRn1LAWWTJ.apk) |
 
 ---
 
