@@ -257,7 +257,7 @@ export default function Home() {
                                     <Text style={{ color: colors.text, marginBottom: 10, marginTop: 20, textAlign: 'center', fontWeight: 'bold' }}>{t('expenseByCat')}</Text>
                                     <PieChartGroup
                                         data={monthlyStats.expenseByCategory || []}
-                                        expense={monthlyStats.expenseByCategoryPercent.map(i => i.percent)}
+                                        expense={monthlyStats.expenseByCategoryPercent.map(i => i.percent.toFixed(1))}
                                     />
                                 </View>
                             </View>

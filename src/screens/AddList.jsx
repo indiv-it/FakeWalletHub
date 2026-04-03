@@ -74,13 +74,9 @@ export default function AddList() {
     // Map edit item type to internal keys
     const mappedType = editItem?.type || 'expense';
 
-    // Map edit item category (could be legacy name or ID)
-    const mappedGroup = editItem?.category 
-        ? resolveCategoryId(editItem.category) 
-        : 'essentials';
-
-    // Map edit item listType (could be legacy name or constant)
-    const mappedAccount = editItem?.listType || LIST_TYPE_CASH;
+    // Map edit item category
+    const mappedGroup = editItem?.category !== undefined ? editItem.category : 'essentials';
+    const mappedAccount = editItem?.listType !== undefined ? editItem.listType : LIST_TYPE_CASH;
 
     const initialDateTime =
         editItem && editItem.date
@@ -132,8 +128,8 @@ export default function AddList() {
             title,
             amount: numericAmount,
             type: listType, // 'income' or 'expense'
-            category: listGroup || 'essentials', // category ID
-            listType: listAccount || LIST_TYPE_CASH, // constant key
+            category: listGroup, // category ID (allows empty)
+            listType: listAccount, // constant key (allows empty)
             date: dateStr,
             created_at: new Date().toISOString(),
         };
@@ -246,7 +242,7 @@ export default function AddList() {
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListAccount(listAccount === LIST_TYPE_BANK ? '' : LIST_TYPE_BANK)}
+                        onPress={() => setListAccount(listAccount === LIST_TYPE_BANK ? 'ไม่ระบุ' : LIST_TYPE_BANK)}
                     />
                     <CustomTypeButton
                         label={t('cash')}
@@ -254,7 +250,7 @@ export default function AddList() {
                         activeColor={colors.accent}
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
-                        onPress={() => setListAccount(listAccount === LIST_TYPE_CASH ? '' : LIST_TYPE_CASH)}
+                        onPress={() => setListAccount(listAccount === LIST_TYPE_CASH ? 'ไม่ระบุ' : LIST_TYPE_CASH)}
                     />
                 </View>
 
@@ -269,7 +265,7 @@ export default function AddList() {
                             activeColor={colors.accent}
                             activeTextColor={colors.background}
                             inactiveTextColor={colors.text}
-                            onPress={() => setListGroup(listGroup === c.id ? '' : c.id)}
+                            onPress={() => setListGroup(listGroup === c.id ? 'ไม่ระบุ' : c.id)}
                         />
                     ))}
                 </View>

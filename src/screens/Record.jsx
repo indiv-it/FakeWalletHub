@@ -404,7 +404,7 @@ export default function Record() {
                             >
                                 <X size={24} color={colors.text} />
                             </TouchableOpacity>
-                            <Text style={[styles.actionModalTitle, { color: colors.text, marginBottom: 15 }]}>{actionItem.title}</Text>
+                            <Text style={[styles.actionModalTitle, { color: colors.text, marginBottom: 15 }]}>{actionItem.title !== 'Untitled' ? actionItem.title : t('anonymous')}</Text>
                             <Text style={[styles.actionModalAmount, { color: actionItem.type === "income" ? colors.accent : colors.red }]}>
                                 {formatAmount(actionItem.amount, actionItem.type)}
                             </Text>
@@ -412,10 +412,10 @@ export default function Record() {
                                 {t('title')} : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.type === "income" ? t('income') : t('expense')}</Text>
                             </Text>
                             <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                                {t('listTypeTitle')} : <Text style={{ fontWeight: FONTS.normal }}>{getListTypeDisplay(actionItem.listType)}</Text>
+                                {t('listTypeTitle')} : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.listType === 'ไม่ระบุ' ? t('notSpecified') : getListTypeDisplay(actionItem.listType)}</Text>
                             </Text>
                             <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                                {t('category')} : <Text style={{ fontWeight: FONTS.normal }}>{getCategoryDisplayName(actionItem.category)}</Text>
+                                {t('category')} : <Text style={{ fontWeight: FONTS.normal }}>{actionItem.category === 'ไม่ระบุ' ? t('notSpecified') : getCategoryDisplayName(actionItem.category)}</Text>
                             </Text>
                             <Text style={[styles.actionModalMeta, { marginTop: 20, fontWeight: FONTS.bold, color: colors.text }]}>
                                 {t('date')} : <Text style={{ fontWeight: FONTS.normal }}>{formatDateByLang(actionItem.date)}</Text>

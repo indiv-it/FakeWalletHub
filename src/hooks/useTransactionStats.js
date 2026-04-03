@@ -105,10 +105,14 @@ export const useTransactionStats = () => {
             percent: totalExpense > 0 ? (item.value / totalExpense) * 100 : 0
         }));
 
+        // ส่วนต่างระหว่างยอดคงเหลือกับหมวดหมู่ทั้งหมด
+        const categoryTotal = Object.values(categoryStats).reduce((acc, stat) => acc + (stat.income - stat.expense), 0);
+        const netProfit = sumMoney - categoryTotal;
+
         return {
             totalIncome,
             totalExpense,
-            netProfit: sumMoney,
+            netProfit,
             balance: sumMoney,
             bank: bankIncome - bankExpense,
             cash: cashIncome - cashExpense,

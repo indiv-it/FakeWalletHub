@@ -182,8 +182,8 @@ export async function insertTransaction(data) {
             title: data.title || 'Untitled',
             amount: data.amount || 0,
             type: data.type || 'expense',
-            category: data.category || 'essentials',
-            listType: data.listType || LIST_TYPE_CASH,
+            category: (data.category !== undefined && data.category !== null) ? data.category : 'essentials',
+            listType: (data.listType !== undefined && data.listType !== null) ? data.listType : LIST_TYPE_CASH,
             date: data.date || new Date().toISOString().split('T')[0],
             created_at: data.created_at || new Date().toISOString(),
         };

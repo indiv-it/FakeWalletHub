@@ -154,6 +154,7 @@ const TRANSLATIONS = {
         github: 'GitHub',
         contact: 'ติดต่อเรา',
         getStarted: 'เริ่มใช้งาน',
+        notSpecified: 'ไม่ระบุ',
     },
     en: {
         // Nav
@@ -267,6 +268,7 @@ const TRANSLATIONS = {
         github: 'GitHub',
         contact: 'Contact Us',
         getStarted: 'Get Started',
+        notSpecified: 'Not Specified',
     },
     zh: {
         // Nav
@@ -380,6 +382,7 @@ const TRANSLATIONS = {
         github: 'GitHub',
         contact: '联系我们',
         getStarted: '开始使用',
+        notSpecified: '未指定',
     },
     ja: {
         // Nav
@@ -493,6 +496,7 @@ const TRANSLATIONS = {
         github: 'GitHub',
         contact: 'お問い合わせ',
         getStarted: '始める',
+        notSpecified: '未指定',
     },
 };
 

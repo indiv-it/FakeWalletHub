@@ -63,7 +63,7 @@ export const CategoryProvider = ({ children }) => {
 
     // Get display name for a category: custom name > translation > id
     const getCategoryDisplayName = (categoryId) => {
-        if (!categoryId) return '';
+        if (!categoryId || categoryId === '') return t('notSpecified');
         
         // If it's a legacy Thai name, resolve to ID first
         const resolvedId = LEGACY_CATEGORY_MAP[categoryId] || categoryId;
@@ -90,7 +90,7 @@ export const CategoryProvider = ({ children }) => {
 
     // Resolve any category identifier (legacy name, translated name, or ID) to its constant ID
     const resolveCategoryId = (categoryNameOrId) => {
-        if (!categoryNameOrId) return 'essentials';
+        if (!categoryNameOrId || categoryNameOrId === '') return '';
         
         // Already an ID?
         if (CATEGORY_IDS.includes(categoryNameOrId)) {
