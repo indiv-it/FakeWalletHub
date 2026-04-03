@@ -4,7 +4,11 @@
 
 | Platform | Download Link |
 | :--- | :--- |
+<<<<<<< HEAD
 | **Direct APK** | [![Download APK (V1.0.0)](https://img.shields.io/badge/Download_APK_(V1.0.0)-000000?style=for-the-badge&logo=android&logoColor=green)](https://expo.dev/artifacts/eas/nnaUnGPbvydW177PxUuKT4.apk) |
+=======
+| **Direct APK** | [![Download APK (V1.0.1)](https://img.shields.io/badge/Download_APK_(V1.0.1)-000000?style=for-the-badge&logo=android&logoColor=green)](https://expo.dev/artifacts/eas/v3jdSVdG1qzWeTQWgTmrfD.apk) |
+>>>>>>> 97d7b1e (Update README)
 
 ---
 
@@ -35,6 +39,7 @@
 ---
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 ## 📲 Download the App
 
@@ -45,6 +50,8 @@
 ---
 
 >>>>>>> 9aad713 (Update Record)
+=======
+>>>>>>> 97d7b1e (Update README)
 ## ⚙️ Installation (For Developers)
 
 To run this project locally, follow these steps:
