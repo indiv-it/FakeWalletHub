@@ -11,18 +11,23 @@ import {
 import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { BlurView } from 'expo-blur';
+
+// --- Icons ---
 import { FileEdit, Trash2, ListPlus, X } from 'lucide-react-native';
+
+// --- Theme & Context ---
 import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
-
-
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useNote } from '../context/NoteContext';
+
+// --- Components ---
 import Footer from '../components/Footer';
 import ConfirmPopup from '../components/ConfirmPopup';
-import { useNote } from '../context/NoteContext';
-import { useLanguage } from '../context/LanguageContext';
 import AlertPopup from '../components/AlertPopup';
 
+// --- Constants ---
 const NOTE_COLORS = [
     '#FCA5A5', // Red
     '#FCD34D', // Yellow
@@ -32,53 +37,40 @@ const NOTE_COLORS = [
     '#F9A8D4', // Pink
 ];
 
+/**
+* Notebook Screen Component
+* Displays a grid/list of notes, and allows users to add, edit, or delete notes.
+*/
 export default function Notebook() {
+    // --- Contexts ---
     const { colors } = useTheme();
     const { notes, addNote, editNote, deleteNote, isLoading } = useNote();
     const { t } = useLanguage();
 
-    // Modal state
+    // --- State: Modal & Popups ---
     const [modalVisible, setModalVisible] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editId, setEditId] = useState(null);
-    const [popup, setPopup] = useState(false);
+    const [popup, setPopup] = useState(false); // Delete confirmation popup
+    const [popupAlert, setPopupAlert] = useState(false); // Validation error popup
     const [noteToDelete, setNoteToDelete] = useState(null);
-    const [popupAlert, setPopupAlert] = useState(false);
 
-    /**
-     * Handles the delete button click
-     * @param {Object} note - The note to delete
-     */
-    const handleDeleteClick = (note) => {
-        setNoteToDelete(note);
-        setPopup(true);
-    };
-
-    /**
-     * Confirms and executes note deletion
-     */
-    const confirmDelete = async () => {
-        if (noteToDelete) {
-            await deleteNote(noteToDelete.id);
-            setPopup(false);
-            setNoteToDelete(null);
-        }
-    };
-
-    // Form state
+    // --- State: Form Inputs ---
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [noteColor, setNoteColor] = useState(NOTE_COLORS[1]);
 
-    // Date state
+    // --- State: Date Picker ---
     const initialDate = new Date();
     const [dateTime, setDateTime] = useState(initialDate);
     const [dateText, setDateText] = useState(initialDate.toLocaleDateString());
     const [showDatePicker, setShowDatePicker] = useState(false);
 
+    // --- Handlers: Modal Actions ---
+
     /**
-     * Opens modal in "Add" mode
-     */
+    * Opens modal in "Add" mode
+    */
     const openAddModal = () => {
         setIsEditMode(false);
         setEditId(null);
@@ -91,9 +83,9 @@ export default function Notebook() {
     };
 
     /**
-     * Opens modal in "Edit" mode with pre-filled data
-     * @param {Object} note - Note to edit
-     */
+    * Opens modal in "Edit" mode with pre-filled data
+    * @param {Object} note - Note to edit
+    */
     const openEditModal = (note) => {
         setIsEditMode(true);
         setEditId(note.id);
@@ -108,13 +100,19 @@ export default function Notebook() {
         setModalVisible(true);
     };
 
+    /**
+    * Handles saving the note (add or edit)
+    */
     const handleSave = async () => {
         if (!title.trim()) {
             setPopupAlert(true);
             return;
         }
 
-        const dateStr = `${dateTime.getFullYear()}-${String(dateTime.getMonth() + 1).padStart(2, '0')}-${String(dateTime.getDate()).padStart(2, '0')}`;
+        const dateStr = `${
+            dateTime.getFullYear()}-${
+                String(dateTime.getMonth() + 1).padStart(2, '0')}-${
+                String(dateTime.getDate()).padStart(2, '0')}`;
 
         const noteData = {
             title,
@@ -133,20 +131,48 @@ export default function Notebook() {
         setModalVisible(false);
     };
 
-    const onDateChange = (event, selectedDate) => {
+    // --- Handlers: Delete Actions ---
+    /**
+    * Handles the delete button click, opening the confirmation popup
+    * @param {Object} note - The note to delete
+    */
+    const handleDeleteClick = (note) => {
+        setNoteToDelete(note);
+        setPopup(true);
+    };
+
+    /**
+    * Confirms and executes note deletion
+    */
+    const confirmDelete = async () => {
+        if (noteToDelete) {
+            await deleteNote(noteToDelete.id);
+            setPopup(false);
+            setNoteToDelete(null);
+        }
+    };
+
+    // --- Handlers: Date Picker ---
+    const onDateChange = (selectedDate) => {
         const currentDate = selectedDate || dateTime;
         setShowDatePicker(Platform.OS === 'ios');
         setDateTime(currentDate);
         setDateText(currentDate.toLocaleDateString());
     };
 
+    // --- Renderers ---
     /**
-     * Renders an individual note card
-     */
+    * Renders an individual note card
+    */
     const renderNoteCard = ({ item }) => (
         <View style={[styles.noteCard, { backgroundColor: item.color }]}>
+            {/* Header: Title and Actions */}
             <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                    {item.title}
+                </Text>
+
+                {/* Actions: Edit and Delete */}
                 <View style={styles.cardActions}>
                     <TouchableOpacity onPress={() => openEditModal(item)} style={styles.actionBtn}>
                         <FileEdit size={20} color="#1F2937" />
@@ -157,18 +183,27 @@ export default function Notebook() {
                 </View>
             </View>
 
-            <Text style={styles.cardDate}>{item.date}</Text>
-
+            {/* Content: Date and Details */}
+            <Text style={styles.cardDate}>
+                {item.date}
+            </Text>
             {item.content ? (
-                <Text style={styles.cardContent} numberOfLines={3}>{item.content}</Text>
+                <Text style={styles.cardContent} numberOfLines={3}>
+                    {item.content}
+                </Text>
             ) : null}
         </View>
     );
 
+    // --- Render Main screen ---
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <Text style={[styles.textHeader, { color: colors.text }]}>{t('notebook')}</Text>
+            {/* Header Component */}
+            <Text style={[styles.textHeader, { color: colors.text }]}>
+                {t('notebook')}
+            </Text>
 
+            {/* List of Notes */}
             <FlatList
                 data={notes}
                 keyExtractor={(item) => item.id.toString()}
@@ -178,7 +213,9 @@ export default function Notebook() {
                 ListEmptyComponent={
                     !isLoading && (
                         <View style={styles.emptyContainer}>
-                            <Text style={[styles.emptyText, { color: colors.gray }]}>{t('noNote')}</Text>
+                            <Text style={[styles.emptyText, { color: colors.gray }]}>
+                                {t('noNote')}
+                            </Text>
                         </View>
                     )
                 }
@@ -197,58 +234,81 @@ export default function Notebook() {
             <View style={{ height: 80 }} />
             <Footer />
 
-            {/* Add / Edit Modal */}
+            {/* Add / Edit Note Modal */}
             <Modal
                 visible={modalVisible}
                 animationType="slide"
                 transparent={true}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <BlurView intensity={30} tint="dark" style={styles.modalOverlay}>
+                <BlurView 
+                    intensity={30} 
+                    tint="dark" 
+                    style={styles.modalOverlay}
+                >
                     <View style={[styles.modalContent, { backgroundColor: colors.cardBg }]}>
+                        {/* Modal Header */}
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: colors.text }]}>
-                                {isEditMode ? t('editNote') : t('addNote')}
+                                {isEditMode 
+                                    ? t('editNote') 
+                                    : t('addNote')
+                                }
                             </Text>
+
+                            {/* Close Button */}
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
                                 <X size={24} color={colors.text} />
                             </TouchableOpacity>
                         </View>
 
-                        {/* Form Fields */}
-                        <Text style={[styles.inputLabel, { color: colors.text }]}>{t('noteTitle')}</Text>
+                        {/* Modal Form Fields */}
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>
+                            {t('noteTitle')}
+                        </Text>
                         <TextInput
-                            style={[styles.textInput, { color: colors.text, backgroundColor: colors.background }]}
                             placeholder={t('noteTitlePlaceholder')}
                             placeholderTextColor={colors.gray}
                             value={title}
                             onChangeText={setTitle}
+                            style={[styles.textInput, {
+                                color: colors.text, 
+                                backgroundColor: colors.background 
+                            }]}
                         />
 
-                        <Text style={[styles.inputLabel, { color: colors.text }]}>{t('noteDetail')}</Text>
+                        {/* Content Input */}
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>
+                            {t('noteDetail')}
+                        </Text>
                         <TextInput
-                            style={[
-                                styles.textInput,
-                                styles.textArea,
-                                { color: colors.text, backgroundColor: colors.background }
-                            ]}
                             placeholder={t('noteDetailPlaceholder')}
                             placeholderTextColor={colors.gray}
                             value={content}
                             onChangeText={setContent}
                             multiline
                             textAlignVertical="top"
+                            style={[
+                                styles.textInput,
+                                styles.textArea,
+                                { color: colors.text, backgroundColor: colors.background }
+                            ]}
                         />
 
-                        {/* Date Picker */}
-                        <Text style={[styles.inputLabel, { color: colors.text }]}>{t('date')}</Text>
+                        {/* Date Picker Form */}
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>
+                            {t('date')}
+                        </Text>
                         <TouchableOpacity
                             onPress={() => setShowDatePicker(true)}
                             style={[styles.dateButton, { backgroundColor: colors.background }]}
                         >
-                            <Text style={[styles.dateText, { color: colors.text }]}>{dateText}</Text>
+                            <Text style={[styles.dateText, { color: colors.text }]}>
+                                {dateText}
+                            </Text>
                         </TouchableOpacity>
 
+                        {/* Date Picker */}
                         {showDatePicker && (
                             <DateTimePicker
                                 value={dateTime}
@@ -258,8 +318,10 @@ export default function Notebook() {
                             />
                         )}
 
-                        {/* Color Picker */}
-                        <Text style={[styles.inputLabel, { color: colors.text }]}>{t('noteColor')}</Text>
+                        {/* Color Picker Form */}
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>
+                            {t('noteColor')}
+                        </Text>
                         <View style={styles.colorPalette}>
                             {NOTE_COLORS.map((color) => (
                                 <TouchableOpacity
@@ -274,21 +336,24 @@ export default function Notebook() {
                             ))}
                         </View>
 
-                        {/* Save Button */}
+                        {/* Save Action Button */}
                         <TouchableOpacity
                             style={[styles.saveBtn, { backgroundColor: colors.accent }]}
                             onPress={handleSave}
                         >
                             <Text style={[styles.saveBtnText, { color: colors.background }]}>
-                                {isEditMode ? t('saveEdit') : t('save')}
+                                {isEditMode 
+                                    ? t('saveEdit') 
+                                    : t('save')
+                                }
                             </Text>
                         </TouchableOpacity>
                     </View>
                 </BlurView>
             </Modal>
 
-            {/* Confirm Delete Popup */}
-            <ConfirmPopup 
+            {/* Shared Popup Modals */}
+            <ConfirmPopup
                 visible={popup}
                 onCancel={() => {
                     setPopup(false);
@@ -297,11 +362,12 @@ export default function Notebook() {
                 onConfirm={confirmDelete}
             />
 
+            {/* Alert Popup */}
             <AlertPopup
                 visible={popupAlert}
                 title={t('noteAlert')}
                 description={t('noteAlertDesc')}
-                onClose={() => {setPopupAlert(false)}}
+                onClose={() => { setPopupAlert(false) }}
                 buttonText={t('ok')}
                 type="warning"
             />
@@ -309,6 +375,7 @@ export default function Notebook() {
     );
 }
 
+// --- Styles ---
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -391,7 +458,7 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: moderateScale(24),
         borderTopRightRadius: moderateScale(24),
         padding: horizontalScale(24),
-        paddingBottom: Platform.OS === 'ios' ? verticalScale(40) : verticalScale(24),
+        paddingBottom: Platform.OS === 'ios' ? verticalScale(25) : verticalScale(55),
     },
     modalHeader: {
         flexDirection: 'row',
@@ -442,9 +509,11 @@ const styles = StyleSheet.create({
         width: horizontalScale(40),
         height: horizontalScale(40),
         borderRadius: moderateScale(20),
+        borderWidth: 5,
+        borderColor: '#111827',
     },
     colorCircleSelected: {
-        borderWidth: 3,
+        borderWidth: 0,
         borderColor: '#111827',
     },
     saveBtn: {

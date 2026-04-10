@@ -16,7 +16,7 @@ import {
 import { BlurView } from 'expo-blur';
 import { horizontalScale, verticalScale, moderateScale } from "../utils/responsive";
 
-// components
+// --- Theme & Components ---
 import { useTheme } from '../context/ThemeContext';
 import { usePopup } from "../context/PopupContext";
 import { useLanguage, LANGUAGES } from "../context/LanguageContext";
@@ -24,7 +24,7 @@ import { useCurrency, CURRENCIES } from "../context/CurrencyContext";
 import { useCategory } from "../context/CategoryContext";
 import { CARD_SHADOW } from "../style/Theme";
 
-// icons
+// --- Icons ---
 import {
     Sun,
     Moon,
@@ -52,6 +52,7 @@ import {
     GraduationCap,
 } from 'lucide-react-native';
 
+// --- Constants ---
 const AVAILABLE_ICONS = [
     { name: 'ShoppingCart', Icon: ShoppingCart },
     { name: 'ShoppingBag', Icon: ShoppingBag },
@@ -70,7 +71,9 @@ const AVAILABLE_ICONS = [
     { name: 'GraduationCap', Icon: GraduationCap },
 ];
 
-// Map icon name to component for easy rendering
+/**
+ * Map icon name to component for easy rendering
+ */
 export const getIconComponent = (name, size, color) => {
     const iconObj = AVAILABLE_ICONS.find(i => i.name === name);
     if (iconObj) {
@@ -80,29 +83,40 @@ export const getIconComponent = (name, size, color) => {
     return null;
 };
 
-// Nav Component
+/**
+ * Nav Component
+ * The top navigation bar, featuring dropdown menus for theme, language,
+ * currency settings, as well as category customization modals.
+ */
 export default function Nav() {
+    // --- Context Hooks ---
     const { colors, toggleTheme, isDarkMode } = useTheme();
     const { openPopup } = usePopup();
     const { currentLang, changeLanguage, t, languages } = useLanguage();
     const { currentCurrency, changeCurrency } = useCurrency();
     const { categories, editCategory, editCategoryIcon } = useCategory();
 
+    // --- State: Menus ---
     const [menuOpen, setMenuOpen] = useState(false);
     const [langMenuOpen, setLangMenuOpen] = useState(false);
     const [curMenuOpen, setCurMenuOpen] = useState(false);
+
+    // --- State: Category Modal ---
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [selectedIcon, setSelectedIcon] = useState(null);
 
-    // Animations
+    // --- Animation Refs ---
     const menuAnim = useRef(new Animated.Value(0)).current;
     const langMenuAnim = useRef(new Animated.Value(0)).current;
     const curMenuAnim = useRef(new Animated.Value(0)).current;
     const rotateAnim = useRef(new Animated.Value(0)).current;
 
-    // Toggle dropdown menu
+    // --- Handlers: Dropdowns ---
+    /**
+     * Toggles the main dropdown menu open or closed
+     */
     const toggleMenu = () => {
         const next = !menuOpen;
         setMenuOpen(next);
@@ -149,6 +163,9 @@ export default function Nav() {
         }
     };
 
+    /**
+     * Toggles the secondary Language dropdown
+     */
     const toggleLangMenu = () => {
         const next = !langMenuOpen;
         setLangMenuOpen(next);
@@ -161,7 +178,9 @@ export default function Nav() {
         }).start();
     };
 
-    // Toggle currency menu
+    /**
+     * Toggles the secondary Currency dropdown
+     */
     const toggleCurMenu = () => {
         const next = !curMenuOpen;
         setCurMenuOpen(next);
@@ -174,7 +193,9 @@ export default function Nav() {
         }).start();
     };
 
-    // Close menu
+    /**
+     * Closes the main and secondary menus
+     */
     const closeMenu = () => {
         setMenuOpen(false);
         setLangMenuOpen(false);
@@ -204,19 +225,27 @@ export default function Nav() {
         ]).start();
     };
 
-    // Handle language selection
+    // --- Handlers: General Settings ---
+    /**
+     * Handle language selection
+     */
     const handleLangSelect = (langCode) => {
         changeLanguage(langCode);
         closeMenu();
     };
 
-    // Handle currency selection
+    /**
+     * Handle currency selection
+     */
     const handleCurSelect = (curCode) => {
         changeCurrency(curCode);
         closeMenu();
     };
 
-    // Handle editing category
+    // --- Handlers: Category Editor ---
+    /**
+     * Handle saving changes to a category group
+     */
     const handleSaveCategory = async () => {
         if (editingCategory) {
             if (newCategoryName.trim()) {
@@ -225,6 +254,7 @@ export default function Nav() {
             if (selectedIcon) {
                 await editCategoryIcon(editingCategory.id, selectedIcon);
             }
+            // Reset to defaults
             setEditingCategory(null);
             setNewCategoryName('');
             setSelectedIcon(null);
@@ -232,7 +262,7 @@ export default function Nav() {
         }
     };
 
-    // Menu animation
+    // --- Interpolated Animations Computations ---
     const menuScale = menuAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [0.9, 1],
@@ -286,7 +316,11 @@ export default function Nav() {
         outputRange: ['0deg', '180deg'],
     });
 
-    // Menu item component with stagger animation
+    // --- Sub-Components ---
+    
+    /**
+     * Menu item component with stagger animation
+     */
     const MenuItem = ({ icon, label, onPress, rightContent, isLast, index }) => {
         const itemAnim = useRef(new Animated.Value(0)).current;
 
@@ -663,6 +697,7 @@ export default function Nav() {
     );
 }
 
+// --- Styles ---
 const styles = StyleSheet.create({
     nav: {
         flexDirection: "row",

@@ -104,11 +104,11 @@ export async function initDatabase() {
                     icon TEXT
                 );
             `);
-            
+
             // Run migrations
             await migrateTransactionData(database);
             await migrateCategoryIcons(database);
-            
+
             console.log('Database initialized successfully');
         } catch (error) {
             console.error('Database initialization failed:', error);
@@ -177,7 +177,6 @@ export async function insertTransaction(data) {
     try {
         await initDatabase();
         const database = await getDatabase();
-
         const transactionData = {
             title: data.title || 'Untitled',
             amount: data.amount || 0,

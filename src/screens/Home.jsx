@@ -12,7 +12,7 @@ import { useState, useMemo } from "react";
 import { BlurView } from 'expo-blur';
 import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
 
-// components
+// --- Theme & Components ---
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { usePopup } from '../context/PopupContext';
@@ -23,27 +23,52 @@ import Nav, { getIconComponent } from '../components/Nav';
 import Footer from '../components/Footer';
 import PieChartComponent from '../components/pieChart';
 import PieChartGroup from '../components/pieChartGroup';
-import { Mail, Github, Heart, Archive, Landmark, Banknote, X, Settings } from 'lucide-react-native';
 
-// hooks
+// --- Icons ---
+import {
+    Mail,
+    Github,
+    Heart,
+    Archive,
+    Landmark,
+    Banknote,
+    X,
+    Settings
+} from 'lucide-react-native';
+
+// --- Hooks ---
 import { useTransactionStats } from '../hooks/useTransactionStats';
 
+/**
+ * Home Screen Component
+ * The main dashboard displaying high-level transaction statistics, 
+ * category balances, and providing access to navigation and popups.
+ */
 export default function Home() {
-    const { colors } = useTheme();
-    const { t, formatMonthYear } = useLanguage();
-    const { formatMoney } = useCurrency();
-    const { getCategoryDisplayName, CATEGORY_IDS, getCategoryIconName } = useCategory();
-    const [popupMoney, setPopupMoney] = useState(null);
-    const [popupGroup, setPopupGroup] = useState(null); // stores category ID
-    const { isOpen, closePopup } = usePopup();
+    // --- Context Hooks ---
+    const { colors } = useTheme(); 
+    const { isOpen, closePopup } = usePopup(); 
+    const { t, formatMonthYear } = useLanguage(); 
+    const { formatMoney } = useCurrency(); 
 
+    // --- Local State ---
+    const [popupMoney, setPopupMoney] = useState(null); // Toggles general income/expense popup
+    const [popupGroup, setPopupGroup] = useState(null); // Stores the active category ID for group popup
+
+    // --- Category & Stats Hooks ---
+    const { getCategoryDisplayName, CATEGORY_IDS, getCategoryIconName } = useCategory();
     const { allTimeStats, monthlyStats } = useTransactionStats();
 
+    // --- Helpers & Computations ---
     const fmt = (n) => formatMoney(n);
 
+    // URL contacts in about section
     const GITHUB_URL = 'https://github.com/indiv-it/FakeWalletHub';
     const CONTACT_EMAIL = 'indiv.company@gmail.com';
 
+    /**
+     * Prepare display categories mapping IDs to their display data
+     */
     const displayCategories = useMemo(() => CATEGORY_IDS.map((catId) => {
         const iconName = getCategoryIconName(catId);
         return {
@@ -53,25 +78,49 @@ export default function Home() {
         };
     }), [CATEGORY_IDS, getCategoryDisplayName, getCategoryIconName, colors.background]);
 
-    // Render a card for each category
+    /**
+     * Calculate category balance (income - expense)
+     */
+    const getCategoryBalance = (stats, catId) => {
+        const income = stats?.[catId]?.income || 0;
+        const expense = stats?.[catId]?.expense || 0;
+        return income - expense;
+    };
+
+    // --- Sub-Components ---
+
+    /**
+     * Renders a category card in the list showing balance and a miniature pie chart
+     */
     const CategoryCard = ({ catId, icon }) => {
         const displayName = getCategoryDisplayName(catId);
+        const balance = getCategoryBalance(allTimeStats.categoryStats, catId);
         const isLast = catId === CATEGORY_IDS[CATEGORY_IDS.length - 1];
         return (
             <TouchableOpacity
-                style={[styles.list, { borderBottomColor: colors.border, borderBottomWidth: isLast ? 0 : 1 }]}
                 onPress={() => setPopupGroup(catId)}
+                style={[styles.list, {
+                    borderBottomColor: colors.border,
+                    borderBottomWidth: isLast ? 0 : 1
+                }]}
             >
+                {/* Icon Wrapper */}
                 <View style={[styles.cardIcon, { backgroundColor: colors.accent }]}>
                     {icon}
                 </View>
 
+                {/* Category Name and Balance */}
                 <View>
-                    <Text style={[styles.cardText, { color: colors.text }]}>{displayName}</Text>
-                    <Text style={[styles.cardTextMoney, { color: colors.accent }]}>{fmt((allTimeStats.categoryStats[catId]?.income || 0) - (allTimeStats.categoryStats[catId]?.expense || 0))}</Text>
+                    <Text style={{ color: colors.text, fontSize: SIZES.sm, fontWeight: FONTS.normal }}>
+                        {displayName}
+                    </Text>
+                    <Text style={{ color: colors.accent, fontSize: SIZES.base, fontWeight: FONTS.bold }}>
+                        {fmt(balance)}
+                    </Text>
                 </View>
 
-                <View style={styles.cardPie}>
+                {/* Miniature Pie Chart for Income vs Expense */}
+                <View style={{ flex: 1, alignItems: "flex-end" }}>
                     <PieChartComponent
                         income={allTimeStats.categoryStats[catId]?.income || 0}
                         expense={allTimeStats.categoryStats[catId]?.expense || 0}
@@ -84,26 +133,37 @@ export default function Home() {
         );
     };
 
-
-    // Category detail popup
+    /**
+     * Popup displaying detailed monthly statistics for a specific category
+     */
     const GroupPopup = ({ catId }) => {
         const displayName = getCategoryDisplayName(catId);
         return (
             <View style={[styles.popupMoney, { backgroundColor: colors.cardBg }]}>
+                {/* close button */}
                 <X
                     onPress={() => setPopupGroup(null)}
                     size={24}
                     color={colors.text}
-                    style={{ position: "absolute", right: 15, top: 15, zIndex: 100 }}
+                    style={{ 
+                        position: "absolute", 
+                        right: 15, 
+                        top: 15, 
+                        zIndex: 100 
+                    }}
                 />
 
-                <View style={{ flex: 1, justifyContent: "center", marginTop: 20 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                        <Text style={[styles.textHeader, { color: colors.accent }]}>{displayName}</Text>
-                    </View>
-                </View>
+                {/* category name */}
+                <Text style={{ color: colors.accent, fontSize: SIZES.xl, fontWeight: FONTS.bold }}>
+                    {displayName}
+                </Text>
 
-                <Text style={[styles.textSmInPopup, { color: colors.text, marginVertical: 20 }]}>{t('monthlyData')} : {formatMonthYear()}</Text>
+                {/* month year */}
+                <Text style={{ color: colors.text, marginTop: 10, marginBottom: 20, fontSize: SIZES.xs, fontWeight: FONTS.normal }}>
+                    {t('monthlyData')} : {formatMonthYear()}
+                </Text>
+
+                {/* income chart */}
                 <ChartIncomeExpense
                     title={t('income')}
                     money={monthlyStats.categoryStats[catId]?.income || 0}
@@ -114,6 +174,7 @@ export default function Home() {
                     background={colors.accent}
                 />
 
+                {/* expense chart */}
                 <ChartIncomeExpense
                     title={t('expense')}
                     money={monthlyStats.categoryStats[catId]?.expense || 0}
@@ -124,11 +185,18 @@ export default function Home() {
                     background={colors.red}
                 />
 
-                <View style={{ borderLeftWidth: 3, borderLeftColor: colors.text, flexDirection: "row", justifyContent: "space-between", alignItems: 'center', paddingLeft: 10, marginVertical: 20 }}>
+                <View style={[styles.pieChartContainer, { borderLeftColor: colors.text }]}>
+                    {/* total ratio text */}
                     <View>
-                        <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold' }}>{t('totalRatio')}</Text>
-                        <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>{monthlyStats.categoryPercent[catId]?.toFixed(1) || 0}%</Text>
+                        <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold' }}>
+                            {t('totalRatio')}
+                        </Text>
+                        <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>
+                            {monthlyStats.categoryPercent[catId]?.toFixed(1) || 0}%
+                        </Text>
                     </View>
+
+                    {/* Overall Ratio Pie Chart */}
                     <PieChartComponent
                         income={monthlyStats.categoryPercent[catId] || 0}
                         expense={100 - (monthlyStats.categoryPercent[catId] || 0)}
@@ -141,15 +209,43 @@ export default function Home() {
         );
     };
 
-    // Income vs Expense chart component
+    /**
+     * Reusable row component for displaying a specific chart alongside its stats
+     */
     const ChartIncomeExpense = ({ title, money, color, income, expense, percent, background }) => {
         return (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <View style={{ borderLeftWidth: 3, borderLeftColor: title === t('income') ? colors.accent : colors.red, paddingLeft: 10 }}>
-                    <Text style={{ color: title === t('income') ? colors.accent : colors.red, fontSize: 16, fontWeight: 'bold' }}>{title}</Text>
-                    <Text style={{ color: title === t('income') ? colors.accent : colors.red, fontSize: 18, fontWeight: 'bold' }}>{fmt(money)}</Text>
-                    <Text style={{ color: colors.gray, fontSize: 14 }}>{percent}%</Text>
+            <View style={{ 
+                flexDirection: 'row', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                marginBottom: 20 
+            }}>
+                {/* title and money */}
+                <View style={{ 
+                    borderLeftWidth: 3, 
+                    paddingLeft: 10,
+                    borderLeftColor: title === t('income') 
+                        ? colors.accent 
+                        : colors.red
+                }}>
+
+                    {/* title */}
+                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: title === t('income') ? colors.accent : colors.red }}>
+                        {title}
+                    </Text>
+
+                    {/* money */}
+                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: title === t('income') ? colors.accent : colors.red }}>
+                        {fmt(money)}
+                    </Text>
+
+                    {/* percent */}
+                    <Text style={{ color: colors.gray, fontSize: 14 }}>
+                        {percent}%
+                    </Text>
                 </View>
+
+                {/* pie chart */}
                 <PieChartComponent
                     income={income}
                     expense={expense}
@@ -161,29 +257,65 @@ export default function Home() {
         );
     };
 
-
+    // --- Main Rendering ---
     return (
-        <View style={[styles.containerBody, { backgroundColor: colors.background }]}>
+        <View style={{ 
+            backgroundColor: colors.background, 
+            padding: horizontalScale(20),
+            flex: 1
+        }}>
+            {/* Top Navigation Component */}
             <Nav />
 
-            {/* card */}
-            <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+            {/* Top Stat Summary Card */}
+            <View style={[styles.card, { 
+                backgroundColor: colors.cardBg, 
+                borderColor: colors.border 
+            }]}>
                 <View>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                    {/* bank */}
+                    <View style={{ 
+                        flexDirection: "row", 
+                        alignItems: "center", 
+                        gap: 10 
+                    }}>
                         <Landmark size={14} color={colors.text} />
-                        <Text style={[styles.text, { color: colors.text }]}>{fmt(allTimeStats.bank)}</Text>
+                        <Text style={{ color: colors.text, fontSize: SIZES.sm, fontWeight: FONTS.normal }}>
+                            {fmt(allTimeStats.bank)}
+                        </Text>
                     </View>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+
+                    {/* cash */}
+                    <View style={{ 
+                        flexDirection: "row", 
+                        alignItems: "center", 
+                        gap: 10 
+                    }}>
                         <Banknote size={14} color={colors.text} />
-                        <Text style={[styles.text, { color: colors.text }]}>{fmt(allTimeStats.cash)}</Text>
+                        <Text style={{ color: colors.text, fontSize: SIZES.sm, fontWeight: FONTS.normal }}>
+                            {fmt(allTimeStats.cash)}
+                        </Text>
                     </View>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+
+                    {/* net profit */}
+                    <View style={{ 
+                        flexDirection: "row", 
+                        alignItems: "center", 
+                        gap: 10 
+                    }}>
                         <Archive size={14} color={colors.text} />
-                        <Text style={[styles.text, { color: colors.text }]}>{fmt(allTimeStats.netProfit)}</Text>
+                        <Text style={{ color: colors.text, fontSize: SIZES.sm, fontWeight: FONTS.normal }}>
+                            {fmt(allTimeStats.netProfit)}
+                        </Text>
                     </View>
-                    <Text style={[styles.textHeader, { color: colors.accent }]}>{fmt(allTimeStats.balance)}</Text>
+
+                    {/* total balance */}
+                    <Text style={{ color: colors.accent, fontSize: SIZES.xl, fontWeight: FONTS.bold }}>
+                        {fmt(allTimeStats.balance)}
+                    </Text>
                 </View>
 
+                {/* pie chart income/expense */}
                 <PieChartComponent
                     income={allTimeStats.totalIncome}
                     expense={allTimeStats.totalExpense}
@@ -194,9 +326,11 @@ export default function Home() {
                 />
             </View>
 
-
-            {/* list */}
-            <View style={[styles.cardList, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+            {/* list group */}
+            <View style={[styles.cardList, { 
+                backgroundColor: colors.cardBg, 
+                borderColor: colors.border 
+            }]}>
                 <FlatList
                     data={displayCategories}
                     scrollEnabled={false}
@@ -210,9 +344,10 @@ export default function Home() {
                 />
             </View>
 
+            {/* footer */}
             <Footer />
 
-            {/* popup รายรับ-รายจ่าย */}
+            {/* popup expense & income */}
             {popupMoney && (
                 <Modal
                     animationType="fade"
@@ -220,22 +355,46 @@ export default function Home() {
                     visible={!!popupMoney}
                     onRequestClose={() => setPopupMoney(null)}
                 >
-                    <BlurView intensity={30} tint="dark" style={styles.popupContainer}>
+                    <BlurView 
+                        intensity={5} 
+                        tint="dark" 
+                        style={styles.popupContainer}
+                    >
+
+                        {/* overlay */}
                         <TouchableOpacity
-                            style={styles.popupshadow}
+                            style={styles.popupShadow}
                             activeOpacity={1}
                             onPress={() => setPopupMoney(null)}
                         >
-                            <View style={[styles.popupMoney, { backgroundColor: colors.cardBg, transform: [{ translateX: -horizontalScale(150) }, { translateY: -verticalScale(280) }] }]}>
+                            <View style={[styles.popupMoney, { 
+                                backgroundColor: colors.cardBg, 
+                                transform: [
+                                    { translateX: -horizontalScale(150) }, 
+                                    { translateY: -verticalScale(280) } 
+                                ] 
+                            }]}>
+
+                                {/* close button */}
                                 <X
                                     onPress={() => setPopupMoney(null)}
-                                    size={24}
                                     color={colors.text}
-                                    style={{ position: "absolute", right: 15, top: 15, zIndex: 100 }}
+                                    size={24}
+                                    style={{ 
+                                        position: "absolute", 
+                                        right: 15, 
+                                        top: 15, 
+                                        zIndex: 100 
+                                    }}
                                 />
 
                                 <View>
-                                    <Text style={[styles.textSmInPopup, { color: colors.text, marginBottom: 20 }]}>{t('monthlyData')} : {formatMonthYear()}</Text>
+                                    {/* month year */}
+                                    <Text style={{ color: colors.text, marginBottom: 20, fontSize: SIZES.xs, fontWeight: FONTS.normal }}>
+                                        {t('monthlyData')} : {formatMonthYear()}
+                                    </Text>
+
+                                    {/* income chart */}
                                     <ChartIncomeExpense
                                         title={t('income')}
                                         money={monthlyStats.totalIncome || 0}
@@ -245,6 +404,8 @@ export default function Home() {
                                         percent={monthlyStats.incomePercent.toFixed(1)}
                                         background={colors.accent}
                                     />
+
+                                    {/* expense chart */}
                                     <ChartIncomeExpense
                                         title={t('expense')}
                                         money={monthlyStats.totalExpense || 0}
@@ -254,7 +415,13 @@ export default function Home() {
                                         percent={monthlyStats.expensePercent.toFixed(1)}
                                         background={colors.red}
                                     />
-                                    <Text style={{ color: colors.text, marginBottom: 10, marginTop: 20, textAlign: 'center', fontWeight: 'bold' }}>{t('expenseByCat')}</Text>
+
+                                    {/* expense text by category */}
+                                    <Text style={{ color: colors.text,marginBottom: 10,marginTop: 20,textAlign: 'center',fontWeight: 'bold' }}>
+                                        {t('expenseByCat')}
+                                    </Text>
+
+                                    {/* pie chart group */}
                                     <PieChartGroup
                                         data={monthlyStats.expenseByCategory || []}
                                         expense={monthlyStats.expenseByCategoryPercent.map(i => i.percent.toFixed(1))}
@@ -273,9 +440,13 @@ export default function Home() {
                     animationType="fade"
                     onRequestClose={() => setPopupGroup(null)}
                 >
-                    <BlurView intensity={30} tint="dark" style={styles.popupContainer}>
+                    <BlurView 
+                        intensity={5} 
+                        tint="dark" 
+                        style={styles.popupContainer}
+                    >
                         <TouchableOpacity
-                            style={styles.popupshadow}
+                            style={styles.popupShadow}
                             activeOpacity={1}
                             onPress={() => setPopupGroup(null)}
                         >
@@ -286,75 +457,149 @@ export default function Home() {
             )}
 
             {/* popup About */}
-            <Modal visible={isOpen} transparent animationType="fade" onRequestClose={closePopup}>
-                <BlurView intensity={30} tint="dark" style={styles.popupContainer}>
+            <Modal
+                visible={isOpen} 
+                transparent 
+                animationType="fade" 
+                onRequestClose={closePopup}
+            >
+                <BlurView 
+                    intensity={5} 
+                    tint="dark" 
+                    style={styles.popupContainer}
+                >
                     <View style={dialogStyles.overlay}>
+                        {/* overlay */}
                         <TouchableOpacity
-                            style={dialogStyles.backdrop}
+                            style={{ ...StyleSheet.absoluteFillObject }}
                             activeOpacity={1}
                             onPress={closePopup}
                         />
-                        <View style={[dialogStyles.card, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+                        <View style={[dialogStyles.card, { 
+                            backgroundColor: colors.cardBg, 
+                            borderColor: colors.border 
+                        }]}>
+
+                            {/* close button */}
                             <X
                                 onPress={closePopup}
                                 size={24}
                                 color={colors.text}
-                                style={{ position: "absolute", right: 15, top: 15, zIndex: 100 }}
+                                style={{ 
+                                    position: "absolute", 
+                                    right: 15, 
+                                    top: 15, 
+                                    zIndex: 100 
+                                }}
                             />
+                            <View style={{ 
+                                alignItems: 'center', 
+                                marginBottom: verticalScale(16) 
+                            }}>
 
-                            <View style={dialogStyles.aboutHeader}>
-                                <Image source={require('../imgs/Logo_FWH.png')} style={dialogStyles.aboutLogo} />
-                                <Text style={[dialogStyles.title, { color: colors.text }]}>FakeWalletHub</Text>
+                                {/* logo */}
+                                <Image 
+                                    source={require('../imgs/Logo_FWH.png')} 
+                                    style={dialogStyles.aboutLogo} 
+                                />
+
+                                {/* title */}
+                                <Text style={[dialogStyles.title, { color: colors.text }]}>
+                                    FakeWalletHub
+                                </Text>
+
+                                {/* version */}
                                 <View style={[dialogStyles.versionTag, { backgroundColor: colors.accent + '35' }]}>
-                                    <Text style={{ color: colors.accent, fontSize: 12, fontWeight: 'bold' }}>v1.0.0</Text>
+                                    <Text style={{ color: colors.accent, fontSize: 12, fontWeight: 'bold' }}>
+                                        v1.0.2
+                                    </Text>
                                 </View>
                             </View>
 
-                            <View style={dialogStyles.aboutContent}>
+                            <View style={{ marginTop: verticalScale(10) }}>
+                                {/* description */}
                                 <Text style={[dialogStyles.aboutDesc, { color: colors.text }]}>
                                     {t('aboutDescFull')}
                                 </Text>
 
+                                {/* divider */}
                                 <View style={[dialogStyles.divider, { backgroundColor: colors.text + '50' }]} />
 
+                                {/* info rows - Developer */}
                                 <View style={dialogStyles.infoRow}>
-                                    <Text style={[dialogStyles.infoLabel, { color: colors.gray }]}>{t('developer')}</Text>
-                                    <Text style={[dialogStyles.infoValue, { color: colors.text }]}>Chockpipat Kongdee</Text>
+                                    <Text style={{ color: colors.gray, fontSize: moderateScale(13) }}>
+                                        {t('developer')}
+                                    </Text>
+                                    <Text style={[dialogStyles.infoValue, { color: colors.text }]}>
+                                        Chockpipat Kongdee
+                                    </Text>
                                 </View>
 
+                                {/* info rows - License */}
                                 <View style={dialogStyles.infoRow}>
-                                    <Text style={[dialogStyles.infoLabel, { color: colors.gray }]}>{t('license')}</Text>
-                                    <Text style={[dialogStyles.infoValue, { color: colors.text }]}>MIT License</Text>
+                                    <Text style={{ color: colors.gray, fontSize: moderateScale(13) }}>
+                                        {t('license')}
+                                    </Text>
+                                    <Text style={[dialogStyles.infoValue, { color: colors.text }]}>
+                                        MIT License
+                                    </Text>
                                 </View>
 
+                                {/* divider */}
                                 <View style={[dialogStyles.divider, { backgroundColor: colors.text + '50' }]} />
 
+                                {/* links */}
                                 <View style={dialogStyles.linksContainer}>
-                                    <TouchableOpacity style={dialogStyles.linkItem} onPress={() => Linking.openURL(GITHUB_URL)}>
+                                    {/* GitHub */}
+                                    <TouchableOpacity  
+                                        style={dialogStyles.linkItem} 
+                                        onPress={() => Linking.openURL(GITHUB_URL)}
+                                    >
                                         <Github size={20} color={colors.accent} />
-                                        <Text style={{ color: colors.accent, marginLeft: 8 }}>GitHub</Text>
+                                        <Text style={{ color: colors.accent, marginLeft: 8 }}>
+                                            GitHub
+                                        </Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={dialogStyles.linkItem} onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)}>
+
+                                    {/* Contact Email */}
+                                    <TouchableOpacity 
+                                        style={dialogStyles.linkItem} 
+                                        onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)}
+                                    >
                                         <Mail size={20} color={colors.accent} />
-                                        <Text style={{ color: colors.accent, marginLeft: 8 }}>Contact</Text>
+                                        <Text style={{ color: colors.accent, marginLeft: 8 }}>
+                                            Contact
+                                        </Text>
                                     </TouchableOpacity>
                                 </View>
 
+                                {/* footer */}
                                 <View style={dialogStyles.footer}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                                        <Text style={{ color: colors.gray, fontSize: 11 }}>Made with </Text>
+                                    <View style={{ 
+                                        flexDirection: 'row', 
+                                        alignItems: 'center', 
+                                        marginTop: 4 
+                                    }}>
+                                        <Text style={{ color: colors.gray, fontSize: 11 }}>
+                                            Made with
+                                        </Text>
                                         <Heart size={10} color={colors.red} fill={colors.red} />
-                                        <Text style={{ color: colors.gray, fontSize: 11 }}> in Thailand</Text>
+                                        <Text style={{ color: colors.gray, fontSize: 11 }}>
+                                            in Thailand
+                                        </Text>
                                     </View>
                                 </View>
                             </View>
 
+                            {/* close button */}
                             <TouchableOpacity
                                 style={[dialogStyles.primaryButton, { backgroundColor: colors.accent }]}
                                 onPress={closePopup}
                                 activeOpacity={0.9}
                             >
-                                <Text style={[dialogStyles.primaryButtonText, { color: colors.background }]}>{t('close')}</Text>
+                                <Text style={[dialogStyles.primaryButtonText, { color: colors.background }]}>
+                                    {t('close')}
+                                </Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -364,12 +609,8 @@ export default function Home() {
     );
 }
 
-
+// --- Styles ---
 const styles = StyleSheet.create({
-    containerBody: {
-        flex: 1,
-        padding: horizontalScale(20),
-    },
     card: {
         flexDirection: "row",
         alignItems: "center",
@@ -380,14 +621,6 @@ const styles = StyleSheet.create({
         marginBottom: verticalScale(15),
         borderWidth: 1,
         ...CARD_SHADOW
-    },
-    textHeader: {
-        fontSize: SIZES.xl,
-        fontWeight: FONTS.bold,
-    },
-    text: {
-        fontSize: SIZES.sm,
-        fontWeight: FONTS.normal,
     },
     list: {
         flexDirection: "row",
@@ -410,18 +643,6 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(10),
         marginRight: horizontalScale(10),
     },
-    cardText: {
-        fontSize: SIZES.sm,
-        fontWeight: FONTS.normal,
-    },
-    cardTextMoney: {
-        fontSize: SIZES.base,
-        fontWeight: FONTS.bold,
-    },
-    cardPie: {
-        flex: 1,
-        alignItems: "flex-end",
-    },
     popupContainer: {
         position: "absolute",
         top: 0,
@@ -429,7 +650,7 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: 0,
     },
-    popupshadow: {
+    popupShadow: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: "rgba(0,0,0,0.4)",
     },
@@ -444,9 +665,13 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
     },
-    textSmInPopup: {
-        fontSize: SIZES.xs,
-        fontWeight: FONTS.normal,
+    pieChartContainer: {
+        borderLeftWidth: 3,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: 'center',
+        paddingLeft: 10,
+        marginVertical: 20
     },
 });
 
@@ -456,9 +681,6 @@ const dialogStyles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    backdrop: {
-        ...StyleSheet.absoluteFillObject,
-    },
     card: {
         width: '85%',
         borderRadius: moderateScale(24),
@@ -466,10 +688,6 @@ const dialogStyles = StyleSheet.create({
         paddingHorizontal: horizontalScale(20),
         borderWidth: 1,
         ...CARD_SHADOW,
-    },
-    aboutHeader: {
-        alignItems: 'center',
-        marginBottom: verticalScale(16),
     },
     aboutLogo: {
         width: horizontalScale(60),
@@ -488,9 +706,6 @@ const dialogStyles = StyleSheet.create({
         paddingVertical: verticalScale(2),
         borderRadius: moderateScale(20),
     },
-    aboutContent: {
-        marginTop: verticalScale(10),
-    },
     aboutDesc: {
         fontSize: moderateScale(13),
         textAlign: 'center',
@@ -506,9 +721,6 @@ const dialogStyles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: verticalScale(8),
-    },
-    infoLabel: {
-        fontSize: moderateScale(13),
     },
     infoValue: {
         fontSize: moderateScale(13),

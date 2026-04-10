@@ -2,32 +2,44 @@ import { useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated';
+
+// --- Theme & Components ---
 import { useTheme } from '../context/ThemeContext';
 import { moderateScale } from '../utils/responsive';
 
 
-// Animated Circle Component
+// --- Shared Animation Components ---
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-// Pie Chart Component
+/**
+ * PieChartComponent
+ * An animated, interactive pie chart built with SVG. Designed to show income vs expense ratio.
+ */
 const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, color = "red", background }) => {
+    // --- Contexts & Derived State ---
+    const { colors } = useTheme();                          
     const scaledSize = moderateScale(size);
-    const total = income + expense;                         // Total amount
-    const { colors } = useTheme();                          // Theme colors
+    const total = income + expense;                         
+    
+    // --- Chart Geometry Calculations ---
     const radius = scaledSize * 0.375;                      // outerRadius equivalent
     const innerRadius = scaledSize * 0.25;                  // innerRadius equivalent
-    const strokeWidth = radius - innerRadius;               // Stroke width
-    const adjustedRadius = (radius + innerRadius) / 2;      // Adjusted radius
-    const circumference = 2 * Math.PI * adjustedRadius;     // Circumference
-    const center = scaledSize / 2;                          // Center of the pie chart
+    const strokeWidth = radius - innerRadius;               // Stroke width thickness
+    const adjustedRadius = (radius + innerRadius) / 2;      // True radius for the SVG Circle
+    const circumference = 2 * Math.PI * adjustedRadius;     // Total path length
+    const center = scaledSize / 2;                          // Center coordinates
 
-    // Calculate stroke dash for income (green) portion
+    // --- Data Ratio Calculations ---
+    // Calculate stroke dash relative to income (green) portion
     const incomeRatio = total > 0 ? income / total : 0.5;
     const incomeArc = circumference * incomeRatio;
+    
+    // --- Animation Values ---
     const progress = useSharedValue(0);
 
-    // Animate the pie chart
+    // --- Animation Logic ---
     useEffect(() => {
+        // Reset and animate the progress value whenever data changes
         progress.value = 0;
         progress.value = withTiming(1, {
             duration: 1000,
@@ -35,7 +47,7 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
         });
     }, [income, expense]);
 
-    // Animate the stroke dash
+    // Animate the stroke dash array to draw the arc smoothly
     const animatedProps = useAnimatedProps(() => {
         const animatedIncomeArc = incomeArc * progress.value;
         return {
@@ -43,12 +55,12 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
         };
     });
 
-    // Render the pie chart
+    // --- Render Content ---
     const content = (
         <View style={[styles.container, { width: scaledSize, height: scaledSize }]}>
             <Svg width={scaledSize} height={scaledSize} viewBox={`0 0 ${scaledSize} ${scaledSize} `} pointerEvents="none">
 
-                {/* Expense (red) - full circle background */}
+                {/* Base Layer: Expense (typically red) - Full circle background */}
                 <Circle
                     cx={center}
                     cy={center}
@@ -58,7 +70,7 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
                     fill="none"
                 />
 
-                {/* Income (green) - partial arc on top */}
+                {/* Top Layer: Income (typically green) - Animated partial arc */}
                 {total > 0 && (
                     <AnimatedCircle
                         cx={center}
@@ -76,7 +88,8 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
         </View>
     );
 
-    // Handle click event
+    // --- Interaction Wrapper ---
+    // Make it clickable only if the onPieClick prop is provided
     if (onPieClick) {
         return (
             <TouchableOpacity
@@ -92,6 +105,7 @@ const PieChartComponent = ({ income = 0, expense = 0, size = 120, onPieClick, co
     return content;
 };
 
+// --- Styles ---
 const styles = StyleSheet.create({
     container: {
         justifyContent: 'center',

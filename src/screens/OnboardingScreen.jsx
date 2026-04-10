@@ -9,47 +9,60 @@ import {
     Linking,
     Image,
 } from 'react-native';
-import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 
-// Context
+// --- Theme & Responsiveness ---
+import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
+import { COLORS } from '../style/Theme';
+
+// --- Contexts ---
 import { useLanguage, LANGUAGES } from '../context/LanguageContext';
 import { useCurrency, CURRENCIES } from '../context/CurrencyContext';
 import { useTheme } from '../context/ThemeContext';
 
-// Icons
+// --- Icons ---
 import { Check, ChevronRight, ChevronLeft, Github, Mail, Globe, Sparkles } from 'lucide-react-native';
-import { COLORS } from '../style/Theme';
 
+// --- Constants ---
 const { width } = Dimensions.get('window');
-
 const GITHUB_URL = 'https://github.com/indiv-it/FakeWalletHub';
 const CONTACT_EMAIL = 'indiv.company@gmail.com';
 
+/**
+ * Onboarding Screen Component
+ * First-time user experience for selecting language and currency, and displaying a welcome message.
+ */
 export default function OnboardingScreen() {
+    // --- Navigation & Context ---
     const navigation = useNavigation();
     const { currentLang, changeLanguage, t } = useLanguage();
     const { currentCurrency, changeCurrency, currencies } = useCurrency();
     const { colors, isDarkMode } = useTheme();
 
+    // --- State ---
     const [step, setStep] = useState(0); // 0 = language/currency, 1 = welcome
 
-    // Animations
+    // --- Animation Refs ---
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(30)).current;
     const scaleAnim = useRef(new Animated.Value(0.95)).current;
     const logoAnim = useRef(new Animated.Value(0)).current;
 
-    // Card stagger animations
+    /**
+     * Array of animation values for staggered card entrance
+     */
     const cardAnims = useRef(
         Array.from({ length: 8 }, () => new Animated.Value(0))
     ).current;
 
+    // --- Effects ---
+
+    /**
+     * Run initial entrance animations on mount or step change
+     */
     useEffect(() => {
-        // Initial entrance
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
@@ -89,6 +102,11 @@ export default function OnboardingScreen() {
         ).start();
     }, [step]);
 
+    // --- Handlers: Transitions & Actions ---
+
+    /**
+     * Helper to orchestrate out/in transition when navigating steps
+     */
     const animateTransition = (callback) => {
         Animated.parallel([
             Animated.timing(fadeAnim, {
@@ -103,7 +121,8 @@ export default function OnboardingScreen() {
             }),
         ]).start(() => {
             callback();
-            // Reset card anims
+            
+            // Reset animations for the next step
             cardAnims.forEach((a) => a.setValue(0));
             slideAnim.setValue(30);
             
@@ -135,10 +154,16 @@ export default function OnboardingScreen() {
         });
     };
 
+    /**
+     * Proceeds to the Welcome step
+     */
     const handleNext = () => {
         animateTransition(() => setStep(1));
     };
 
+    /**
+     * Finishes onboarding and navigates to Main App (Home)
+     */
     const handleGetStarted = async () => {
         try {
             await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
@@ -151,18 +176,29 @@ export default function OnboardingScreen() {
         });
     };
 
+    /**
+     * Opens external links like Github or Mail
+     */
     const handleOpenURL = (url) => {
         Linking.openURL(url).catch((err) =>
             console.log('Error opening URL:', err)
         );
     };
 
-    // Gradient colors based on theme
+    // --- Extracted Computations ---
+
+    /**
+     * Background gradient base dependent on Theme Mode
+     */
     const gradientColors = isDarkMode
         ? ['#0a0a0a', '#111827', '#1a1a2e']
         : ['#e8edf5', '#f0f4ff', '#e0e8f9'];
 
-    // Selection card component
+    // --- Sub-Components ---
+
+    /**
+     * Selection Card for language or currency choice
+     */
     const SelectionCard = ({ item, isSelected, onPress, index, icon }) => {
         const cardAnim = cardAnims[index] || new Animated.Value(1);
         const cardScale = cardAnim.interpolate({
@@ -224,7 +260,9 @@ export default function OnboardingScreen() {
         );
     };
 
-    // Step 0: Language & Currency
+    /**
+     * Renders Step 0: Initial Setup for Language and Currency
+     */
     const renderSetup = () => (
         <Animated.View
             style={[
@@ -235,7 +273,7 @@ export default function OnboardingScreen() {
                 },
             ]}
         >
-            {/* Logo */}
+            {/* Header / Logo */}
             <Animated.View
                 style={[styles.logoContainer, { opacity: logoAnim }]}
             >
@@ -247,7 +285,7 @@ export default function OnboardingScreen() {
                 </Text>
             </Animated.View>
 
-            {/* Language Section */}
+            {/* Language Selection Section */}
             <View style={styles.sectionContainer}>
                 <View style={styles.sectionHeader}>
                     <Globe size={18} color={colors.accent} />
@@ -269,7 +307,7 @@ export default function OnboardingScreen() {
                 </View>
             </View>
 
-            {/* Currency Section */}
+            {/* Currency Selection Section */}
             <View style={styles.sectionContainer}>
                 <View style={styles.sectionHeader}>
                     <Sparkles size={18} color={colors.accent} />
@@ -291,7 +329,7 @@ export default function OnboardingScreen() {
                 </View>
             </View>
 
-            {/* Next Button */}
+            {/* Next Step Action Button */}
             <TouchableOpacity
                 style={[styles.primaryButton, { backgroundColor: colors.accent }]}
                 onPress={handleNext}
@@ -303,7 +341,7 @@ export default function OnboardingScreen() {
                 <ChevronRight size={20} color={colors.background} />
             </TouchableOpacity>
 
-            {/* Step Indicator */}
+            {/* Step Position Indicator */}
             <View style={styles.stepIndicator}>
                 <View style={[styles.stepDot, { backgroundColor: colors.accent }]} />
                 <View style={[styles.stepDot, { backgroundColor: colors.border }]} />
@@ -311,7 +349,9 @@ export default function OnboardingScreen() {
         </Animated.View>
     );
 
-    // Step 1: Welcome
+    /**
+     * Renders Step 1: Welcome and About Info
+     */
     const renderWelcome = () => (
         <Animated.View
             style={[
@@ -323,7 +363,7 @@ export default function OnboardingScreen() {
                 },
             ]}
         >
-            {/* Back Button */}
+            {/* Back Button to Setup Screen */}
             <TouchableOpacity 
                 style={[styles.backButton, { backgroundColor: isDarkMode ? '#ffffff15' : '#00000010' }]}
                 onPress={() => animateTransition(() => setStep(0))}
@@ -331,7 +371,7 @@ export default function OnboardingScreen() {
                 <ChevronLeft size={24} color={colors.text} />
             </TouchableOpacity>
 
-            {/* Welcome Hero */}
+            {/* Welcome Info Wrapper */}
             <Animated.View style={[styles.welcomeHero]}>
                 <View style={[styles.welcomeIconContainer, { backgroundColor: colors.accent + '15' }]}>
                     <Text style={styles.welcomeEmoji}>🎉</Text>
@@ -344,9 +384,9 @@ export default function OnboardingScreen() {
                 </Text>
             </Animated.View>
 
-            {/* Links */}
+            {/* External App Links (Developer / GitHub) */}
             <View style={styles.linksContainer}>
-                {/* GitHub Link */}
+                {/* 1. GitHub Card Link */}
                 <Animated.View
                     style={{
                         transform: [
@@ -378,7 +418,7 @@ export default function OnboardingScreen() {
                     </TouchableOpacity>
                 </Animated.View>
 
-                {/* Contact Link */}
+                {/* 2. Contact Email Card Link */}
                 <Animated.View
                     style={{
                         transform: [
@@ -411,7 +451,7 @@ export default function OnboardingScreen() {
                 </Animated.View>
             </View>
 
-            {/* Get Started Button */}
+            {/* Launch Home App Button */}
             <TouchableOpacity
                 style={[styles.primaryButton, styles.getStartedButton, { backgroundColor: colors.accent }]}
                 onPress={handleGetStarted}
@@ -423,7 +463,7 @@ export default function OnboardingScreen() {
                 </Text>
             </TouchableOpacity>
 
-            {/* Step Indicator */}
+            {/* Step Position Indicator */}
             <View style={styles.stepIndicator}>
                 <View style={[styles.stepDot, { backgroundColor: colors.border }]} />
                 <View style={[styles.stepDot, { backgroundColor: colors.accent }]} />
@@ -431,17 +471,20 @@ export default function OnboardingScreen() {
         </Animated.View>
     );
 
+    // --- Main Screen Container Render ---
     return (
         <LinearGradient colors={gradientColors} style={styles.container}>
-            {/* Decorative accent glow */}
+            {/* Background Decorative Accent Orbs */}
             <View style={[styles.glowOrb, { backgroundColor: colors.accent + '10' }]} />
             <View style={[styles.glowOrb2, { backgroundColor: colors.accent + '10' }]} />
             
+            {/* Step Logic */}
             {step === 0 ? renderSetup() : renderWelcome()}
         </LinearGradient>
     );
 }
 
+// --- Styles ---
 const styles = StyleSheet.create({
     container: {
         flex: 1,

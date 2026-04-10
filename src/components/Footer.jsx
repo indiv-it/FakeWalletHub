@@ -1,23 +1,26 @@
+import React, { useRef, useEffect } from "react";
 import { View, TouchableOpacity, Text, StyleSheet, Animated } from "react-native"
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
 
-import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useRef, useEffect } from "react";
-
-// components
+// --- Theme & Components ---
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { CARD_SHADOW } from "../style/Theme";
 
-// Icons
+// --- Icons ---
 import { ChartColumnBig, ClipboardList, NotebookPen, Plus } from 'lucide-react-native';
 
-// Components menu
+/**
+ * Menu Component (Internal)
+ * Renders an individual animated menu item in the footer.
+ */
 const Menu = ({ icon: IconComponent, text, link, route, navigation, colors }) => {
+    // --- State & Validation ---
     const isActive = route.name === link;
     const scaleAnim = useRef(new Animated.Value(isActive ? 1.1 : 1)).current;
 
-    // Animation effect
+    // --- Animation Logic ---
     useEffect(() => {
         Animated.spring(scaleAnim, {
             toValue: isActive ? 1.1 : 1,
@@ -27,6 +30,7 @@ const Menu = ({ icon: IconComponent, text, link, route, navigation, colors }) =>
         }).start();
     }, [isActive]);
 
+    // Interpolate animated values
     const textOpacity = scaleAnim.interpolate({
         inputRange: [1, 1.1],
         outputRange: [0, 1],
@@ -37,7 +41,7 @@ const Menu = ({ icon: IconComponent, text, link, route, navigation, colors }) =>
         outputRange: [0, 0],
     });
 
-    // Menu item
+    // --- Render Menu Item ---
     return (
         <View>
             <TouchableOpacity
@@ -50,46 +54,55 @@ const Menu = ({ icon: IconComponent, text, link, route, navigation, colors }) =>
                         transform: [{ scale: scaleAnim }, { translateY }],
                     }}
                 >
-                    {/* Icon */}
+                    {/* Dynamic Icon */}
                     <IconComponent
                         size={20}
                         color={isActive ? colors.accent : colors.text}
                     />
                 </Animated.View>
 
-                {/* Text */}
+                {/* Animated Text (Visible only when active) */}
                 {isActive && (
-                    <Animated.Text style={[styles.text, { color: colors.accent, fontWeight: 'bold', opacity: textOpacity }]}>{text}</Animated.Text>
+                    <Animated.Text style={[styles.text, { color: colors.accent, fontWeight: 'bold', opacity: textOpacity }]}>
+                        {text}
+                    </Animated.Text>
                 )}
             </TouchableOpacity>
         </View>
     )
 }
 
-// Footer Component
+/**
+ * Footer Component
+ * Main bottom navigation bar displaying core app screens and a floating action button.
+ */
 export default function Footer() {
+    // --- Contexts & Navigation ---
     const { colors } = useTheme();
     const { t } = useLanguage();
     const navigation = useNavigation();
     const route = useRoute();
 
-    // Display Items
+    // --- Render ---
     return (
         <View style={[styles.container, { backgroundColor: colors.cardBg }]}>
-
-            {/* Menu */}
+            {/* Navigation Menus */}
             <Menu icon={ChartColumnBig} text={t('home')} link="Home" route={route} navigation={navigation} colors={colors} />
             <Menu icon={ClipboardList} text={t('record')} link="Record" route={route} navigation={navigation} colors={colors} />
             <Menu icon={NotebookPen} text={t('notebook')} link="Notebook" route={route} navigation={navigation} colors={colors} />
 
-            {/* Add Button */}
-            <TouchableOpacity style={[styles.add, { backgroundColor: colors.accent }]} onPress={() => navigation.navigate("AddList")}>
+            {/* Floating Action Button (Add) */}
+            <TouchableOpacity 
+                style={[styles.add, { backgroundColor: colors.accent }]} 
+                onPress={() => navigation.navigate("AddList")}
+            >
                 <Plus size={20} color={colors.background} />
             </TouchableOpacity>
         </View>
     )
 }
 
+// --- Styles ---
 const styles = StyleSheet.create({
     container: {
         bottom: verticalScale(54),

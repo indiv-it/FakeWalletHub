@@ -11,33 +11,47 @@ import {
 import { BlurView } from 'expo-blur';
 import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
 
+// --- Icons ---
 import { AlertCircle, CheckCircle2, AlertTriangle, Info } from 'lucide-react-native';
+
+// --- Theme & Context ---
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
+/**
+ * AlertPopup Component
+ * Displays a customizable alert modal with animations and theme support.
+ * Types supported: 'success', 'warning', 'error', 'info'
+ */
 export default function AlertPopup({
     visible,
     title,
     description,
     onClose,
     buttonText,
-    type = 'warning' // 'success', 'warning', 'error', 'info'
+    type = 'warning' 
 }) {
+    // --- Contexts ---
     const { colors } = useTheme();
     const { t } = useLanguage();
     
-    // Use translations as defaults
+    // --- State & Defaults ---
+    // Use translations as default text if none are provided
     const displayTitle = title || t('notifications');
     const displayDescription = description || '';
     const displayButtonText = buttonText || t('ok');
+    
+    // Animation Values
     const scaleValue = useRef(new Animated.Value(0)).current;
     const opacityValue = useRef(new Animated.Value(0)).current;
 
+    // --- Animation Logic ---
     useEffect(() => {
         if (visible) {
+            // Animate in: zoom and fade in
             Animated.parallel([
                 Animated.spring(scaleValue, {
                     toValue: 1,
@@ -52,6 +66,7 @@ export default function AlertPopup({
                 })
             ]).start();
         } else {
+            // Animate out: slightly zoom out and fade out
             Animated.parallel([
                 Animated.timing(scaleValue, {
                     toValue: 0.8,
@@ -67,9 +82,14 @@ export default function AlertPopup({
         }
     }, [visible]);
 
+    // Avoid rendering completely if not visible
     if (!visible) return null;
 
-    // Config style based on type
+    // --- Helper Functions ---
+    /**
+     * Determines the icon and color based on the alert type
+     * @returns {Object} { Icon, color }
+     */
     const getIconConfig = () => {
         switch (type) {
             case 'success':
@@ -87,6 +107,7 @@ export default function AlertPopup({
     const { Icon, color: typeColor } = getIconConfig();
     const blurTint = colors.background === '#111827' ? 'dark' : 'dark';
 
+    // --- Render ---
     return (
         <Modal transparent visible={visible} animationType="fade" hardwareAccelerated>
             <BlurView intensity={30} tint={blurTint} style={styles.blurContainer}>
@@ -100,18 +121,18 @@ export default function AlertPopup({
                         }
                     ]}
                 >
-                    {/* Icon section */}
+                    {/* Icon Section */}
                     <View style={styles.iconContainer}>
                         <View style={[styles.iconCircle, { backgroundColor: typeColor + '15' }]}>
                             <Icon size={36} color={typeColor} strokeWidth={2.5} />
                         </View>
                     </View>
                     
-                    {/* Texts section */}
+                    {/* Text Section */}
                     <Text style={[styles.title, { color: colors.text }]}>{displayTitle}</Text>
                     <Text style={[styles.description, { color: colors.gray }]}>{displayDescription}</Text>
                     
-                    {/* Button section */}
+                    {/* Button Section */}
                     <View style={styles.buttonContainer}>
                         <TouchableOpacity
                             style={[styles.button, { backgroundColor: typeColor }]}
@@ -127,6 +148,7 @@ export default function AlertPopup({
     );
 }
 
+// --- Styles ---
 const styles = StyleSheet.create({
     blurContainer: {
         flex: 1,

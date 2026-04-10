@@ -47,12 +47,13 @@ function AppNavigator() {
     }
   };
 
-  if (!initialRoute) return <LoadingOverlay />; // Loading
+  // Loading
+  if (!initialRoute) return <LoadingOverlay />;
 
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={initialRoute}
+        initialRouteName={'Home'}
         screenOptions={{
           headerShown: false,
           animation: "none",

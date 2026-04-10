@@ -1,17 +1,22 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet, Dimensions, Image, Text } from 'react-native';
 import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
-
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
+/**
+ * LoadingOverlay Component
+ * Displays a full-screen loading animation with a glowing rotating orb and a logo.
+ */
 export default function LoadingOverlay() {
+    // --- Animation State ---
     const pulseAnim = useRef(new Animated.Value(1)).current;
     const rotateAnim = useRef(new Animated.Value(0)).current;
 
+    // --- Animation Logic ---
     useEffect(() => {
-        // Continuous pulse animation
+        // Continuous pulse animation (scaling up and down)
         Animated.loop(
             Animated.sequence([
                 Animated.timing(pulseAnim, {
@@ -27,7 +32,7 @@ export default function LoadingOverlay() {
             ])
         ).start();
 
-        // Continuous rotation for outer glow
+        // Continuous rotation for outer glow ring
         Animated.loop(
             Animated.timing(rotateAnim, {
                 toValue: 1,
@@ -37,18 +42,22 @@ export default function LoadingOverlay() {
         ).start();
     }, []);
 
+    // Interpolate rotation value from 0-1 to degrees
     const rotation = rotateAnim.interpolate({
         inputRange: [0, 1],
         outputRange: ['0deg', '360deg'],
     });
 
+    // --- Render ---
     return (
         <View style={styles.container}>
+            {/* Dark Gradient Background */}
             <LinearGradient
                 colors={['#0a0a0a', '#111827', '#1a1a2e']}
                 style={styles.background}
             />
             
+            {/* Main Content Area */}
             <View style={styles.content}>
                 {/* Glowing rotating outer ring */}
                 <Animated.View
@@ -62,18 +71,20 @@ export default function LoadingOverlay() {
                     <View style={styles.glowInner} />
                 </Animated.View>
 
-                {/* Center Logo */}
+                {/* Center Logo pulsating */}
                 <Animated.View style={[styles.logoContainer, { transform: [{ scale: pulseAnim }] }]}>
                     <Image source={require('../imgs/Logo_FWH.png')} style={styles.logoImage} />
                 </Animated.View>
                 
             </View>
-            {/* Loading text */}
+            
+            {/* Loading Text */}
             <Text style={styles.loadingText}>Loading...</Text>
         </View>
     );
 }
 
+// --- Styles ---
 const styles = StyleSheet.create({
     container: {
         ...StyleSheet.absoluteFillObject,
