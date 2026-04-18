@@ -13,7 +13,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { BlurView } from 'expo-blur';
 
 // --- Icons ---
-import { FileEdit, Trash2, ListPlus, X } from 'lucide-react-native';
+import { FileEdit, Trash2, ListPlus, X, NotebookPen } from 'lucide-react-native';
 
 // --- Theme & Context ---
 import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
@@ -109,10 +109,7 @@ export default function Notebook() {
             return;
         }
 
-        const dateStr = `${
-            dateTime.getFullYear()}-${
-                String(dateTime.getMonth() + 1).padStart(2, '0')}-${
-                String(dateTime.getDate()).padStart(2, '0')}`;
+        const dateStr = `${dateTime.getFullYear()}-${String(dateTime.getMonth() + 1).padStart(2, '0')}-${String(dateTime.getDate()).padStart(2, '0')}`;
 
         const noteData = {
             title,
@@ -199,9 +196,12 @@ export default function Notebook() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header Component */}
-            <Text style={[styles.textHeader, { color: colors.text }]}>
-                {t('notebook')}
-            </Text>
+            <View style={styles.headerContainer}>
+                <NotebookPen size={20} color={colors.accent} />
+                <Text style={[styles.textHeader, { color: colors.text }]}>
+                    {t('notebook')}
+                </Text>
+            </View>
 
             {/* List of Notes */}
             <FlatList
@@ -241,20 +241,23 @@ export default function Notebook() {
                 transparent={true}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <BlurView 
-                    intensity={30} 
-                    tint="dark" 
+                <BlurView
+                    intensity={30}
+                    tint="dark"
                     style={styles.modalOverlay}
                 >
                     <View style={[styles.modalContent, { backgroundColor: colors.cardBg }]}>
                         {/* Modal Header */}
                         <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: colors.text }]}>
-                                {isEditMode 
-                                    ? t('editNote') 
-                                    : t('addNote')
-                                }
-                            </Text>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: horizontalScale(10) }}>
+                                <NotebookPen size={20} color={colors.accent} />
+                                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                                    {isEditMode
+                                        ? t('editNote')
+                                        : t('addNote')
+                                    }
+                                </Text>
+                            </View>
 
                             {/* Close Button */}
                             <TouchableOpacity onPress={() => setModalVisible(false)}>
@@ -272,8 +275,8 @@ export default function Notebook() {
                             value={title}
                             onChangeText={setTitle}
                             style={[styles.textInput, {
-                                color: colors.text, 
-                                backgroundColor: colors.background 
+                                color: colors.text,
+                                backgroundColor: colors.background
                             }]}
                         />
 
@@ -342,8 +345,8 @@ export default function Notebook() {
                             onPress={handleSave}
                         >
                             <Text style={[styles.saveBtnText, { color: colors.background }]}>
-                                {isEditMode 
-                                    ? t('saveEdit') 
+                                {isEditMode
+                                    ? t('saveEdit')
                                     : t('save')
                                 }
                             </Text>
@@ -381,11 +384,17 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: horizontalScale(20),
     },
+    headerContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: horizontalScale(10),
+        marginTop: verticalScale(30),
+        marginBottom: verticalScale(20),
+    },
     textHeader: {
         fontSize: SIZES.xl,
         fontWeight: FONTS.bold,
-        marginTop: verticalScale(30),
-        marginBottom: verticalScale(20),
         textAlign: "center",
     },
     listContent: {
@@ -452,7 +461,7 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.4)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
         borderTopLeftRadius: moderateScale(24),

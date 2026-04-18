@@ -444,8 +444,7 @@ export default function Nav() {
                                     { translateY: menuTranslateY },
                                 ],
                             },
-                        ]}
-                    >
+                        ]}>
                         {/* Edit Categories */}
                         <MenuItem
                             index={4}
@@ -622,17 +621,40 @@ export default function Nav() {
             </View>
 
             {/* Category Edit Modal */}
-            <Modal transparent visible={showCategoryModal} animationType="fade" onRequestClose={() => setShowCategoryModal(false)}>
-                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-                    <TouchableWithoutFeedback onPress={() => { setShowCategoryModal(false); setEditingCategory(null); setNewCategoryName(''); }}>
-                        <BlurView intensity={30} tint="dark" style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.1)' }]} />
+            <Modal
+                transparent
+                visible={showCategoryModal}
+                animationType="fade"
+                onRequestClose={() => setShowCategoryModal(false)}
+            >
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={{ flex: 1 }}
+                >
+                    <TouchableWithoutFeedback 
+                        onPress={() => { 
+                            setShowCategoryModal(false); 
+                            setEditingCategory(null); 
+                            setNewCategoryName(''); 
+                        }}
+                    >
+                        <BlurView 
+                            intensity={30} 
+                            tint="dark" 
+                            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.8)' }]} 
+                        />
                     </TouchableWithoutFeedback>
+
                     <View style={[styles.categoryModal, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-                        <Text style={[styles.categoryModalTitle, { color: colors.text }]}>{t('editCategory')}</Text>
+                        <Text style={[styles.categoryModalTitle, { color: colors.text }]}>
+                            {t('editCategory')}
+                        </Text>
                         
                         {editingCategory ? (
                             <View>
-                                <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>{t('editNewName')}</Text>
+                                <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
+                                    {t('editNewName')}
+                                </Text>
                                 <TextInput
                                     style={[styles.categoryInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
                                     value={newCategoryName}
@@ -641,7 +663,9 @@ export default function Nav() {
                                     placeholderTextColor={colors.textSecondary}
                                 />
 
-                                <Text style={{ color: colors.textSecondary, marginBottom: 12, marginTop: 10 }}>{t('editIcon')}</Text>
+                                <Text style={{ color: colors.textSecondary, marginBottom: 12, marginTop: 10 }}>
+                                    {t('editIcon')}
+                                </Text>
                                 <View style={styles.iconGrid}>
                                     {AVAILABLE_ICONS.map((item) => (
                                         <TouchableOpacity 
@@ -660,25 +684,38 @@ export default function Nav() {
 
                                 <View style={styles.categoryActions}>
                                     <TouchableOpacity style={[styles.categoryBtn, { backgroundColor: colors.border }]} onPress={() => { setEditingCategory(null); setNewCategoryName(''); setSelectedIcon(null); }}>
-                                        <Text style={{ color: colors.text, fontWeight: 'bold' }}>{t('cancel')}</Text>
+                                        <Text style={{ color: colors.text, fontWeight: 'bold' }}>
+                                            {t('cancel')}
+                                        </Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={[styles.categoryBtn, { backgroundColor: colors.accent }]} onPress={handleSaveCategory}>
-                                        <Text style={{ color: colors.background, fontWeight: 'bold' }}>{t('save')}</Text>
+                                        <Text style={{ color: colors.background, fontWeight: 'bold' }}>
+                                            {t('save')}
+                                        </Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
                         ) : (
                             <View>
                                 {categories.map(cat => (
-                                    <View key={cat.id} style={[styles.categoryRow, { borderBottomColor: colors.border }]}>
+                                    <View
+                                        key={cat.id}
+                                        style={[styles.categoryRow, { borderBottomColor: colors.border }]}
+                                    >
                                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                                             <View style={[styles.miniIcon, { backgroundColor: colors.accent + '15' }]}>
                                                 {getIconComponent(cat.iconName, 16, colors.accent) || <Settings size={16} color={colors.accent} />}
                                             </View>
-                                            <Text style={{ color: colors.text, fontSize: 16 }}>{cat.name}</Text>
+                                            <Text style={{ color: colors.text, fontSize: 16 }}>
+                                                {cat.name}
+                                            </Text>
                                         </View>
                                         <TouchableOpacity 
-                                            onPress={() => { setEditingCategory(cat); setNewCategoryName(cat.name); setSelectedIcon(cat.iconName); }}
+                                            onPress={() => { 
+                                                setEditingCategory(cat); 
+                                                setNewCategoryName(cat.name); 
+                                                setSelectedIcon(cat.iconName); 
+                                            }}
                                             style={{ padding: 8, backgroundColor: colors.accent + '20', borderRadius: 8 }}
                                         >
                                             <Edit3 size={16} color={colors.accent} />
@@ -686,7 +723,9 @@ export default function Nav() {
                                     </View>
                                 ))}
                                 <TouchableOpacity style={[styles.categoryCloseBtn, { backgroundColor: colors.border, marginTop: 16 }]} onPress={() => setShowCategoryModal(false)}>
-                                    <Text style={{ color: colors.text, fontWeight: 'bold' }}>{t('close')}</Text>
+                                    <Text style={{ color: colors.text, fontWeight: 'bold' }}>
+                                        {t('close')}
+                                    </Text>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -740,7 +779,7 @@ const styles = StyleSheet.create({
     // Backdrop
     backdrop: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.1)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
 
     // Dropdown menu

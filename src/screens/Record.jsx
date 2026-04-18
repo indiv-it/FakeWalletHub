@@ -8,6 +8,7 @@ import {
     Easing,
     Platform,
     Modal,
+    TextInput
 } from "react-native";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -39,7 +40,13 @@ import {
     Trash2,
     Pencil,
     Scroll,
-    Archive
+    Archive,
+    ArrowUp,
+    Search,
+    TrendingUp,
+    TrendingDown,
+    FunnelX,
+    ClipboardList
 } from 'lucide-react-native';
 
 /**
@@ -61,6 +68,7 @@ export default function Record() {
     // --- State: Filtering ---
     const [filter, setFilter] = useState("all");
     const [dateFilter, setDateFilter] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
     // --- State: Date Picker ---
     const [pickerDate, setPickerDate] = useState(() => new Date());
@@ -71,16 +79,30 @@ export default function Record() {
     const [popupDelete, setPopupDelete] = useState(false);
     const [actionItem, setActionItem] = useState(null);
     const [transactionToDelete, setTransactionToDelete] = useState(null);
+    const [showBackToTop, setShowBackToTop] = useState(false);
 
     // --- Animation Refs ---
     const scaleAnim = useRef(new Animated.Value(0)).current;
     const listEntranceAnim = useRef(new Animated.Value(0)).current;
+    const flatListRef = useRef(null);
 
     // --- Constants ---
     const FILTERS = [
-        { id: "all", label: t('all') },
-        { id: "income", label: t('income') },
-        { id: "expense", label: t('expense') },
+        {
+            id: "all",
+            label: t('all'),
+            icon: <FunnelX size={16} color={filter === "all" ? colors.background : colors.text} />
+        },
+        {
+            id: "income",
+            label: t('income'),
+            icon: <TrendingUp size={16} color={filter === "income" ? colors.background : colors.text} />
+        },
+        {
+            id: "expense",
+            label: t('expense'),
+            icon: <TrendingDown size={16} color={filter === "expense" ? colors.background : colors.text} />
+        },
     ];
 
     // --- Lifecycle Methods ---
@@ -103,14 +125,21 @@ export default function Record() {
     }, []);
 
     // --- Derived State & Computations ---
-    
-    // Filter records based on transaction type and date
+
+    // Filter records based on transaction type, date, and search query
     let filteredRecords =
         filter === "all"
             ? transactions
             : transactions.filter((r) => r.type === filter);
     if (dateFilter) {
         filteredRecords = filteredRecords.filter((r) => r.date === dateFilter);
+    }
+    if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        filteredRecords = filteredRecords.filter((r) =>
+            r.title.toLowerCase().includes(query) ||
+            (r.title === 'Untitled' && t('anonymous').toLowerCase().includes(query))
+        );
     }
 
     /**
@@ -240,6 +269,19 @@ export default function Record() {
         setDateFilter(null);
     };
 
+    // Handle scroll to show/hide back to top button
+    const handleScroll = ({ nativeEvent }) => {
+        const offsetY = nativeEvent.contentOffset.y;
+        setShowBackToTop(offsetY > 200);
+    };
+
+    // Scroll to top
+    const scrollToTop = () => {
+        if (flatListRef.current) {
+            flatListRef.current.scrollToOffset({ offset: 0, animated: true });
+        }
+    };
+
     // --- Sub-components ---
 
     /**
@@ -251,16 +293,17 @@ export default function Record() {
             <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => setFilter(item.id)}
-                style={[styles.filterChip, { 
-                    backgroundColor: isActive 
-                        ? colors.accent 
-                        : colors.cardBg 
+                style={[styles.filterChip, {
+                    backgroundColor: isActive
+                        ? colors.accent
+                        : colors.cardBg
                 }]}
             >
-                <Text style={[styles.filterChipText, { 
-                    color: isActive 
-                        ? colors.background 
-                        : colors.text 
+                {item.icon}
+                <Text style={[styles.filterChipText, {
+                    color: isActive
+                        ? colors.background
+                        : colors.text
                 }]}>
                     {item.label}
                 </Text>
@@ -305,21 +348,21 @@ export default function Record() {
                 <TouchableOpacity
                     activeOpacity={0.9}
                     onPress={() => openAction(item)}
-                    style={[ styles.listbox,{
-                            backgroundColor: colors.cardBg,
-                            borderLeftColor: isIncome 
-                                ? colors.accent 
-                                : colors.red
-                        }]
+                    style={[styles.listbox, {
+                        backgroundColor: colors.cardBg,
+                        borderLeftColor: isIncome
+                            ? colors.accent
+                            : colors.red
+                    }]
                     }
                 >
                     <View style={styles.listContent}>
                         <View style={styles.list_textHead}>
                             {/* Amount */}
-                            <Text style={[styles.textMoney, { 
-                                color: isIncome 
-                                    ? colors.accent 
-                                    : colors.red 
+                            <Text style={[styles.textMoney, {
+                                color: isIncome
+                                    ? colors.accent
+                                    : colors.red
                             }]}>
                                 {formatAmount(item.amount, item.type)}
                             </Text>
@@ -343,12 +386,12 @@ export default function Record() {
                         </View>
 
                         {/* Title */}
-                        <Text 
+                        <Text
                             numberOfLines={1}
-                            style={[styles.textAbout, { color: colors.text }]} 
+                            style={[styles.textAbout, { color: colors.text }]}
                         >
-                            {item.title !== 'Untitled' 
-                                ? item.title 
+                            {item.title !== 'Untitled'
+                                ? item.title
                                 : t('anonymous')}
                         </Text>
                     </View>
@@ -410,65 +453,76 @@ export default function Record() {
     // --- Main Render ---
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <Text style={[styles.textHeader, { color: colors.text }]}>
-                {t('record')}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: horizontalScale(10) }}>
+                <ClipboardList size={20} color={colors.accent} />
+                <Text style={[styles.textHeader, { color: colors.text }]}>
+                    {t('record')}
+                </Text>
+            </View>
 
             {/* Sub-section: Filters */}
             <View style={styles.filterRow}>
                 {FILTERS.map((f) => (
-                    <FilterChip 
-                        key={f.id} 
-                        item={f} 
-                        filter={filter} 
-                        setFilter={setFilter} 
+                    <FilterChip
+                        key={f.id}
+                        item={f}
+                        filter={filter}
+                        setFilter={setFilter}
+                        icon={f.icon}
                     />
                 ))}
             </View>
 
             {/* Sub-section: Date Filter */}
             <View style={styles.dateFilterRow}>
+                <View style={[styles.searchContainer, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+                    <Search size={18} color={colors.gray} />
+                    <TextInput
+                        placeholder={t('search')}
+                        placeholderTextColor={colors.gray}
+                        style={[styles.searchInput, { color: colors.text }]}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
+                </View>
                 <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={openDatePicker}
-                    style={[styles.filterChip, { 
-                        backgroundColor: dateFilter 
-                            ? colors.accent 
-                            : colors.cardBg 
+                    style={[styles.filterChip, {
+                        backgroundColor: dateFilter
+                            ? colors.accent
+                            : colors.cardBg
                     }]}
                 >
                     {/* Calendar Icon */}
                     <CalendarDays
                         size={18}
                         style={{ marginRight: 6 }}
-                        color={dateFilter 
-                            ? colors.background 
+                        color={dateFilter
+                            ? colors.background
                             : colors.text
                         }
                     />
 
                     {/* Date Text */}
                     <Text style={[styles.filterChipText, { color: dateFilter ? colors.background : colors.text }]}>
-                        {dateFilter 
-                            ? formatDateByLang(dateFilter) 
+                        {dateFilter
+                            ? formatDateByLang(dateFilter)
                             : t('date')
                         }
                     </Text>
+                    {/* Clear Date Filter Button */}
+                    {dateFilter && (
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={clearDateFilter}
+                            style={styles.dateFilterClear}
+                        >
+                            <X size={18} color={colors.background} />
+                        </TouchableOpacity>
+                    )}
                 </TouchableOpacity>
 
-                {/* Clear Date Filter Button */}
-                {dateFilter && (
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={clearDateFilter}
-                        style={[styles.dateFilterClear, { backgroundColor: colors.red }]}
-                    >
-                        <X size={18} color={colors.white} />
-                        <Text style={[styles.dateFilterClearText, { color: colors.white }]}>
-                            {t('clear')}
-                        </Text>
-                    </TouchableOpacity>
-                )}
             </View>
 
             {/* Component: Date Picker Modal */}
@@ -487,7 +541,7 @@ export default function Record() {
                 <View style={styles.datePickerActions}>
 
                     {/* Cancel Button */}
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         onPress={() => setShowDatePicker(false)}
                         style={styles.datePickerBtn}
                     >
@@ -517,14 +571,15 @@ export default function Record() {
             {/* Sub-section: Transaction List */}
             <Animated.View style={styles.listContainer}>
                 <FlatList
+                    ref={flatListRef}
                     data={filteredRecords}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item, index }) => (
-                        <RecordRow 
-                            item={item} 
-                            index={index} 
-                            entranceAnim={listEntranceAnim} 
-                            openAction={openAction} 
+                        <RecordRow
+                            item={item}
+                            index={index}
+                            entranceAnim={listEntranceAnim}
+                            openAction={openAction}
                         />
                     )}
                     contentContainerStyle={[
@@ -532,30 +587,43 @@ export default function Record() {
                         filteredRecords.length === 0 && styles.listContentEmpty,
                     ]}
                     ListEmptyComponent={
-                        <EmptyState 
-                            filter={filter} 
-                            dateFilter={dateFilter} 
-                            setFilter={setFilter} 
-                            setDateFilter={setDateFilter} 
+                        <EmptyState
+                            filter={filter}
+                            dateFilter={dateFilter}
+                            setFilter={setFilter}
+                            setDateFilter={setDateFilter}
                         />
                     }
                     showsVerticalScrollIndicator={false}
+                    onScroll={handleScroll}
+                    scrollEventThrottle={16}
                 />
             </Animated.View>
+
+            {/* Back to Top Button */}
+            {showBackToTop && (
+                <TouchableOpacity
+                    style={[styles.backToTopButton, { backgroundColor: colors.accent }]}
+                    onPress={scrollToTop}
+                    activeOpacity={0.8}
+                >
+                    <ArrowUp size={24} color={colors.background} />
+                </TouchableOpacity>
+            )}
 
             {/* Bottom Footer Area */}
             <Footer />
 
             {/* Modals & Popups: Item Action Sheet */}
             {showActionModal && actionItem && (
-                <Modal 
-                    visible={showActionModal} 
-                    transparent={true} 
+                <Modal
+                    visible={showActionModal}
+                    transparent={true}
                     animationType="fade"
                 >
-                    <BlurView 
-                        intensity={30} 
-                        tint="dark" 
+                    <BlurView
+                        intensity={30}
+                        tint="dark"
                         style={styles.modalOverlay}
                     >
                         <TouchableOpacity
@@ -564,10 +632,10 @@ export default function Record() {
                             onPress={closeAction}
                         />
                         <Animated.View
-                            style={[ styles.actionModal, {
-                                    transform: [{ scale: scaleAnim }],
-                                    backgroundColor: colors.cardBg
-                                }
+                            style={[styles.actionModal, {
+                                transform: [{ scale: scaleAnim }],
+                                backgroundColor: colors.cardBg
+                            }
                             ]}
                         >
                             {/* Close Button */}
@@ -580,60 +648,60 @@ export default function Record() {
 
                             {/* Title */}
                             <Text style={[styles.actionModalTitle, { color: colors.text, marginBottom: 15 }]}>
-                                {actionItem.title !== 'Untitled' 
-                                    ? actionItem.title 
+                                {actionItem.title !== 'Untitled'
+                                    ? actionItem.title
                                     : t('anonymous')
                                 }
                             </Text>
 
                             {/* Amount */}
-                            <Text style={[styles.actionModalAmount, { 
-                                color: actionItem.type === "income" 
-                                    ? colors.accent 
-                                    : colors.red 
+                            <Text style={[styles.actionModalAmount, {
+                                color: actionItem.type === "income"
+                                    ? colors.accent
+                                    : colors.red
                             }]}>
                                 {formatAmount(actionItem.amount, actionItem.type)}
                             </Text>
 
                             {/* Type */}
                             <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                                {t('title')} 
-                                    : <Text style={{ fontWeight: FONTS.normal }}>
-                                        {actionItem.type === "income" 
-                                            ? t('income') 
-                                            : t('expense')
-                                        }
-                                    </Text>
+                                {t('title')}
+                                : <Text style={{ fontWeight: FONTS.normal }}>
+                                    {actionItem.type === "income"
+                                        ? t('income')
+                                        : t('expense')
+                                    }
+                                </Text>
                             </Text>
 
                             {/* List Type */}
                             <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                                {t('listTypeTitle')} 
-                                    : <Text style={{ fontWeight: FONTS.normal }}>
-                                        {actionItem.listType === 'ไม่ระบุ' 
-                                            ? t('notSpecified') 
-                                            : getListTypeDisplay(actionItem.listType)
-                                        }
-                                    </Text>
+                                {t('listTypeTitle')}
+                                : <Text style={{ fontWeight: FONTS.normal }}>
+                                    {actionItem.listType === 'ไม่ระบุ'
+                                        ? t('notSpecified')
+                                        : getListTypeDisplay(actionItem.listType)
+                                    }
+                                </Text>
                             </Text>
 
                             {/* Category */}
                             <Text style={[styles.actionModalMeta, { color: colors.text }]}>
-                                {t('category')} 
-                                    : <Text style={{ fontWeight: FONTS.normal }}>
-                                        {actionItem.category === 'ไม่ระบุ' 
-                                            ? t('notSpecified') 
-                                            : getCategoryDisplayName(actionItem.category)
-                                        }
-                                    </Text>
+                                {t('category')}
+                                : <Text style={{ fontWeight: FONTS.normal }}>
+                                    {actionItem.category === 'ไม่ระบุ'
+                                        ? t('notSpecified')
+                                        : getCategoryDisplayName(actionItem.category)
+                                    }
+                                </Text>
                             </Text>
 
                             {/* Date */}
                             <Text style={[styles.actionModalMeta, { marginTop: 20, fontWeight: FONTS.bold, color: colors.text }]}>
-                                {t('date')} 
-                                    : <Text style={{ fontWeight: FONTS.normal }}>
-                                        {formatDateByLang(actionItem.date)}
-                                    </Text>
+                                {t('date')}
+                                : <Text style={{ fontWeight: FONTS.normal }}>
+                                    {formatDateByLang(actionItem.date)}
+                                </Text>
                             </Text>
 
                             <View style={styles.actionButtons}>
@@ -703,10 +771,8 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: horizontalScale(4),
-        paddingVertical: verticalScale(10),
-        paddingHorizontal: horizontalScale(14),
+        paddingHorizontal: horizontalScale(4),
         borderRadius: moderateScale(20),
-        ...CARD_SHADOW
     },
     dateFilterClearText: {
         fontSize: SIZES.xs,
@@ -736,6 +802,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
+        gap: horizontalScale(8),
         paddingVertical: verticalScale(10),
         paddingHorizontal: horizontalScale(18),
         borderRadius: moderateScale(20),
@@ -848,7 +915,7 @@ const styles = StyleSheet.create({
     },
     modalBackdrop: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.4)",
+        backgroundColor: "rgba(0,0,0,0.8)",
         zIndex: 1,
     },
     actionModal: {
@@ -928,8 +995,47 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     listContainer: {
+        flex: 1,
         borderRadius: moderateScale(10),
         overflow: "hidden",
-        height: "58%",
+        minHeight: 280,
+        maxHeight: "59%",
+    },
+    backToTopButton: {
+        position: "absolute",
+        bottom: verticalScale(120),
+        right: horizontalScale(0),
+        transform: [{ translateX: -horizontalScale(25) }],
+        width: horizontalScale(50),
+        height: horizontalScale(50),
+        borderRadius: moderateScale(25),
+        alignItems: "center",
+        justifyContent: "center",
+        elevation: 5,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: verticalScale(2),
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: moderateScale(3.84),
+        zIndex: 100,
+    },
+    searchContainer: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        height: verticalScale(42),
+        paddingHorizontal: horizontalScale(16),
+        borderRadius: moderateScale(50),
+        borderWidth: 1,
+        ...CARD_SHADOW,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: SIZES.xs,
+        fontWeight: FONTS.semibold,
+        marginLeft: horizontalScale(8),
+        outlineStyle: "none",
     },
 });

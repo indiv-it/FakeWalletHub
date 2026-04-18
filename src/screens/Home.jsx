@@ -471,7 +471,7 @@ export default function Home() {
                     <View style={dialogStyles.overlay}>
                         {/* overlay */}
                         <TouchableOpacity
-                            style={{ ...StyleSheet.absoluteFillObject }}
+                            style={[styles.popupShadow, StyleSheet.absoluteFillObject]}
                             activeOpacity={1}
                             onPress={closePopup}
                         />
@@ -581,11 +581,11 @@ export default function Home() {
                                         marginTop: 4 
                                     }}>
                                         <Text style={{ color: colors.gray, fontSize: 11 }}>
-                                            Made with
+                                            Made with &nbsp;
                                         </Text>
                                         <Heart size={10} color={colors.red} fill={colors.red} />
                                         <Text style={{ color: colors.gray, fontSize: 11 }}>
-                                            in Thailand
+                                            &nbsp; in Thailand
                                         </Text>
                                     </View>
                                 </View>
@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
     },
     popupShadow: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.4)",
+        backgroundColor: "rgba(0,0,0,0.8)",
     },
     popupMoney: {
         width: horizontalScale(300),

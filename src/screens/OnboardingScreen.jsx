@@ -38,7 +38,7 @@ export default function OnboardingScreen() {
     // --- Navigation & Context ---
     const navigation = useNavigation();
     const { currentLang, changeLanguage, t } = useLanguage();
-    const { currentCurrency, changeCurrency, currencies } = useCurrency();
+    const { currentCurrency, changeCurrency } = useCurrency();
     const { colors, isDarkMode } = useTheme();
 
     // --- State ---
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
         color: COLORS.accent,
     },
     selectionLabel: {
-        fontSize: moderateScale(14),
+        fontSize: moderateScale(12),
         flex: 1,
     },
     checkCircle: {
@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(32),
     },
     primaryButtonText: {
-        fontSize: moderateScale(17),
+        fontSize: moderateScale(14),
         fontWeight: '700',
     },
 

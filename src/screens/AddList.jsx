@@ -18,11 +18,22 @@ import { BlurView } from 'expo-blur';
 import { horizontalScale, verticalScale, moderateScale } from "../utils/responsive";
 import { COLORS, SIZES, FONTS, CARD_SHADOW } from "../style/Theme";
 import { useTheme } from "../context/ThemeContext";
+import {
+    Tag,
+    Landmark,
+    Banknote,
+    TrendingUp,
+    TrendingDown,
+    CalendarDays,
+    SquarePlus,
+    SquarePen
+} from "lucide-react-native";
 
 // --- Contexts ---
 import { useTransaction } from "../context/TransactionContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useCategory } from "../context/CategoryContext";
+import { useCurrency } from "../context/CurrencyContext";
 
 // --- Constants & Components ---
 import { LIST_TYPE_CASH, LIST_TYPE_BANK } from "../server/database";
@@ -32,7 +43,7 @@ import AlertPopup from "../components/AlertPopup";
 * CustomTypeButton Component (Internal)
 * Render an animated button to select types/categories
 */
-const CustomTypeButton = ({ label, isActive, activeColor, activeTextColor, inactiveTextColor = COLORS.white, onPress }) => {
+const CustomTypeButton = ({ label, isActive, activeColor, activeTextColor, icon, inactiveTextColor = COLORS.white, onPress }) => {
     // --- Contexts ---
     const { colors } = useTheme();
 
@@ -64,6 +75,7 @@ const CustomTypeButton = ({ label, isActive, activeColor, activeTextColor, inact
     return (
         <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
             <Animated.View style={[styles.typeButton, { backgroundColor }]}>
+                {icon}
                 <Animated.Text style={[styles.typeText, { color: textColor }]}>
                     {label}
                 </Animated.Text>
@@ -90,6 +102,7 @@ export default function AddList() {
     const { addTransaction, editTransaction } = useTransaction();
     const { t } = useLanguage();
     const { categories } = useCategory();
+    const { currencyInfo } = useCurrency();
 
     // --- Initial Values Mapping ---
     const mappedType = editItem?.type || 'expense';
@@ -115,6 +128,7 @@ export default function AddList() {
     const [showAmountAlert, setShowAmountAlert] = useState(false);
     const [showCompleteAlert, setShowCompleteAlert] = useState(false);
     const [showTypeAlert, setShowTypeAlert] = useState(false);
+    const [showTypeAndCategory, setShowTypeAndCategory] = useState(false);
     const [showSaveErrorAlert, setShowSaveErrorAlert] = useState(false);
 
     // --- Handlers ---
@@ -148,9 +162,15 @@ export default function AddList() {
             return;
         }
 
+        if (listAccount == 'ไม่ระบุ' && listGroup == 'ไม่ระบุ') {
+            setShowTypeAndCategory(true);
+            return;
+        }
+
         // Format Date to YYYY-MM-DD
-        const dateStr = `${dateTime.getFullYear()}-${String(dateTime.getMonth() + 1).padStart(2, '0')}-${String(dateTime.getDate()).padStart(2, '0')
-            }`;
+        const dateStr = `${dateTime.getFullYear()}-${String(dateTime.getMonth() + 1)
+            .padStart(2, '0')}-${String(dateTime.getDate())
+                .padStart(2, '0')}`;
 
         // Construct Transaction Data
         const transactionData = {
@@ -197,12 +217,21 @@ export default function AddList() {
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header Area */}
-            <Text style={[styles.textHeader, { color: colors.text }]}>
-                {isEditMode
-                    ? t('editItem')
-                    : t('addItem')
-                }
-            </Text>
+            {isEditMode ? (
+                <View style={styles.headerContainer}>
+                    <SquarePen size={24} color={colors.accent} />
+                    <Text style={[styles.textHeader, { color: colors.text }]}>
+                        {t('editItem')}
+                    </Text>
+                </View>
+            ) : (
+                <View style={styles.headerContainer}>
+                    <SquarePlus size={24} color={colors.accent} />
+                    <Text style={[styles.textHeader, { color: colors.text }]}>
+                        {t('addItem')}
+                    </Text>
+                </View>
+            )}
 
             {/* Form Area */}
             <View>
@@ -210,22 +239,31 @@ export default function AddList() {
                 <Text style={[styles.textForm, { color: colors.text }]}>
                     {t('amount')}
                 </Text>
-                <TextInput
-                    keyboardType="number-pad"
-                    placeholder="00.00"
-                    placeholderTextColor={colors.gray}
-                    value={amount}
-                    onChangeText={setAmount}
-                    style={[styles.textInput, {
-                        color: colors.text,
-                        backgroundColor: colors.cardBg
-                    }]}
-                />
+                <View style={[styles.amountInputContainer, { backgroundColor: colors.cardBg }]}>
+                    <Text style={[styles.currencySymbol, { color: colors.text }]}>
+                        {currencyInfo.symbol}
+                    </Text>
+                    <TextInput
+                        keyboardType="number-pad"
+                        placeholder="00.00"
+                        placeholderTextColor={colors.gray}
+                        value={amount}
+                        onChangeText={setAmount}
+                        style={[styles.textInput, {
+                            color: colors.text,
+                            backgroundColor: 'transparent',
+                            borderWidth: 0,
+                            flex: 1,
+                            marginTop: 0,
+                            outlineStyle: 'none',
+                        }]}
+                    />
+                </View>
 
                 {/* 2. Title & Date Area */}
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                     <Text style={[styles.textForm, { color: colors.text }]}>
-                        {t('title')}
+                        {t('itemName')}
                     </Text>
                     <Text style={[styles.textForm, { width: "30%", color: colors.text }]}>
                         {t('date')}
@@ -234,24 +272,36 @@ export default function AddList() {
 
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                     {/* Title / Note Input */}
-                    <TextInput
-                        keyboardType="default"
-                        placeholder={t('itemName')}
-                        placeholderTextColor={colors.gray}
-                        value={title}
-                        onChangeText={setTitle}
-                        style={[styles.textInput, {
-                            width: "63%",
-                            color: colors.text,
-                            backgroundColor: colors.cardBg
-                        }]}
-                    />
+                    <View style={[styles.titleInput, {
+                        color: colors.text,
+                        backgroundColor: colors.cardBg
+                    }]}>
+                        <Tag size={16} color={colors.text} />
+                        <TextInput
+                            keyboardType="default"
+                            placeholder={t('itemName')}
+                            placeholderTextColor={colors.gray}
+                            value={title}
+                            onChangeText={setTitle}
+                            style={[styles.textInput, {
+                                width: "100%",
+                                color: colors.text,
+                                borderRadius: 0,
+                                borderWidth: 0,
+                                height: verticalScale(45),
+                                marginTop: verticalScale(0),
+                                marginLeft: verticalScale(10),
+                                outlineStyle: "none",
+                            }]}
+                        />
+                    </View>
 
                     {/* Date Picker Button */}
                     <TouchableOpacity
                         onPress={() => setShowDatePicker(true)}
                         style={[styles.dateButton, { backgroundColor: colors.cardBg }]}
                     >
+                        <CalendarDays size={16} color={colors.text} />
                         <Text style={[styles.dateText, { color: colors.text }]}>
                             {date}
                         </Text>
@@ -273,7 +323,7 @@ export default function AddList() {
                 <Text style={[styles.textForm, { color: colors.text }]}>
                     {t('listTypeTitle')}
                 </Text>
-                <View style={styles.typeContainer}>
+                <View style={[styles.typeContainer, { backgroundColor: colors.cardBg }]}>
                     <CustomTypeButton
                         label={t('income')}
                         isActive={listType === 'income'}
@@ -281,6 +331,14 @@ export default function AddList() {
                         activeTextColor={colors.background}
                         inactiveTextColor={colors.text}
                         onPress={() => setListType('income')}
+                        icon={
+                            <TrendingUp size={16}
+                                color={listType === 'income'
+                                    ? colors.background
+                                    : colors.text
+                                }
+                            />
+                        }
                     />
 
                     <CustomTypeButton
@@ -290,6 +348,14 @@ export default function AddList() {
                         activeTextColor={colors.white}
                         inactiveTextColor={colors.text}
                         onPress={() => setListType('expense')}
+                        icon={
+                            <TrendingDown size={16}
+                                color={listType === 'expense'
+                                    ? colors.white
+                                    : colors.text
+                                }
+                            />
+                        }
                     />
                 </View>
 
@@ -297,7 +363,7 @@ export default function AddList() {
                 <Text style={[styles.textForm, { color: colors.text }]}>
                     {t('accountTypeTitle')}
                 </Text>
-                <View style={styles.typeContainer}>
+                <View style={[styles.typeContainer, { backgroundColor: colors.cardBg }]}>
                     <CustomTypeButton
                         label={t('accountInBank')}
                         isActive={listAccount === LIST_TYPE_BANK}
@@ -308,6 +374,14 @@ export default function AddList() {
                             listAccount === LIST_TYPE_BANK
                                 ? 'ไม่ระบุ'
                                 : LIST_TYPE_BANK)
+                        }
+                        icon={
+                            <Landmark size={16}
+                                color={listAccount === LIST_TYPE_BANK
+                                    ? colors.background
+                                    : colors.text
+                                }
+                            />
                         }
                     />
 
@@ -322,6 +396,14 @@ export default function AddList() {
                                 ? 'ไม่ระบุ'
                                 : LIST_TYPE_CASH)
                         }
+                        icon={
+                            <Banknote size={16}
+                                color={listAccount === LIST_TYPE_CASH
+                                    ? colors.background
+                                    : colors.text
+                                }
+                            />
+                        }
                     />
                 </View>
 
@@ -329,7 +411,7 @@ export default function AddList() {
                 <Text style={[styles.textForm, { color: colors.text }]}>
                     {t('category')}
                 </Text>
-                <View style={styles.typeContainer}>
+                <View style={[styles.typeContainer, { backgroundColor: colors.cardBg }]}>
                     {categories.map((c) => (
                         <CustomTypeButton
                             key={c.id}
@@ -342,8 +424,7 @@ export default function AddList() {
                                 listGroup === c.id
                                     ? 'ไม่ระบุ'
                                     : c.id)
-                            }
-                        />
+                            } />
                     ))}
                 </View>
             </View>
@@ -352,9 +433,9 @@ export default function AddList() {
             <View style={styles.buttonContainer}>
                 <TouchableOpacity
                     onPress={() => navigation.navigate("Home")}
-                    style={[styles.backButton, { backgroundColor: colors.background, borderColor: colors.accent }]}
+                    style={[styles.backButton, { backgroundColor: colors.cardBg, borderColor: colors.border }]}
                 >
-                    <Text style={[styles.textBack, { color: colors.accent }]}>
+                    <Text style={[styles.textBack, { color: colors.text }]}>
                         {t('cancel')}
                     </Text>
                 </TouchableOpacity>
@@ -370,9 +451,9 @@ export default function AddList() {
             </View>
 
             {/* Popup Alerts */}
-            <Modal 
-                visible={showCompleteAlert} 
-                transparent 
+            <Modal
+                visible={showCompleteAlert}
+                transparent
                 animationType="fade"
                 onRequestClose={() => setShowCompleteAlert(false)}
             >
@@ -416,6 +497,17 @@ export default function AddList() {
                 />
             )}
 
+            {showTypeAndCategory && (
+                <AlertPopup
+                    visible={showTypeAndCategory}
+                    title={t('selectListTypeAndCategory')}
+                    description={t('selectListTypeAndCategoryDesc')}
+                    onClose={() => setShowTypeAndCategory(false)}
+                    buttonText={t('ok')}
+                    type="warning"
+                />
+            )}
+
             {showSaveErrorAlert && (
                 <AlertPopup
                     visible={showSaveErrorAlert}
@@ -436,17 +528,23 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: horizontalScale(20),
     },
+    headerContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: horizontalScale(10),
+        marginTop: verticalScale(20),
+        marginBottom: verticalScale(10),
+    },
     textHeader: {
         fontSize: SIZES.xl,
         fontWeight: FONTS.bold,
         textAlign: "center",
-        marginTop: verticalScale(30),
-        marginBottom: verticalScale(10),
     },
     textForm: {
         fontSize: SIZES.sm,
         fontWeight: FONTS.normal,
-        marginTop: verticalScale(20),
+        marginTop: verticalScale(18),
     },
     blurView: {
         position: "absolute",
@@ -464,21 +562,44 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(10),
         borderWidth: 1,
         borderColor: COLORS.border,
+    },
+    amountInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        height: verticalScale(50),
+        borderRadius: moderateScale(15),
+        marginTop: verticalScale(10),
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        paddingHorizontal: horizontalScale(15),
         ...CARD_SHADOW
+    },
+    currencySymbol: {
+        fontSize: SIZES.sm,
+        fontWeight: FONTS.bold,
+        marginRight: horizontalScale(5),
     },
     typeContainer: {
         flexDirection: "row",
         flexWrap: "wrap",
-        gap: horizontalScale(10),
+        gap: horizontalScale(5),
         justifyContent: "center",
         alignItems: "center",
         marginTop: verticalScale(10),
+        borderRadius: moderateScale(15),
+        padding: horizontalScale(5),
+        borderColor: COLORS.border,
+        borderWidth: 1,
+        ...CARD_SHADOW
     },
     dateButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: horizontalScale(10),
         height: verticalScale(50),
         borderRadius: moderateScale(15),
         marginTop: verticalScale(10),
-        width: "33%",
+        width: "37%",
         justifyContent: "center",
         alignItems: "center",
         borderWidth: 1,
@@ -486,18 +607,18 @@ const styles = StyleSheet.create({
         ...CARD_SHADOW
     },
     dateText: {
-        fontSize: SIZES.sm,
+        fontSize: SIZES.xs,
         fontWeight: FONTS.bold,
     },
     typeButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: horizontalScale(10),
         width: horizontalScale(155),
-        height: verticalScale(50),
-        borderRadius: moderateScale(15),
+        height: verticalScale(45),
+        borderRadius: moderateScale(10),
         alignItems: "center",
         justifyContent: "center",
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        ...CARD_SHADOW
     },
     typeText: {
         fontSize: SIZES.sm,
@@ -524,5 +645,17 @@ const styles = StyleSheet.create({
     textBack: {
         fontSize: SIZES.sm,
         fontWeight: FONTS.bold,
+    },
+    titleInput: {
+        flexDirection: "row",
+        alignItems: "center",
+        width: "60%",
+        borderRadius: moderateScale(15),
+        paddingHorizontal: horizontalScale(15),
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        height: verticalScale(50),
+        marginTop: verticalScale(10),
+        ...CARD_SHADOW
     },
 });

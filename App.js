@@ -48,7 +48,7 @@ function AppNavigator() {
   };
 
   // Loading
-  if (!initialRoute) return <LoadingOverlay />;
+  // if (!initialRoute) return <LoadingOverlay />;
 
   return (
     <NavigationContainer>

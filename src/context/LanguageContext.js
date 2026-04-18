@@ -102,13 +102,14 @@ const TRANSLATIONS = {
         clear: 'ล้าง',
         confirm: 'ตกลง',
         anonymous: 'ไม่ระบุชื่อ',
+        search: 'ค้นหา',
 
         // AddList
         addIncome: 'เพิ่มรายรับ',
         addExpense: 'เพิ่มรายจ่าย',
         addItem: 'เพิ่มรายการ',
         editItem: 'แก้ไขรายการ',
-        title: 'ชื่อรายการ',
+        title: 'รายการ',
         amount: 'จำนวนเงิน',
         date: 'วันที่',
         category: 'หมวดหมู่',
@@ -125,6 +126,8 @@ const TRANSLATIONS = {
         selectListType: 'กรุณาเลือกประเภทรายการ',
         saveError: 'เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่',
         itemName: 'ชื่อรายการ',
+        selectListTypeAndCategory: 'กรุณาเลือกประเภทบัญชีหรือหมวดหมู่',
+        selectListTypeAndCategoryDesc: 'กรุณาเลือกประเภทบัญชีหรือหมวดหมู่มาอย่างน้อย 1 อย่างก่อนบันทึก',
 
         // Notebook
         noteTitle: 'ชื่อโน้ต',
@@ -216,6 +219,7 @@ const TRANSLATIONS = {
         clear: 'Clear',
         confirm: 'Confirm',
         anonymous: 'Anonymous',
+        search: 'Search',
 
         // AddList
         addIncome: 'Add Income',
@@ -239,6 +243,8 @@ const TRANSLATIONS = {
         selectListType: 'Please select a list type',
         saveError: 'Error saving. Please try again.',
         itemName: 'Item name',
+        selectListTypeAndCategory: 'Please select a account type or category',
+        selectListTypeAndCategoryDesc: 'Please select at least 1 account type or category before saving',
 
         // Notebook
         noteTitle: 'Note Title',
@@ -330,6 +336,7 @@ const TRANSLATIONS = {
         clear: '清除',
         confirm: '确定',
         anonymous: '匿名',
+        search: '搜索',
 
         // AddList
         addIncome: '添加收入',
@@ -353,6 +360,8 @@ const TRANSLATIONS = {
         selectListType: '请选择列表类型',
         saveError: '保存失败，请重试。',
         itemName: '项目名称',
+        selectListTypeAndCategory: '请选择账户类型或类别',
+        selectListTypeAndCategoryDesc: '请选择至少 1 个账户类型或类别后再保存',
 
         // Notebook
         noteTitle: '笔记标题',
@@ -444,6 +453,7 @@ const TRANSLATIONS = {
         clear: 'クリア',
         confirm: '確認',
         anonymous: '匿名',
+        search: '検索',
 
         // AddList
         addIncome: '収入を追加',
@@ -467,6 +477,8 @@ const TRANSLATIONS = {
         selectListType: 'リストタイプを選択してください',
         saveError: '保存に失敗しました。もう一度お試しください。',
         itemName: 'アイテム名',
+        selectListTypeAndCategory: 'アカウントタイプまたはカテゴリを選択してください',
+        selectListTypeAndCategoryDesc: 'アカウントタイプまたはカテゴリを少なくとも 1 つ選択してください',
 
         // Notebook
         noteTitle: 'ノートタイトル',
