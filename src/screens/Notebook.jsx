@@ -331,8 +331,8 @@ export default function Notebook() {
                                     key={color}
                                     style={[
                                         styles.colorCircle,
-                                        { backgroundColor: color },
-                                        noteColor === color && styles.colorCircleSelected
+                                        { backgroundColor: color, borderColor: colors.cardBg },
+                                        noteColor === color && styles.colorCircleSelected,
                                     ]}
                                     onPress={() => setNoteColor(color)}
                                 />
@@ -519,11 +519,9 @@ const styles = StyleSheet.create({
         height: horizontalScale(40),
         borderRadius: moderateScale(20),
         borderWidth: 5,
-        borderColor: '#111827',
     },
     colorCircleSelected: {
         borderWidth: 0,
-        borderColor: '#111827',
     },
     saveBtn: {
         height: verticalScale(50),

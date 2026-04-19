@@ -64,6 +64,7 @@ const TRANSLATIONS = {
         monthlyData: 'ข้อมูลประจำเดือน',
         totalRatio: 'สัดส่วนทั้งหมด',
         expenseByCat: 'สัดส่วนรายจ่ายหมวดหมู่',
+        moneySumText: 'รายรับ-รายจ่ายทั้งหมด',
 
         // Categories (default display names)
         essentials: 'เงินจำเป็น',
@@ -152,7 +153,7 @@ const TRANSLATIONS = {
         selectLanguage: 'เลือกภาษา',
         selectCurrency: 'เลือกสกุลเงิน',
         next: 'ถัดไป',
-        welcomeTitle: 'ยินดีต้อนรับ! 🎉',
+        welcomeTitle: 'ยินดีต้อนรับ!',
         welcomeDesc: 'ขอบคุณที่เลือกใช้ FakeWalletHub\nแอปจัดการรายรับ-รายจ่ายอัจฉริยะ',
         github: 'GitHub',
         contact: 'ติดต่อเรา',
@@ -181,6 +182,7 @@ const TRANSLATIONS = {
         monthlyData: 'Monthly Data',
         totalRatio: 'Total Ratio',
         expenseByCat: 'Expense by Category',
+        moneySumText: 'Total Income-Expense',
 
         // Categories
         essentials: 'Essentials',
@@ -269,7 +271,7 @@ const TRANSLATIONS = {
         selectLanguage: 'Select Language',
         selectCurrency: 'Select Currency',
         next: 'Next',
-        welcomeTitle: 'Welcome! 🎉',
+        welcomeTitle: 'Welcome!',
         welcomeDesc: 'Thank you for choosing FakeWalletHub\nYour smart income & expense manager',
         github: 'GitHub',
         contact: 'Contact Us',
@@ -298,6 +300,7 @@ const TRANSLATIONS = {
         monthlyData: '月度数据',
         totalRatio: '总比例',
         expenseByCat: '分类支出比例',
+        moneySumText: '总收入-总支出',
 
         // Categories
         essentials: '必需品',
@@ -386,7 +389,7 @@ const TRANSLATIONS = {
         selectLanguage: '选择语言',
         selectCurrency: '选择货币',
         next: '下一步',
-        welcomeTitle: '欢迎！🎉',
+        welcomeTitle: '欢迎！',
         welcomeDesc: '感谢您选择 FakeWalletHub\n您的智能收支管理工具',
         github: 'GitHub',
         contact: '联系我们',
@@ -415,6 +418,7 @@ const TRANSLATIONS = {
         monthlyData: '月間データ',
         totalRatio: '総比率',
         expenseByCat: 'カテゴリ別支出',
+        moneySumText: '総収入-総支出',
 
         // Categories
         essentials: '必需品',
@@ -503,7 +507,7 @@ const TRANSLATIONS = {
         selectLanguage: '言語を選択',
         selectCurrency: '通貨を選択',
         next: '次へ',
-        welcomeTitle: 'ようこそ！🎉',
+        welcomeTitle: 'ようこそ！',
         welcomeDesc: 'FakeWalletHubをお選びいただきありがとうございます\nスマート収支管理ツール',
         github: 'GitHub',
         contact: 'お問い合わせ',

@@ -389,6 +389,10 @@ export default function Home() {
                                 />
 
                                 <View>
+                                    <Text style={{ color: colors.accent, marginBottom: 5, fontSize: SIZES.sm, fontWeight: FONTS.bold }}>
+                                        {t('moneySumText')}
+                                    </Text>
+
                                     {/* month year */}
                                     <Text style={{ color: colors.text, marginBottom: 20, fontSize: SIZES.xs, fontWeight: FONTS.normal }}>
                                         {t('monthlyData')} : {formatMonthYear()}
@@ -471,7 +475,7 @@ export default function Home() {
                     <View style={dialogStyles.overlay}>
                         {/* overlay */}
                         <TouchableOpacity
-                            style={[styles.popupShadow, StyleSheet.absoluteFillObject]}
+                            style={[StyleSheet.absoluteFillObject]}
                             activeOpacity={1}
                             onPress={closePopup}
                         />
@@ -511,7 +515,7 @@ export default function Home() {
                                 {/* version */}
                                 <View style={[dialogStyles.versionTag, { backgroundColor: colors.accent + '35' }]}>
                                     <Text style={{ color: colors.accent, fontSize: 12, fontWeight: 'bold' }}>
-                                        v1.0.2
+                                        v1.1.0
                                     </Text>
                                 </View>
                             </View>
@@ -680,6 +684,7 @@ const dialogStyles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: "rgba(0,0,0,0.3)",
     },
     card: {
         width: '85%',

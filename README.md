@@ -4,7 +4,7 @@
 
 | Platform | Download Link |
 | :--- | :--- |
-| **Direct APK** | [![Download APK (V1.0.2)](https://img.shields.io/badge/Download_APK_(V1.0.2)-000000?style=for-the-badge&logo=android&logoColor=green)](https://expo.dev/artifacts/eas/ofgCgAVLG7AkRMLaXagn1Z.apk) |
+| **Direct APK** | [![Download APK (V1.1.0)](https://img.shields.io/badge/Download_APK_(V1.1.0)-000000?style=for-the-badge&logo=android&logoColor=green)](https://expo.dev/artifacts/eas/91RcEt9mesoJ1fd1ZKRTU.apk) |
 
 ---
 

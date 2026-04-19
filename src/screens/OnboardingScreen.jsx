@@ -374,7 +374,7 @@ export default function OnboardingScreen() {
             {/* Welcome Info Wrapper */}
             <Animated.View style={[styles.welcomeHero]}>
                 <View style={[styles.welcomeIconContainer, { backgroundColor: colors.accent + '15' }]}>
-                    <Text style={styles.welcomeEmoji}>🎉</Text>
+                    <Sparkles size={45} color={colors.accent} />
                 </View>
                 <Text style={[styles.welcomeTitle, { color: colors.text }]}>
                     {t('welcomeTitle')}
@@ -646,9 +646,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: verticalScale(20),
-    },
-    welcomeEmoji: {
-        fontSize: moderateScale(48),
     },
     welcomeTitle: {
         fontSize: moderateScale(28),

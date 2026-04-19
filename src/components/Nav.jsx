@@ -6,7 +6,6 @@ import {
     Image,
     Text,
     Animated,
-    Dimensions,
     TouchableWithoutFeedback,
     Modal,
     TextInput,
@@ -588,7 +587,9 @@ export default function Nav() {
                 <View style={[styles.logoContainer, { backgroundColor: isDarkMode ? colors.background : colors.text }]}>
                     <Image source={require('../imgs/Logo_FWH.png')} style={styles.img} />
                     <Text style={{ color: colors.white, fontWeight: 'bold' }}>
-                        <Text style={{ color: isDarkMode ? colors.accent : colors.white }}>Fake</Text>
+                        <Text style={{ color: colors.accent }}>
+                            Fake
+                        </Text>
                         WalletHub
                     </Text>
                 </View>
