@@ -1,3 +1,4 @@
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
     View,
     Text,
@@ -7,8 +8,8 @@ import {
     Modal,
     Image,
     Linking,
-} from "react-native"
-import { useState, useMemo } from "react";
+    Animated,
+} from "react-native";
 import { BlurView } from 'expo-blur';
 import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
 
@@ -37,7 +38,7 @@ import {
 } from 'lucide-react-native';
 
 // --- Hooks ---
-import { useTransactionStats } from '../hooks/useTransactionStats';
+import { useTransactionStats, TransactionStats } from '../hooks/useTransactionStats';
 
 /**
  * Home Screen Component
@@ -52,15 +53,15 @@ export default function Home() {
     const { formatMoney } = useCurrency(); 
 
     // --- Local State ---
-    const [popupMoney, setPopupMoney] = useState(null); // Toggles general income/expense popup
-    const [popupGroup, setPopupGroup] = useState(null); // Stores the active category ID for group popup
+    const [popupMoney, setPopupMoney] = useState<boolean | null>(null); // Toggles general income/expense popup
+    const [popupGroup, setPopupGroup] = useState<string | null>(null); // Stores the active category ID for group popup
 
     // --- Category & Stats Hooks ---
-    const { getCategoryDisplayName, CATEGORY_IDS, getCategoryIconName } = useCategory();
+    const { getCategoryDisplayName, CATEGORY_IDS, getCategoryIconName, getCategoryGoal } = useCategory();
     const { allTimeStats, monthlyStats } = useTransactionStats();
 
     // --- Helpers & Computations ---
-    const fmt = (n) => formatMoney(n);
+    const fmt = (n: number) => formatMoney(n);
 
     // URL contacts in about section
     const GITHUB_URL = 'https://github.com/indiv-it/FakeWalletHub';
@@ -81,7 +82,7 @@ export default function Home() {
     /**
      * Calculate category balance (income - expense)
      */
-    const getCategoryBalance = (stats, catId) => {
+    const getCategoryBalance = (stats: Record<string, { income: number; expense: number }>, catId: string) => {
         const income = stats?.[catId]?.income || 0;
         const expense = stats?.[catId]?.expense || 0;
         return income - expense;
@@ -92,16 +93,41 @@ export default function Home() {
     /**
      * Renders a category card in the list showing balance and a miniature pie chart
      */
-    const CategoryCard = ({ catId, icon }) => {
+    const CategoryCard = ({ catId, icon }: { catId: string; icon: React.ReactNode }) => {
         const displayName = getCategoryDisplayName(catId);
         const balance = getCategoryBalance(allTimeStats.categoryStats, catId);
         const isLast = catId === CATEGORY_IDS[CATEGORY_IDS.length - 1];
+        
+        // Savings Goal
+        const goal = getCategoryGoal(catId);
+        const hasGoal = goal && goal.goal_enabled;
+        
+        // Setup Progress Bar Animation if Goal is Enabled
+        const progressAnim = useRef(new Animated.Value(0)).current;
+        const progressPercentage = hasGoal && goal.goal_amount > 0 ? Math.min(Math.max((balance / goal.goal_amount) * 100, 0), 100) : 0;
+        
+        useEffect(() => {
+            if (hasGoal) {
+                Animated.timing(progressAnim, {
+                    toValue: progressPercentage,
+                    duration: 1000,
+                    useNativeDriver: false,
+                }).start();
+            }
+        }, [progressPercentage, hasGoal]);
+
+        const progressWidth = progressAnim.interpolate({
+            inputRange: [0, 100],
+            outputRange: ['0%', '100%'],
+        });
+
         return (
             <TouchableOpacity
                 onPress={() => setPopupGroup(catId)}
                 style={[styles.list, {
                     borderBottomColor: colors.border,
-                    borderBottomWidth: isLast ? 0 : 1
+                    borderBottomWidth: isLast ? 0 : 1,
+                    alignItems: 'center',
                 }]}
             >
                 {/* Icon Wrapper */}
@@ -109,26 +135,41 @@ export default function Home() {
                     {icon}
                 </View>
 
-                {/* Category Name and Balance */}
-                <View>
+                {/* Category Name, Balance, and Optional Progress Bar */}
+                <View style={{ flex: 1, marginRight: hasGoal ? 0 : 10 }}>
                     <Text style={{ color: colors.text, fontSize: SIZES.sm, fontWeight: FONTS.normal }}>
                         {displayName}
                     </Text>
                     <Text style={{ color: colors.accent, fontSize: SIZES.base, fontWeight: FONTS.bold }}>
                         {fmt(balance)}
                     </Text>
+
+                    {hasGoal && (
+                        <View style={{ position: 'relative', bottom: 15 }}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 5 }}>
+                                <Text style={{ color: colors.gray, fontSize: 10 }}>
+                                    {fmt(goal.goal_amount)}
+                                </Text>
+                            </View>
+                            <View style={{ height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: 'hidden' }}>
+                                <Animated.View style={{ height: '100%', width: progressWidth, backgroundColor: colors.accent }} />
+                            </View>
+                        </View>
+                    )}
                 </View>
 
-                {/* Miniature Pie Chart for Income vs Expense */}
-                <View style={{ flex: 1, alignItems: "flex-end" }}>
-                    <PieChartComponent
-                        income={allTimeStats.categoryStats[catId]?.income || 0}
-                        expense={allTimeStats.categoryStats[catId]?.expense || 0}
-                        size={60}
-                        color={colors.red}
-                        background={colors.accent}
-                    />
-                </View>
+                {/* Miniature Pie Chart for Income vs Expense if no goal */}
+                {!hasGoal && (
+                    <View style={{ width: 60, alignItems: "flex-end" }}>
+                        <PieChartComponent
+                            income={allTimeStats.categoryStats[catId]?.income || 0}
+                            expense={allTimeStats.categoryStats[catId]?.expense || 0}
+                            size={60}
+                            color={colors.red}
+                            background={colors.accent}
+                        />
+                    </View>
+                )}
             </TouchableOpacity>
         );
     };
@@ -136,7 +177,7 @@ export default function Home() {
     /**
      * Popup displaying detailed monthly statistics for a specific category
      */
-    const GroupPopup = ({ catId }) => {
+    const GroupPopup = ({ catId }: { catId: string }) => {
         const displayName = getCategoryDisplayName(catId);
         return (
             <View style={[styles.popupMoney, { backgroundColor: colors.cardBg }]}>
@@ -170,7 +211,7 @@ export default function Home() {
                     color='white'
                     income={monthlyStats.categoryStats[catId]?.income || 0}
                     expense={monthlyStats.categoryStats[catId]?.expense || 0}
-                    percent={monthlyStats.categoryStatsPercent[catId]?.incomePercent.toFixed(1) || 0}
+                    percent={monthlyStats.categoryStatsPercent[catId]?.incomePercent.toFixed(1) || '0'}
                     background={colors.accent}
                 />
 
@@ -181,7 +222,7 @@ export default function Home() {
                     color='white'
                     income={monthlyStats.categoryStats[catId]?.expense || 0}
                     expense={monthlyStats.categoryStats[catId]?.income || 0}
-                    percent={monthlyStats.categoryStatsPercent[catId]?.expensePercent.toFixed(1) || 0}
+                    percent={monthlyStats.categoryStatsPercent[catId]?.expensePercent.toFixed(1) || '0'}
                     background={colors.red}
                 />
 
@@ -191,15 +232,19 @@ export default function Home() {
                         <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold' }}>
                             {t('totalRatio')}
                         </Text>
+                        {/* Changed to allTimeData label as requested */}
+                        <Text style={{ color: colors.gray, fontSize: 12, marginBottom: 4 }}>
+                            {t('allTimeData')}
+                        </Text>
                         <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>
-                            {monthlyStats.categoryPercent[catId]?.toFixed(1) || 0}%
+                            {allTimeStats.categoryPercent[catId]?.toFixed(1) || 0}%
                         </Text>
                     </View>
 
-                    {/* Overall Ratio Pie Chart */}
+                    {/* Overall Ratio Pie Chart - Changed to allTimeStats */}
                     <PieChartComponent
-                        income={monthlyStats.categoryPercent[catId] || 0}
-                        expense={100 - (monthlyStats.categoryPercent[catId] || 0)}
+                        income={allTimeStats.categoryPercent[catId] || 0}
+                        expense={100 - (allTimeStats.categoryPercent[catId] || 0)}
                         size={80}
                         color='white'
                         background={colors.text}
@@ -212,7 +257,17 @@ export default function Home() {
     /**
      * Reusable row component for displaying a specific chart alongside its stats
      */
-    const ChartIncomeExpense = ({ title, money, color, income, expense, percent, background }) => {
+    interface ChartIncomeExpenseProps {
+        title: string;
+        money: number;
+        color: string;
+        income: number;
+        expense: number;
+        percent: string;
+        background: string;
+    }
+
+    const ChartIncomeExpense = ({ title, money, color, income, expense, percent, background }: ChartIncomeExpenseProps) => {
         return (
             <View style={{ 
                 flexDirection: 'row', 
@@ -628,7 +683,6 @@ const styles = StyleSheet.create({
     },
     list: {
         flexDirection: "row",
-        alignItems: "center",
         paddingVertical: verticalScale(15),
     },
     cardList: {

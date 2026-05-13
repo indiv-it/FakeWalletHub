@@ -1,12 +1,20 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DARK_COLORS, LIGHT_COLORS } from '../style/Theme';
+import { DARK_COLORS, LIGHT_COLORS, ThemeColors } from '../style/Theme';
+
+// --- Types ---
+interface ThemeContextValue {
+    colors: ThemeColors;
+    isDarkMode: boolean;
+    toggleTheme: () => void;
+    setIsDarkMode: (value: boolean) => void;
+}
 
 // Create the theme context
-const ThemeContext = createContext();
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 // Custom hook to use the theme
-export const useTheme = () => {
+export const useTheme = (): ThemeContextValue => {
     const context = useContext(ThemeContext);
     if (!context) {
         throw new Error('useTheme must be used within a ThemeProvider');
@@ -15,7 +23,7 @@ export const useTheme = () => {
 };
 
 // Theme provider component
-export const ThemeProvider = ({ children }) => {
+export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const [isDarkMode, setIsDarkMode] = useState(true);
 
     // Load theme preference from storage on app start
@@ -39,8 +47,6 @@ export const ThemeProvider = ({ children }) => {
     const toggleTheme = () => {
         const newTheme = !isDarkMode;
         setIsDarkMode(newTheme);
-
-        // Save theme preference
         try {
             AsyncStorage.setItem('themeMode', newTheme ? 'dark' : 'light');
         } catch (error) {
@@ -48,15 +54,13 @@ export const ThemeProvider = ({ children }) => {
         }
     };
 
-    // Theme object
-    const theme = {
+    const theme: ThemeContextValue = {
         colors: isDarkMode ? DARK_COLORS : LIGHT_COLORS,
         isDarkMode,
         toggleTheme,
         setIsDarkMode,
     };
 
-    // Provide the theme to the app
     return (
         <ThemeContext.Provider value={theme}>
             {children}

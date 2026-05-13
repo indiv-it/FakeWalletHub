@@ -1,3 +1,4 @@
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
     View,
     Text,
@@ -10,8 +11,7 @@ import {
     Modal,
     TextInput
 } from "react-native";
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation, useFocusEffect, NavigationProp } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { BlurView } from 'expo-blur';
 import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
@@ -29,7 +29,7 @@ import { useCurrency } from "../context/CurrencyContext";
 import { useCategory } from "../context/CategoryContext";
 
 // --- Constants & Database ---
-import { LIST_TYPE_CASH, LIST_TYPE_BANK } from "../server/database";
+import { LIST_TYPE_CASH, LIST_TYPE_BANK, TransactionData } from "../server/database";
 
 // --- Icons ---
 import {
@@ -49,6 +49,11 @@ import {
     ClipboardList
 } from 'lucide-react-native';
 
+// --- Types ---
+type RootStackParamList = {
+    AddList: { editItem: TransactionData };
+};
+
 /**
 * Record Screen Component
 * Displays a list of transaction records with filtering by type (All, Income, Expense)
@@ -56,7 +61,7 @@ import {
 */
 export default function Record() {
     // --- Navigation ---
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
     // --- Context Hooks ---
     const { colors } = useTheme();
@@ -66,9 +71,9 @@ export default function Record() {
     const { getCategoryDisplayName } = useCategory();
 
     // --- State: Filtering ---
-    const [filter, setFilter] = useState("all");
-    const [dateFilter, setDateFilter] = useState(null);
-    const [searchQuery, setSearchQuery] = useState("");
+    const [filter, setFilter] = useState<string>("all");
+    const [dateFilter, setDateFilter] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState<string>("");
 
     // --- State: Date Picker ---
     const [pickerDate, setPickerDate] = useState(() => new Date());
@@ -77,14 +82,14 @@ export default function Record() {
     // --- State: Modals & Popups ---
     const [showActionModal, setShowActionModal] = useState(false);
     const [popupDelete, setPopupDelete] = useState(false);
-    const [actionItem, setActionItem] = useState(null);
-    const [transactionToDelete, setTransactionToDelete] = useState(null);
+    const [actionItem, setActionItem] = useState<TransactionData | null>(null);
+    const [transactionToDelete, setTransactionToDelete] = useState<TransactionData | null>(null);
     const [showBackToTop, setShowBackToTop] = useState(false);
 
     // --- Animation Refs ---
     const scaleAnim = useRef(new Animated.Value(0)).current;
     const listEntranceAnim = useRef(new Animated.Value(0)).current;
-    const flatListRef = useRef(null);
+    const flatListRef = useRef<FlatList>(null);
 
     // --- Constants ---
     const FILTERS = [
@@ -145,7 +150,7 @@ export default function Record() {
     /**
     * Format amount with sign based on transaction type
     */
-    const formatAmount = (amount, type) => {
+    const formatAmount = (amount: number, type: string) => {
         const sign = type === "income" ? "+" : "-";
         return `${sign} ${formatMoney(amount)}`;
     };
@@ -153,7 +158,7 @@ export default function Record() {
     /**
     * Get display name for list type constants (Cash vs Bank)
     */
-    const getListTypeDisplay = (listType) => {
+    const getListTypeDisplay = (listType: string) => {
         if (listType === LIST_TYPE_CASH) return t('cash');
         if (listType === LIST_TYPE_BANK) return t('accountInBank');
         return listType;
@@ -162,7 +167,7 @@ export default function Record() {
     /**
     * Convert JS Date object to YYYY-MM-DD
     */
-    const dateToYYYYMMDD = (date) => {
+    const dateToYYYYMMDD = (date: Date) => {
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, "0");
         const d = String(date.getDate()).padStart(2, "0");
@@ -174,7 +179,7 @@ export default function Record() {
     /**
     * Open action modal for a specific transaction
     */
-    const openAction = (item) => {
+    const openAction = (item: TransactionData) => {
         setActionItem(item);
         setShowActionModal(true);
         Animated.spring(scaleAnim, {
@@ -204,16 +209,20 @@ export default function Record() {
     * Navigate to edit screen
     */
     const handleEdit = () => {
-        closeAction();
-        navigation.navigate("AddList", { editItem: actionItem });
+        if (actionItem) {
+            closeAction();
+            navigation.navigate("AddList", { editItem: actionItem });
+        }
     };
 
     /**
     * Delete process triggers
     */
-    const handleDeleteClick = (item) => {
-        setTransactionToDelete(item);
-        setPopupDelete(true);
+    const handleDeleteClick = (item: TransactionData | null) => {
+        if (item) {
+            setTransactionToDelete(item);
+            setPopupDelete(true);
+        }
     };
 
     // Show delete popup
@@ -249,7 +258,7 @@ export default function Record() {
     // --- Handlers: Date Picker ---
 
     // Handle date picker change
-    const onDatePickerChange = (event, selectedDate) => {
+    const onDatePickerChange = (event: any, selectedDate?: Date) => {
         if (Platform.OS === "android") setShowDatePicker(false);
         if (event.type === "set") {
             const next = selectedDate || pickerDate;
@@ -270,7 +279,7 @@ export default function Record() {
     };
 
     // Handle scroll to show/hide back to top button
-    const handleScroll = ({ nativeEvent }) => {
+    const handleScroll = ({ nativeEvent }: any) => {
         const offsetY = nativeEvent.contentOffset.y;
         setShowBackToTop(offsetY > 200);
     };
@@ -287,7 +296,7 @@ export default function Record() {
     /**
     * Component for individual filter chips
     */
-    function FilterChip({ item, filter, setFilter }) {
+    function FilterChip({ item, filter, setFilter }: { item: any; filter: string; setFilter: (f: string) => void }) {
         const isActive = filter === item.id;
         return (
             <TouchableOpacity
@@ -314,7 +323,7 @@ export default function Record() {
     /**
     * Helper to render the appropriate icon based on account type
     */
-    function iconMoney(listType, isIncome) {
+    function iconMoney(listType: string, isIncome: boolean) {
         return (
             listType === LIST_TYPE_CASH
                 ? <Banknote size={24} color={isIncome ? colors.accent : colors.red} />
@@ -327,7 +336,7 @@ export default function Record() {
     /**
     * Individual record row component with entry animations
     */
-    function RecordRow({ item, index, entranceAnim, openAction }) {
+    function RecordRow({ item, index, entranceAnim, openAction }: { item: TransactionData; index: number; entranceAnim: Animated.Value; openAction: (i: TransactionData) => void }) {
         const isIncome = item.type === "income";
         const listType = item.listType || LIST_TYPE_CASH;
 
@@ -411,7 +420,7 @@ export default function Record() {
     /**
     * Component to show when no transactions match the filters
     */
-    function EmptyState({ filter, dateFilter, setFilter, setDateFilter }) {
+    function EmptyState({ filter, dateFilter, setFilter, setDateFilter }: { filter: string; dateFilter: string | null; setFilter: (f: string) => void; setDateFilter: (d: string | null) => void }) {
         return (
             <View style={styles.emptyState}>
                 {/* Icon */}
@@ -468,7 +477,6 @@ export default function Record() {
                         item={f}
                         filter={filter}
                         setFilter={setFilter}
-                        icon={f.icon}
                     />
                 ))}
             </View>
@@ -707,12 +715,12 @@ export default function Record() {
                             <View style={styles.actionButtons}>
                                 {/* Edit Button */}
                                 <TouchableOpacity
-                                    style={[styles.actionBtnEdit, { backgroundColor: colors.accent }]}
+                                    style={[styles.actionBtnEdit, { backgroundColor: colors.cardBg, borderColor: colors.border, borderWidth: 1 }]}
                                     onPress={handleEdit}
                                     activeOpacity={0.8}
                                 >
-                                    <Pencil size={20} color={colors.background} />
-                                    <Text style={[styles.actionBtnEditText, { color: colors.background }]}>
+                                    <Pencil size={20} color={colors.text} />
+                                    <Text style={[styles.actionBtnEditText, { color: colors.text }]}>
                                         {t('edit')}
                                     </Text>
                                 </TouchableOpacity>
@@ -861,7 +869,7 @@ const styles = StyleSheet.create({
     },
     textAbout: {
         fontSize: SIZES.xs,
-        fontWeight: FONTS.regular,
+        fontWeight: FONTS.normal,
         marginTop: verticalScale(2),
     },
     textGroup: {
@@ -1036,6 +1044,5 @@ const styles = StyleSheet.create({
         fontSize: SIZES.xs,
         fontWeight: FONTS.semibold,
         marginLeft: horizontalScale(8),
-        outlineStyle: "none",
     },
 });

@@ -12,6 +12,7 @@ import { NoteProvider } from './src/context/NoteContext';
 import { LanguageProvider } from './src/context/LanguageContext';
 import { CurrencyProvider } from './src/context/CurrencyContext';
 import { CategoryProvider } from './src/context/CategoryContext';
+import { PopupProvider } from './src/context/PopupContext';
 
 // screens
 import Home from './src/screens/Home';
@@ -19,17 +20,21 @@ import Record from './src/screens/Record';
 import Notebook from './src/screens/Notebook';
 import AddList from './src/screens/AddList';
 import OnboardingScreen from './src/screens/OnboardingScreen';
-import { PopupProvider } from './src/context/PopupContext';
 
-// Loading overlay
-import LoadingOverlay from './src/components/LoadingOverlay';
+// Stack navigator types
+export type RootStackParamList = {
+  Onboarding: undefined;
+  Home: undefined;
+  Record: undefined;
+  Notebook: undefined;
+  AddList: { editItem?: any };
+};
 
-// Stack navigator
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 // App navigator
 function AppNavigator() {
-  const [initialRoute, setInitialRoute] = useState(null); // Initial route
+  const [initialRoute, setInitialRoute] = useState<string | null>(null); // Initial route
 
   // Check onboarding status on mount
   useEffect(() => {
@@ -48,12 +53,13 @@ function AppNavigator() {
   };
 
   // Loading
-  // if (!initialRoute) return <LoadingOverlay />;
+  if (!initialRoute) return null;
 
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={'Home'}
+        id="root"
+        initialRouteName={initialRoute as keyof RootStackParamList}
         screenOptions={{
           headerShown: false,
           animation: "none",
@@ -78,7 +84,7 @@ export default function App() {
             <ThemeProvider>
               <TransactionProvider>
                 <NoteProvider>
-                  <StatusBar style="light" />
+                  <StatusBar style="auto" />
                   <AppNavigator />
                 </NoteProvider>
               </TransactionProvider>

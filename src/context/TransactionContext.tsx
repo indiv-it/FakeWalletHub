@@ -1,19 +1,28 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-
-// Import database functions
 import {
     initDatabase,
     getAllTransactions,
     insertTransaction,
     updateTransaction,
     deleteTransaction,
+    TransactionData,
 } from '../server/database';
 
+// --- Types ---
+interface TransactionContextValue {
+    transactions: TransactionData[];
+    isLoading: boolean;
+    loadTransactions: () => Promise<void>;
+    addTransaction: (data: Partial<TransactionData>) => Promise<void>;
+    editTransaction: (id: number, data: Partial<TransactionData>) => Promise<void>;
+    removeTransaction: (id: number) => Promise<void>;
+}
+
 // ------ Create Context ------
-const TransactionContext = createContext();
+const TransactionContext = createContext<TransactionContextValue | undefined>(undefined);
 
 // ------ Custom Hook ------
-export const useTransaction = () => {
+export const useTransaction = (): TransactionContextValue => {
     const context = useContext(TransactionContext);
     if (!context) {
         throw new Error('useTransaction must be used within a TransactionProvider');
@@ -22,8 +31,8 @@ export const useTransaction = () => {
 };
 
 // ------ Provider Component ------
-export const TransactionProvider = ({ children }) => {
-    const [transactions, setTransactions] = useState([]);
+export const TransactionProvider = ({ children }: { children: React.ReactNode }) => {
+    const [transactions, setTransactions] = useState<TransactionData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     // ------ Load Data from DB ------
@@ -53,7 +62,7 @@ export const TransactionProvider = ({ children }) => {
     }, [loadTransactions]);
 
     // ------ Add Data ------
-    const addTransaction = useCallback(async (data) => {
+    const addTransaction = useCallback(async (data: Partial<TransactionData>) => {
         try {
             await insertTransaction(data);
             await loadTransactions();
@@ -64,7 +73,7 @@ export const TransactionProvider = ({ children }) => {
     }, [loadTransactions]);
 
     // ------ Edit Data ------
-    const editTransaction = useCallback(async (id, data) => {
+    const editTransaction = useCallback(async (id: number, data: Partial<TransactionData>) => {
         try {
             await updateTransaction(id, data);
             await loadTransactions();
@@ -75,7 +84,7 @@ export const TransactionProvider = ({ children }) => {
     }, [loadTransactions]);
 
     // ------ Delete Data ------
-    const removeTransaction = useCallback(async (id) => {
+    const removeTransaction = useCallback(async (id: number) => {
         try {
             await deleteTransaction(id);
             await loadTransactions();
@@ -84,8 +93,7 @@ export const TransactionProvider = ({ children }) => {
         }
     }, [loadTransactions]);
 
-    // ------ Context Value ------
-    const value = {
+    const value: TransactionContextValue = {
         transactions,
         isLoading,
         loadTransactions,

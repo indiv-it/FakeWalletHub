@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, ReactNode } from 'react';
 import {
     View,
     Text,
@@ -30,13 +30,21 @@ const { width } = Dimensions.get('window');
 const GITHUB_URL = 'https://github.com/indiv-it/FakeWalletHub';
 const CONTACT_EMAIL = 'indiv.company@gmail.com';
 
+interface SelectionCardProps {
+    item: { name?: string; nativeName?: string };
+    isSelected: boolean;
+    onPress: () => void;
+    index: number;
+    icon: string;
+}
+
 /**
  * Onboarding Screen Component
  * First-time user experience for selecting language and currency, and displaying a welcome message.
  */
 export default function OnboardingScreen() {
     // --- Navigation & Context ---
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
     const { currentLang, changeLanguage, t } = useLanguage();
     const { currentCurrency, changeCurrency } = useCurrency();
     const { colors, isDarkMode } = useTheme();
@@ -107,7 +115,7 @@ export default function OnboardingScreen() {
     /**
      * Helper to orchestrate out/in transition when navigating steps
      */
-    const animateTransition = (callback) => {
+    const animateTransition = (callback: () => void) => {
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 0,
@@ -179,7 +187,7 @@ export default function OnboardingScreen() {
     /**
      * Opens external links like Github or Mail
      */
-    const handleOpenURL = (url) => {
+    const handleOpenURL = (url: string) => {
         Linking.openURL(url).catch((err) =>
             console.log('Error opening URL:', err)
         );
@@ -191,15 +199,15 @@ export default function OnboardingScreen() {
      * Background gradient base dependent on Theme Mode
      */
     const gradientColors = isDarkMode
-        ? ['#0a0a0a', '#111827', '#1a1a2e']
-        : ['#e8edf5', '#f0f4ff', '#e0e8f9'];
+        ? (['#0a0a0a', '#111827', '#1a1a2e'] as const)
+        : (['#e8edf5', '#f0f4ff', '#e0e8f9'] as const);
 
     // --- Sub-Components ---
 
     /**
      * Selection Card for language or currency choice
      */
-    const SelectionCard = ({ item, isSelected, onPress, index, icon }) => {
+    const SelectionCard = ({ item, isSelected, onPress, index, icon }: SelectionCardProps) => {
         const cardAnim = cardAnims[index] || new Animated.Value(1);
         const cardScale = cardAnim.interpolate({
             inputRange: [0, 1],
@@ -394,7 +402,7 @@ export default function OnboardingScreen() {
                                 scale: (cardAnims[0] || new Animated.Value(1)).interpolate({
                                     inputRange: [0, 1],
                                     outputRange: [0.9, 1],
-                                }),
+                               States: [0, 1] } as any),
                             },
                         ],
                         opacity: cardAnims[0] || 1,
@@ -426,7 +434,7 @@ export default function OnboardingScreen() {
                                 scale: (cardAnims[1] || new Animated.Value(1)).interpolate({
                                     inputRange: [0, 1],
                                     outputRange: [0.9, 1],
-                                }),
+                                } as any),
                             },
                         ],
                         opacity: cardAnims[1] || 1,
@@ -473,7 +481,7 @@ export default function OnboardingScreen() {
 
     // --- Main Screen Container Render ---
     return (
-        <LinearGradient colors={gradientColors} style={styles.container}>
+        <LinearGradient colors={gradientColors as any} style={styles.container}>
             {/* Background Decorative Accent Orbs */}
             <View style={[styles.glowOrb, { backgroundColor: colors.accent + '10' }]} />
             <View style={[styles.glowOrb2, { backgroundColor: colors.accent + '10' }]} />
@@ -584,7 +592,6 @@ const styles = StyleSheet.create({
     },
     selectionIcon: {
         fontSize: moderateScale(22),
-        color: COLORS.accent,
     },
     selectionLabel: {
         fontSize: moderateScale(12),

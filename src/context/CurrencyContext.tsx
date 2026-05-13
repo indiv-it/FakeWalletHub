@@ -1,9 +1,32 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const CurrencyContext = createContext();
+// --- Types ---
+export interface CurrencyInfo {
+    code: string;
+    symbol: string;
+    name: string;
+    locale: string;
+}
 
-export const useCurrency = () => {
+interface CurrencyContextValue {
+    currentCurrency: string;
+    changeCurrency: (currencyCode: string) => void;
+    formatMoney: (amount: number) => string;
+    currencyInfo: CurrencyInfo;
+    currencies: typeof CURRENCIES;
+}
+
+export const CURRENCIES: Record<string, CurrencyInfo> = {
+    thb: { code: 'thb', symbol: '฿', name: 'THB', locale: 'th-TH' },
+    usd: { code: 'usd', symbol: '$', name: 'USD', locale: 'en-US' },
+    cny: { code: 'cny', symbol: '¥', name: 'CNY', locale: 'zh-CN' },
+    jpy: { code: 'jpy', symbol: '¥', name: 'JPY', locale: 'ja-JP' },
+};
+
+const CurrencyContext = createContext<CurrencyContextValue | undefined>(undefined);
+
+export const useCurrency = (): CurrencyContextValue => {
     const context = useContext(CurrencyContext);
     if (!context) {
         throw new Error('useCurrency must be used within a CurrencyProvider');
@@ -11,14 +34,7 @@ export const useCurrency = () => {
     return context;
 };
 
-export const CURRENCIES = {
-    thb: { code: 'thb', symbol: '฿', name: 'THB', locale: 'th-TH' },
-    usd: { code: 'usd', symbol: '$', name: 'USD', locale: 'en-US' },
-    cny: { code: 'cny', symbol: '¥', name: 'CNY', locale: 'zh-CN' },
-    jpy: { code: 'jpy', symbol: '¥', name: 'JPY', locale: 'ja-JP' },
-};
-
-export const CurrencyProvider = ({ children }) => {
+export const CurrencyProvider = ({ children }: { children: React.ReactNode }) => {
     const [currentCurrency, setCurrentCurrency] = useState('thb');
 
     useEffect(() => {
@@ -36,7 +52,7 @@ export const CurrencyProvider = ({ children }) => {
         }
     };
 
-    const changeCurrency = (currencyCode) => {
+    const changeCurrency = (currencyCode: string) => {
         if (CURRENCIES[currencyCode]) {
             setCurrentCurrency(currencyCode);
             try {
@@ -47,12 +63,15 @@ export const CurrencyProvider = ({ children }) => {
         }
     };
 
-    const formatMoney = (amount) => {
+    const formatMoney = (amount: number): string => {
         const c = CURRENCIES[currentCurrency] || CURRENCIES['thb'];
-        return `${c.symbol} ${Number(amount).toLocaleString(c.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        return `${c.symbol} ${Number(amount).toLocaleString(c.locale, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        })}`;
     };
 
-    const value = {
+    const value: CurrencyContextValue = {
         currentCurrency,
         changeCurrency,
         formatMoney,

@@ -9,7 +9,7 @@ import {
     Platform
 } from 'react-native';
 import { useState } from 'react';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { BlurView } from 'expo-blur';
 
 // --- Icons ---
@@ -21,6 +21,7 @@ import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNote } from '../context/NoteContext';
+import { NoteData } from '../server/database';
 
 // --- Components ---
 import Footer from '../components/Footer';
@@ -50,10 +51,10 @@ export default function Notebook() {
     // --- State: Modal & Popups ---
     const [modalVisible, setModalVisible] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
-    const [editId, setEditId] = useState(null);
+    const [editId, setEditId] = useState<number | null>(null);
     const [popup, setPopup] = useState(false); // Delete confirmation popup
     const [popupAlert, setPopupAlert] = useState(false); // Validation error popup
-    const [noteToDelete, setNoteToDelete] = useState(null);
+    const [noteToDelete, setNoteToDelete] = useState<NoteData | null>(null);
 
     // --- State: Form Inputs ---
     const [title, setTitle] = useState('');
@@ -84,11 +85,11 @@ export default function Notebook() {
 
     /**
     * Opens modal in "Edit" mode with pre-filled data
-    * @param {Object} note - Note to edit
+    * @param {NoteData} note - Note to edit
     */
-    const openEditModal = (note) => {
+    const openEditModal = (note: NoteData) => {
         setIsEditMode(true);
-        setEditId(note.id);
+        setEditId(note.id!);
         setTitle(note.title);
         setContent(note.content || '');
         setNoteColor(note.color);
@@ -111,7 +112,7 @@ export default function Notebook() {
 
         const dateStr = `${dateTime.getFullYear()}-${String(dateTime.getMonth() + 1).padStart(2, '0')}-${String(dateTime.getDate()).padStart(2, '0')}`;
 
-        const noteData = {
+        const noteData: Partial<NoteData> = {
             title,
             content,
             color: noteColor,
@@ -119,7 +120,7 @@ export default function Notebook() {
             created_at: new Date().toISOString()
         };
 
-        if (isEditMode) {
+        if (isEditMode && editId !== null) {
             await editNote(editId, noteData);
         } else {
             await addNote(noteData);
@@ -131,9 +132,9 @@ export default function Notebook() {
     // --- Handlers: Delete Actions ---
     /**
     * Handles the delete button click, opening the confirmation popup
-    * @param {Object} note - The note to delete
+    * @param {NoteData} note - The note to delete
     */
-    const handleDeleteClick = (note) => {
+    const handleDeleteClick = (note: NoteData) => {
         setNoteToDelete(note);
         setPopup(true);
     };
@@ -142,7 +143,7 @@ export default function Notebook() {
     * Confirms and executes note deletion
     */
     const confirmDelete = async () => {
-        if (noteToDelete) {
+        if (noteToDelete && noteToDelete.id !== undefined) {
             await deleteNote(noteToDelete.id);
             setPopup(false);
             setNoteToDelete(null);
@@ -150,7 +151,7 @@ export default function Notebook() {
     };
 
     // --- Handlers: Date Picker ---
-    const onDateChange = (selectedDate) => {
+    const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
         const currentDate = selectedDate || dateTime;
         setShowDatePicker(Platform.OS === 'ios');
         setDateTime(currentDate);
@@ -161,7 +162,7 @@ export default function Notebook() {
     /**
     * Renders an individual note card
     */
-    const renderNoteCard = ({ item }) => (
+    const renderNoteCard = ({ item }: { item: NoteData }) => (
         <View style={[styles.noteCard, { backgroundColor: item.color }]}>
             {/* Header: Title and Actions */}
             <View style={styles.cardHeader}>
@@ -206,18 +207,18 @@ export default function Notebook() {
             {/* List of Notes */}
             <FlatList
                 data={notes}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item) => item.id!.toString()}
                 renderItem={renderNoteCard}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
-                    !isLoading && (
+                    !isLoading ? (
                         <View style={styles.emptyContainer}>
                             <Text style={[styles.emptyText, { color: colors.gray }]}>
                                 {t('noNote')}
                             </Text>
                         </View>
-                    )
+                    ) : null
                 }
             />
 
@@ -277,7 +278,7 @@ export default function Notebook() {
                             style={[styles.textInput, {
                                 color: colors.text,
                                 backgroundColor: colors.background
-                            }]}
+                            } as any]}
                         />
 
                         {/* Content Input */}
@@ -294,7 +295,7 @@ export default function Notebook() {
                             style={[
                                 styles.textInput,
                                 styles.textArea,
-                                { color: colors.text, backgroundColor: colors.background }
+                                { color: colors.text, backgroundColor: colors.background } as any
                             ]}
                         />
 
@@ -394,7 +395,7 @@ const styles = StyleSheet.create({
     },
     textHeader: {
         fontSize: SIZES.xl,
-        fontWeight: FONTS.bold,
+        fontWeight: FONTS.bold as any,
         textAlign: "center",
     },
     listContent: {
@@ -406,7 +407,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: SIZES.base,
-        fontWeight: FONTS.medium,
+        fontWeight: FONTS.medium as any,
     },
     fab: {
         position: 'absolute',
@@ -433,7 +434,7 @@ const styles = StyleSheet.create({
     },
     cardTitle: {
         fontSize: moderateScale(18),
-        fontWeight: FONTS.bold,
+        fontWeight: FONTS.bold as any,
         color: '#1F2937',
         flex: 1,
         marginRight: horizontalScale(10),
@@ -450,7 +451,7 @@ const styles = StyleSheet.create({
         color: '#4B5563',
         marginTop: verticalScale(4),
         marginBottom: verticalScale(8),
-        fontWeight: FONTS.medium,
+        fontWeight: FONTS.medium as any,
     },
     cardContent: {
         fontSize: SIZES.sm,
@@ -477,11 +478,11 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: moderateScale(20),
-        fontWeight: FONTS.bold,
+        fontWeight: FONTS.bold as any,
     },
     inputLabel: {
         fontSize: SIZES.sm,
-        fontWeight: FONTS.bold,
+        fontWeight: FONTS.bold as any,
         marginBottom: verticalScale(8),
         marginTop: verticalScale(16),
     },
@@ -507,7 +508,7 @@ const styles = StyleSheet.create({
     },
     dateText: {
         fontSize: SIZES.sm,
-        fontWeight: FONTS.medium,
+        fontWeight: FONTS.medium as any,
     },
     colorPalette: {
         flexDirection: 'row',
@@ -532,6 +533,6 @@ const styles = StyleSheet.create({
     },
     saveBtnText: {
         fontSize: SIZES.base,
-        fontWeight: FONTS.bold,
+        fontWeight: FONTS.bold as any,
     },
-});;
+});

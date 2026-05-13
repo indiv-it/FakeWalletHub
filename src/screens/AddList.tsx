@@ -9,9 +9,9 @@ import {
     Platform,
     Modal
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { useState, useRef, useEffect } from "react";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { useState, useRef, useEffect, ReactNode } from "react";
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { BlurView } from 'expo-blur';
 
 // --- Utils & Theme ---
@@ -36,14 +36,40 @@ import { useCategory } from "../context/CategoryContext";
 import { useCurrency } from "../context/CurrencyContext";
 
 // --- Constants & Components ---
-import { LIST_TYPE_CASH, LIST_TYPE_BANK } from "../server/database";
+import { LIST_TYPE_CASH, LIST_TYPE_BANK, TransactionData } from "../server/database";
 import AlertPopup from "../components/AlertPopup";
+
+// --- Types ---
+type RootStackParamList = {
+    Home: undefined;
+    AddList: { editItem?: TransactionData };
+};
+
+type AddListRouteProp = RouteProp<RootStackParamList, 'AddList'>;
+
+interface CustomTypeButtonProps {
+    label: string;
+    isActive: boolean;
+    activeColor: string;
+    activeTextColor: string;
+    icon?: ReactNode;
+    inactiveTextColor?: string;
+    onPress: () => void;
+}
 
 /**
 * CustomTypeButton Component (Internal)
 * Render an animated button to select types/categories
 */
-const CustomTypeButton = ({ label, isActive, activeColor, activeTextColor, icon, inactiveTextColor = COLORS.white, onPress }) => {
+const CustomTypeButton = ({ 
+    label, 
+    isActive, 
+    activeColor, 
+    activeTextColor, 
+    icon, 
+    inactiveTextColor = COLORS.white, 
+    onPress 
+}: CustomTypeButtonProps) => {
     // --- Contexts ---
     const { colors } = useTheme();
 
@@ -90,8 +116,8 @@ const CustomTypeButton = ({ label, isActive, activeColor, activeTextColor, icon,
 */
 export default function AddList() {
     // --- Navigation & Route ---
-    const navigation = useNavigation();
-    const route = useRoute();
+    const navigation = useNavigation<any>();
+    const route = useRoute<AddListRouteProp>();
 
     // Evaluate if we are adding or editing an item
     const editItem = route.params?.editItem;
@@ -105,7 +131,7 @@ export default function AddList() {
     const { currencyInfo } = useCurrency();
 
     // --- Initial Values Mapping ---
-    const mappedType = editItem?.type || 'expense';
+    const mappedType: 'income' | 'expense' = editItem?.type || 'expense';
     const mappedGroup = editItem?.category !== undefined ? editItem.category : 'essentials';
     const mappedAccount = editItem?.listType !== undefined ? editItem.listType : LIST_TYPE_CASH;
     const initialDateTime = editItem && editItem.date
@@ -113,7 +139,7 @@ export default function AddList() {
         : new Date();
 
     // --- Form State ---
-    const [listType, setListType] = useState(mappedType);
+    const [listType, setListType] = useState<'income' | 'expense'>(mappedType);
     const [listGroup, setListGroup] = useState(mappedGroup);
     const [listAccount, setListAccount] = useState(mappedAccount);
     const [amount, setAmount] = useState(editItem ? String(editItem.amount ?? '') : '');
@@ -136,7 +162,7 @@ export default function AddList() {
     /**
     * Handle Date Picker Change
     */
-    const onDateChange = (selectedDate) => {
+    const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
         const currentDate = selectedDate || dateTime;
         setShowDatePicker(Platform.OS === 'ios');
         setDateTime(currentDate);
@@ -162,7 +188,7 @@ export default function AddList() {
             return;
         }
 
-        if (listAccount == 'ไม่ระบุ' && listGroup == 'ไม่ระบุ') {
+        if (listAccount === 'ไม่ระบุ' && listGroup === 'ไม่ระบุ') {
             setShowTypeAndCategory(true);
             return;
         }
@@ -173,7 +199,7 @@ export default function AddList() {
                 .padStart(2, '0')}`;
 
         // Construct Transaction Data
-        const transactionData = {
+        const transactionData: Partial<TransactionData> = {
             title,
             amount: numericAmount,
             type: listType,
@@ -255,8 +281,7 @@ export default function AddList() {
                             borderWidth: 0,
                             flex: 1,
                             marginTop: 0,
-                            outlineStyle: 'none',
-                        }]}
+                        } as any]}
                     />
                 </View>
 
@@ -273,7 +298,6 @@ export default function AddList() {
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                     {/* Title / Note Input */}
                     <View style={[styles.titleInput, {
-                        color: colors.text,
                         backgroundColor: colors.cardBg
                     }]}>
                         <Tag size={16} color={colors.text} />
@@ -291,8 +315,7 @@ export default function AddList() {
                                 height: verticalScale(45),
                                 marginTop: verticalScale(0),
                                 marginLeft: verticalScale(10),
-                                outlineStyle: "none",
-                            }]}
+                            } as any]}
                         />
                     </View>
 
@@ -538,12 +561,12 @@ const styles = StyleSheet.create({
     },
     textHeader: {
         fontSize: SIZES.xl,
-        fontWeight: FONTS.bold,
+        fontWeight: FONTS.bold as any,
         textAlign: "center",
     },
     textForm: {
         fontSize: SIZES.sm,
-        fontWeight: FONTS.normal,
+        fontWeight: FONTS.normal as any,
         marginTop: verticalScale(18),
     },
     blurView: {
@@ -555,7 +578,7 @@ const styles = StyleSheet.create({
     },
     textInput: {
         fontSize: SIZES.sm,
-        fontWeight: FONTS.bold,
+        fontWeight: FONTS.bold as any,
         paddingHorizontal: horizontalScale(20),
         height: verticalScale(50),
         borderRadius: moderateScale(15),
@@ -576,7 +599,7 @@ const styles = StyleSheet.create({
     },
     currencySymbol: {
         fontSize: SIZES.sm,
-        fontWeight: FONTS.bold,
+        fontWeight: FONTS.bold as any,
         marginRight: horizontalScale(5),
     },
     typeContainer: {
@@ -601,14 +624,13 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(10),
         width: "37%",
         justifyContent: "center",
-        alignItems: "center",
         borderWidth: 1,
         borderColor: COLORS.border,
         ...CARD_SHADOW
     },
     dateText: {
         fontSize: SIZES.xs,
-        fontWeight: FONTS.bold,
+        fontWeight: FONTS.bold as any,
     },
     typeButton: {
         flexDirection: "row",
@@ -617,12 +639,11 @@ const styles = StyleSheet.create({
         width: horizontalScale(155),
         height: verticalScale(45),
         borderRadius: moderateScale(10),
-        alignItems: "center",
         justifyContent: "center",
     },
     typeText: {
         fontSize: SIZES.sm,
-        fontWeight: FONTS.bold,
+        fontWeight: FONTS.bold as any,
     },
     buttonContainer: {
         flexDirection: "row",
@@ -644,7 +665,7 @@ const styles = StyleSheet.create({
     },
     textBack: {
         fontSize: SIZES.sm,
-        fontWeight: FONTS.bold,
+        fontWeight: FONTS.bold as any,
     },
     titleInput: {
         flexDirection: "row",

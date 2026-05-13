@@ -1,14 +1,30 @@
-
 import { moderateScale } from '../utils/responsive';
 
+// --- Types ---
+export type ThemeColors = {
+    accent: string;
+    cardBg: string;
+    red: string;
+    white: string;
+    background_White: string;
+    chart: string;
+    black: string;
+    gray: string;
+    background: string;
+    text: string;
+    textSecondary: string;
+    border: string;
+    chartColors: string[];
+};
+
 // Dark theme colors
-export const DARK_COLORS = {
+export const DARK_COLORS: ThemeColors = {
     accent: '#ACF532',
     cardBg: '#141414',
     red: '#ff0000',
     white: '#FFFFFF',
     background_White: '#dddddd',
-    chart: "#353535ff",
+    chart: '#353535ff',
     black: '#000000',
     gray: '#808080',
     background: '#000000',
@@ -19,13 +35,13 @@ export const DARK_COLORS = {
 };
 
 // Light theme colors
-export const LIGHT_COLORS = {
+export const LIGHT_COLORS: ThemeColors = {
     accent: '#8cdd00',
     cardBg: '#FFFFFF',
     red: '#ff0000',
     white: '#FFFFFF',
     background_White: '#333333',
-    chart: "#dddddd",
+    chart: '#dddddd',
     black: '#000000',
     gray: '#808080',
     background: '#f1f1f1',
@@ -36,13 +52,14 @@ export const LIGHT_COLORS = {
 };
 
 // Default to dark theme for backward compatibility
-export const COLORS = DARK_COLORS;
+export const COLORS: ThemeColors = DARK_COLORS;
 
 // Font weights
 export const FONTS = {
-    bold: 700,
-    semibold: 600,
-    normal: 400,
+    bold: '700' as const,
+    semibold: '600' as const,
+    normal: '400' as const,
+    medium: '500' as const,
 };
 
 // Font sizes
@@ -62,4 +79,3 @@ export const CARD_SHADOW = {
     shadowRadius: 4,
     elevation: 1,
 };
-

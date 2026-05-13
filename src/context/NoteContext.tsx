@@ -1,11 +1,28 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { initDatabase, getAllNotes, insertNote, updateNote, deleteNote as dbDeleteNote } from '../server/database';
+import {
+    initDatabase,
+    getAllNotes,
+    insertNote,
+    updateNote,
+    deleteNote as dbDeleteNote,
+    NoteData,
+} from '../server/database';
 import { AppState } from 'react-native';
 
-const NoteContext = createContext();
+// --- Types ---
+interface NoteContextValue {
+    notes: NoteData[];
+    isLoading: boolean;
+    addNote: (data: Partial<NoteData>) => Promise<void>;
+    editNote: (id: number, data: Partial<NoteData>) => Promise<void>;
+    deleteNote: (id: number) => Promise<void>;
+    fetchNotes: () => Promise<void>;
+}
 
-export function NoteProvider({ children }) {
-    const [notes, setNotes] = useState([]);
+const NoteContext = createContext<NoteContextValue | undefined>(undefined);
+
+export function NoteProvider({ children }: { children: React.ReactNode }) {
+    const [notes, setNotes] = useState<NoteData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchNotes = useCallback(async () => {
@@ -31,7 +48,7 @@ export function NoteProvider({ children }) {
                 console.error('Error initializing notes:', error);
             }
         })();
-        
+
         const subscription = AppState.addEventListener('change', nextAppState => {
             if (nextAppState === 'active') {
                 fetchNotes();
@@ -40,33 +57,33 @@ export function NoteProvider({ children }) {
         return () => subscription.remove();
     }, [fetchNotes]);
 
-    const addNote = async (data) => {
+    const addNote = async (data: Partial<NoteData>) => {
         try {
             await insertNote(data);
             await fetchNotes();
         } catch (error) {
             console.error('Error adding note:', error);
-            throw error; // Re-throw to handle in UI
+            throw error;
         }
     };
 
-    const editNote = async (id, data) => {
+    const editNote = async (id: number, data: Partial<NoteData>) => {
         try {
             await updateNote(id, data);
             await fetchNotes();
         } catch (error) {
             console.error('Error updating note:', error);
-            throw error; // Re-throw to handle in UI
+            throw error;
         }
     };
 
-    const deleteNote = async (id) => {
+    const deleteNote = async (id: number) => {
         try {
             await dbDeleteNote(id);
             await fetchNotes();
         } catch (error) {
             console.error('Error deleting note:', error);
-            throw error; // Re-throw to handle in UI
+            throw error;
         }
     };
 
@@ -77,6 +94,10 @@ export function NoteProvider({ children }) {
     );
 }
 
-export function useNote() {
-    return useContext(NoteContext);
+export function useNote(): NoteContextValue {
+    const context = useContext(NoteContext);
+    if (!context) {
+        throw new Error('useNote must be used within a NoteProvider');
+    }
+    return context;
 }

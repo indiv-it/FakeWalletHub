@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, ReactNode } from "react";
 import {
     View,
     StyleSheet,
@@ -11,6 +11,7 @@ import {
     TextInput,
     KeyboardAvoidingView,
     Platform,
+    Switch,
 } from "react-native";
 import { BlurView } from 'expo-blur';
 import { horizontalScale, verticalScale, moderateScale } from "../utils/responsive";
@@ -20,7 +21,7 @@ import { useTheme } from '../context/ThemeContext';
 import { usePopup } from "../context/PopupContext";
 import { useLanguage, LANGUAGES } from "../context/LanguageContext";
 import { useCurrency, CURRENCIES } from "../context/CurrencyContext";
-import { useCategory } from "../context/CategoryContext";
+import { useCategory, CategoryItem } from "../context/CategoryContext";
 import { CARD_SHADOW } from "../style/Theme";
 
 // --- Icons ---
@@ -73,7 +74,7 @@ const AVAILABLE_ICONS = [
 /**
  * Map icon name to component for easy rendering
  */
-export const getIconComponent = (name, size, color) => {
+export const getIconComponent = (name: string | null, size: number, color: string) => {
     const iconObj = AVAILABLE_ICONS.find(i => i.name === name);
     if (iconObj) {
         const { Icon } = iconObj;
@@ -93,7 +94,7 @@ export default function Nav() {
     const { openPopup } = usePopup();
     const { currentLang, changeLanguage, t, languages } = useLanguage();
     const { currentCurrency, changeCurrency } = useCurrency();
-    const { categories, editCategory, editCategoryIcon } = useCategory();
+    const { categories, editCategory, editCategoryIcon, saveCategoryGoal, getCategoryGoal } = useCategory();
 
     // --- State: Menus ---
     const [menuOpen, setMenuOpen] = useState(false);
@@ -102,9 +103,13 @@ export default function Nav() {
 
     // --- State: Category Modal ---
     const [showCategoryModal, setShowCategoryModal] = useState(false);
-    const [editingCategory, setEditingCategory] = useState(null);
+    const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
     const [newCategoryName, setNewCategoryName] = useState('');
-    const [selectedIcon, setSelectedIcon] = useState(null);
+    const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
+
+    // --- State: Savings Goal ---
+    const [goalEnabled, setGoalEnabled] = useState(false);
+    const [goalAmount, setGoalAmount] = useState('');
 
     // --- Animation Refs ---
     const menuAnim = useRef(new Animated.Value(0)).current;
@@ -225,26 +230,33 @@ export default function Nav() {
     };
 
     // --- Handlers: General Settings ---
-    /**
-     * Handle language selection
-     */
-    const handleLangSelect = (langCode) => {
+    const handleLangSelect = (langCode: string) => {
         changeLanguage(langCode);
         closeMenu();
     };
 
-    /**
-     * Handle currency selection
-     */
-    const handleCurSelect = (curCode) => {
+    const handleCurSelect = (curCode: string) => {
         changeCurrency(curCode);
         closeMenu();
     };
 
     // --- Handlers: Category Editor ---
-    /**
-     * Handle saving changes to a category group
-     */
+    const handleEditCategoryStart = (cat: CategoryItem) => {
+        setEditingCategory(cat);
+        setNewCategoryName(cat.name);
+        setSelectedIcon(cat.iconName);
+
+        // Load existing goal
+        const goal = getCategoryGoal(cat.id);
+        if (goal) {
+            setGoalEnabled(goal.goal_enabled);
+            setGoalAmount(goal.goal_amount > 0 ? String(goal.goal_amount) : '');
+        } else {
+            setGoalEnabled(false);
+            setGoalAmount('');
+        }
+    };
+
     const handleSaveCategory = async () => {
         if (editingCategory) {
             if (newCategoryName.trim()) {
@@ -253,12 +265,28 @@ export default function Nav() {
             if (selectedIcon) {
                 await editCategoryIcon(editingCategory.id, selectedIcon);
             }
+            
+            // Save Savings Goal
+            const numAmount = parseFloat(goalAmount) || 0;
+            await saveCategoryGoal(editingCategory.id, goalEnabled, numAmount);
+
             // Reset to defaults
             setEditingCategory(null);
             setNewCategoryName('');
             setSelectedIcon(null);
+            setGoalEnabled(false);
+            setGoalAmount('');
             setShowCategoryModal(false);
         }
+    };
+
+    const handleCloseCategoryModal = () => {
+        setShowCategoryModal(false);
+        setEditingCategory(null);
+        setNewCategoryName('');
+        setSelectedIcon(null);
+        setGoalEnabled(false);
+        setGoalAmount('');
     };
 
     // --- Interpolated Animations Computations ---
@@ -289,7 +317,6 @@ export default function Nav() {
         outputRange: [0, Object.keys(LANGUAGES).length * verticalScale(53) + verticalScale(8)],
     });
 
-    // fade submenu
     const langOpacity = langMenuAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [0, 1],
@@ -317,10 +344,16 @@ export default function Nav() {
 
     // --- Sub-Components ---
     
-    /**
-     * Menu item component with stagger animation
-     */
-    const MenuItem = ({ icon, label, onPress, rightContent, isLast, index }) => {
+    interface MenuItemProps {
+        icon: ReactNode;
+        label: string;
+        onPress: () => void;
+        rightContent?: ReactNode;
+        isLast?: boolean;
+        index: number;
+    }
+
+    const MenuItem = ({ icon, label, onPress, rightContent, isLast, index }: MenuItemProps) => {
         const itemAnim = useRef(new Animated.Value(0)).current;
 
         useEffect(() => {
@@ -373,7 +406,7 @@ export default function Nav() {
         );
     };
 
-    const LangItem = ({ lang, isSelected }) => (
+    const LangItem = ({ lang, isSelected }: { lang: any, isSelected: boolean }) => (
         <TouchableOpacity
             style={[
                 styles.langItem,
@@ -396,8 +429,7 @@ export default function Nav() {
         </TouchableOpacity>
     );
 
-    // Currency item in submenu
-    const CurItem = ({ cur, isSelected }) => (
+    const CurItem = ({ cur, isSelected }: { cur: any, isSelected: boolean }) => (
         <TouchableOpacity
             style={[
                 styles.langItem,
@@ -626,19 +658,13 @@ export default function Nav() {
                 transparent
                 visible={showCategoryModal}
                 animationType="fade"
-                onRequestClose={() => setShowCategoryModal(false)}
+                onRequestClose={handleCloseCategoryModal}
             >
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                     style={{ flex: 1 }}
                 >
-                    <TouchableWithoutFeedback 
-                        onPress={() => { 
-                            setShowCategoryModal(false); 
-                            setEditingCategory(null); 
-                            setNewCategoryName(''); 
-                        }}
-                    >
+                    <TouchableWithoutFeedback onPress={handleCloseCategoryModal}>
                         <BlurView 
                             intensity={30} 
                             tint="dark" 
@@ -683,8 +709,36 @@ export default function Nav() {
                                     ))}
                                 </View>
 
+                                {/* Savings Goal UI */}
+                                <View style={styles.goalContainer}>
+                                    <View style={styles.goalHeader}>
+                                        <Text style={{ color: colors.text, fontWeight: 'bold' }}>{t('savingsGoal')}</Text>
+                                        <Switch
+                                            value={goalEnabled}
+                                            onValueChange={setGoalEnabled}
+                                            trackColor={{ false: colors.border, true: colors.accent + '80' }}
+                                            thumbColor={goalEnabled ? colors.accent : colors.gray}
+                                        />
+                                    </View>
+                                    {goalEnabled && (
+                                        <View style={{ marginTop: verticalScale(10) }}>
+                                            <Text style={{ color: colors.textSecondary, marginBottom: verticalScale(8) }}>
+                                                {t('savingsGoalAmount')}
+                                            </Text>
+                                            <TextInput
+                                                style={[styles.categoryInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                                                value={goalAmount}
+                                                onChangeText={setGoalAmount}
+                                                keyboardType="numeric"
+                                                placeholder="0.00"
+                                                placeholderTextColor={colors.textSecondary}
+                                            />
+                                        </View>
+                                    )}
+                                </View>
+
                                 <View style={styles.categoryActions}>
-                                    <TouchableOpacity style={[styles.categoryBtn, { backgroundColor: colors.border }]} onPress={() => { setEditingCategory(null); setNewCategoryName(''); setSelectedIcon(null); }}>
+                                    <TouchableOpacity style={[styles.categoryBtn, { backgroundColor: colors.border }]} onPress={handleCloseCategoryModal}>
                                         <Text style={{ color: colors.text, fontWeight: 'bold' }}>
                                             {t('cancel')}
                                         </Text>
@@ -712,18 +766,14 @@ export default function Nav() {
                                             </Text>
                                         </View>
                                         <TouchableOpacity 
-                                            onPress={() => { 
-                                                setEditingCategory(cat); 
-                                                setNewCategoryName(cat.name); 
-                                                setSelectedIcon(cat.iconName); 
-                                            }}
+                                            onPress={() => handleEditCategoryStart(cat)}
                                             style={{ padding: 8, backgroundColor: colors.accent + '20', borderRadius: 8 }}
                                         >
                                             <Edit3 size={16} color={colors.accent} />
                                         </TouchableOpacity>
                                     </View>
                                 ))}
-                                <TouchableOpacity style={[styles.categoryCloseBtn, { backgroundColor: colors.border, marginTop: 16 }]} onPress={() => setShowCategoryModal(false)}>
+                                <TouchableOpacity style={[styles.categoryCloseBtn, { backgroundColor: colors.border, marginTop: 16 }]} onPress={handleCloseCategoryModal}>
                                     <Text style={{ color: colors.text, fontWeight: 'bold' }}>
                                         {t('close')}
                                     </Text>
@@ -983,5 +1033,17 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderWidth: 1,
         borderColor: 'transparent',
+    },
+    // Savings Goal
+    goalContainer: {
+        marginTop: verticalScale(20),
+        paddingTop: verticalScale(16),
+        borderTopWidth: 1,
+        borderTopColor: '#333',
+    },
+    goalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     }
 });
