@@ -13,7 +13,7 @@ import {
 import { BlurView } from 'expo-blur';
 import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
 
-// --- Theme & Components ---
+// ---Theme & Components ---
 import { SIZES, FONTS, CARD_SHADOW, COLORS } from '../style/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { usePopup } from '../context/PopupContext';
@@ -25,7 +25,7 @@ import Footer from '../components/Footer';
 import PieChartComponent from '../components/pieChart';
 import PieChartGroup from '../components/pieChartGroup';
 
-// --- Icons ---
+// ---Icons ---
 import {
     Mail,
     Github,
@@ -37,8 +37,8 @@ import {
     Settings
 } from 'lucide-react-native';
 
-// --- Hooks ---
-import { useTransactionStats, TransactionStats } from '../hooks/useTransactionStats';
+// ---Hooks ---
+import { useTransactionStats } from '../hooks/useTransactionStats';
 
 /**
  * Home Screen Component
@@ -46,21 +46,21 @@ import { useTransactionStats, TransactionStats } from '../hooks/useTransactionSt
  * category balances, and providing access to navigation and popups.
  */
 export default function Home() {
-    // --- Context Hooks ---
-    const { colors } = useTheme(); 
-    const { isOpen, closePopup } = usePopup(); 
-    const { t, formatMonthYear } = useLanguage(); 
-    const { formatMoney } = useCurrency(); 
+    // ---Context Hooks ---
+    const { colors } = useTheme();
+    const { isOpen, closePopup } = usePopup();
+    const { t, formatMonthYear } = useLanguage();
+    const { formatMoney } = useCurrency();
 
-    // --- Local State ---
+    // ---Local State ---
     const [popupMoney, setPopupMoney] = useState<boolean | null>(null); // Toggles general income/expense popup
     const [popupGroup, setPopupGroup] = useState<string | null>(null); // Stores the active category ID for group popup
 
-    // --- Category & Stats Hooks ---
+    // ---Category & Stats Hooks ---
     const { getCategoryDisplayName, CATEGORY_IDS, getCategoryIconName, getCategoryGoal } = useCategory();
     const { allTimeStats, monthlyStats } = useTransactionStats();
 
-    // --- Helpers & Computations ---
+    // ---Helpers & Computations ---
     const fmt = (n: number) => formatMoney(n);
 
     // URL contacts in about section
@@ -80,7 +80,7 @@ export default function Home() {
     }), [CATEGORY_IDS, getCategoryDisplayName, getCategoryIconName, colors.background]);
 
     /**
-     * Calculate category balance (income - expense)
+     * Calculate category balance (income -expense)
      */
     const getCategoryBalance = (stats: Record<string, { income: number; expense: number }>, catId: string) => {
         const income = stats?.[catId]?.income || 0;
@@ -88,7 +88,7 @@ export default function Home() {
         return income - expense;
     };
 
-    // --- Sub-Components ---
+    // ---Sub-Components ---
 
     /**
      * Renders a category card in the list showing balance and a miniature pie chart
@@ -97,15 +97,15 @@ export default function Home() {
         const displayName = getCategoryDisplayName(catId);
         const balance = getCategoryBalance(allTimeStats.categoryStats, catId);
         const isLast = catId === CATEGORY_IDS[CATEGORY_IDS.length - 1];
-        
+
         // Savings Goal
         const goal = getCategoryGoal(catId);
         const hasGoal = goal && goal.goal_enabled;
-        
+
         // Setup Progress Bar Animation if Goal is Enabled
         const progressAnim = useRef(new Animated.Value(0)).current;
         const progressPercentage = hasGoal && goal.goal_amount > 0 ? Math.min(Math.max((balance / goal.goal_amount) * 100, 0), 100) : 0;
-        
+
         useEffect(() => {
             if (hasGoal) {
                 Animated.timing(progressAnim, {
@@ -140,20 +140,20 @@ export default function Home() {
                     <Text style={{ color: colors.text, fontSize: SIZES.sm, fontWeight: FONTS.normal }}>
                         {displayName}
                     </Text>
-                    <Text style={{ color: colors.accent, fontSize: SIZES.base, fontWeight: FONTS.bold }}>
-                        {fmt(balance)}
-                    </Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                        <Text style={{ color: colors.accent, fontSize: SIZES.base, fontWeight: FONTS.bold }}>
+                            {fmt(balance)}
+                        </Text>
+                        {hasGoal && (
+                            <Text style={{ color: colors.gray, fontSize: 10 }}>
+                                {fmt(goal.goal_amount)}
+                            </Text>
+                        )}
+                    </View>
 
                     {hasGoal && (
-                        <View style={{ position: 'relative', bottom: 15 }}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 5 }}>
-                                <Text style={{ color: colors.gray, fontSize: 10 }}>
-                                    {fmt(goal.goal_amount)}
-                                </Text>
-                            </View>
-                            <View style={{ height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: 'hidden' }}>
-                                <Animated.View style={{ height: '100%', width: progressWidth, backgroundColor: colors.accent }} />
-                            </View>
+                        <View style={{ height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: 'hidden', marginTop: 5 }}>
+                            <Animated.View style={{ height: '100%', width: progressWidth, backgroundColor: colors.accent }} />
                         </View>
                     )}
                 </View>
@@ -186,11 +186,11 @@ export default function Home() {
                     onPress={() => setPopupGroup(null)}
                     size={24}
                     color={colors.text}
-                    style={{ 
-                        position: "absolute", 
-                        right: 15, 
-                        top: 15, 
-                        zIndex: 100 
+                    style={{
+                        position: "absolute",
+                        right: 15,
+                        top: 15,
+                        zIndex: 100
                     }}
                 />
 
@@ -241,7 +241,7 @@ export default function Home() {
                         </Text>
                     </View>
 
-                    {/* Overall Ratio Pie Chart - Changed to allTimeStats */}
+                    {/* Overall Ratio Pie Chart -Changed to allTimeStats */}
                     <PieChartComponent
                         income={allTimeStats.categoryPercent[catId] || 0}
                         expense={100 - (allTimeStats.categoryPercent[catId] || 0)}
@@ -269,32 +269,32 @@ export default function Home() {
 
     const ChartIncomeExpense = ({ title, money, color, income, expense, percent, background }: ChartIncomeExpenseProps) => {
         return (
-            <View style={{ 
-                flexDirection: 'row', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                marginBottom: 20 
+            <View style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 20
             }}>
                 {/* title and money */}
-                <View style={{ 
-                    borderLeftWidth: 3, 
+                <View style={{
+                    borderLeftWidth: 3,
                     paddingLeft: 10,
-                    borderLeftColor: title === t('income') 
-                        ? colors.accent 
+                    borderLeftColor: title === t('income')
+                        ? colors.accent
                         : colors.red
                 }}>
 
-                    {/* title */}
+                    {/* Title */}
                     <Text style={{ fontSize: 16, fontWeight: 'bold', color: title === t('income') ? colors.accent : colors.red }}>
                         {title}
                     </Text>
 
-                    {/* money */}
+                    {/* Money */}
                     <Text style={{ fontSize: 18, fontWeight: 'bold', color: title === t('income') ? colors.accent : colors.red }}>
                         {fmt(money)}
                     </Text>
 
-                    {/* percent */}
+                    {/* Percent */}
                     <Text style={{ color: colors.gray, fontSize: 14 }}>
                         {percent}%
                     </Text>
@@ -312,10 +312,10 @@ export default function Home() {
         );
     };
 
-    // --- Main Rendering ---
+    // ---Main Rendering ---
     return (
-        <View style={{ 
-            backgroundColor: colors.background, 
+        <View style={{
+            backgroundColor: colors.background,
             padding: horizontalScale(20),
             flex: 1
         }}>
@@ -323,16 +323,16 @@ export default function Home() {
             <Nav />
 
             {/* Top Stat Summary Card */}
-            <View style={[styles.card, { 
-                backgroundColor: colors.cardBg, 
-                borderColor: colors.border 
+            <View style={[styles.card, {
+                backgroundColor: colors.cardBg,
+                borderColor: colors.border
             }]}>
                 <View>
-                    {/* bank */}
-                    <View style={{ 
-                        flexDirection: "row", 
-                        alignItems: "center", 
-                        gap: 10 
+                    {/* Bank */}
+                    <View style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 10
                     }}>
                         <Landmark size={14} color={colors.text} />
                         <Text style={{ color: colors.text, fontSize: SIZES.sm, fontWeight: FONTS.normal }}>
@@ -340,11 +340,11 @@ export default function Home() {
                         </Text>
                     </View>
 
-                    {/* cash */}
-                    <View style={{ 
-                        flexDirection: "row", 
-                        alignItems: "center", 
-                        gap: 10 
+                    {/* Cash */}
+                    <View style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 10
                     }}>
                         <Banknote size={14} color={colors.text} />
                         <Text style={{ color: colors.text, fontSize: SIZES.sm, fontWeight: FONTS.normal }}>
@@ -353,10 +353,10 @@ export default function Home() {
                     </View>
 
                     {/* net profit */}
-                    <View style={{ 
-                        flexDirection: "row", 
-                        alignItems: "center", 
-                        gap: 10 
+                    <View style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 10
                     }}>
                         <Archive size={14} color={colors.text} />
                         <Text style={{ color: colors.text, fontSize: SIZES.sm, fontWeight: FONTS.normal }}>
@@ -382,9 +382,9 @@ export default function Home() {
             </View>
 
             {/* list group */}
-            <View style={[styles.cardList, { 
-                backgroundColor: colors.cardBg, 
-                borderColor: colors.border 
+            <View style={[styles.cardList, {
+                backgroundColor: colors.cardBg,
+                borderColor: colors.border
             }]}>
                 <FlatList
                     data={displayCategories}
@@ -399,7 +399,7 @@ export default function Home() {
                 />
             </View>
 
-            {/* footer */}
+            {/* Footer */}
             <Footer />
 
             {/* popup expense & income */}
@@ -410,24 +410,24 @@ export default function Home() {
                     visible={!!popupMoney}
                     onRequestClose={() => setPopupMoney(null)}
                 >
-                    <BlurView 
-                        intensity={5} 
-                        tint="dark" 
+                    <BlurView
+                        intensity={5}
+                        tint="dark"
                         style={styles.popupContainer}
                     >
 
-                        {/* overlay */}
+                        {/* Overlay */}
                         <TouchableOpacity
                             style={styles.popupShadow}
                             activeOpacity={1}
                             onPress={() => setPopupMoney(null)}
                         >
-                            <View style={[styles.popupMoney, { 
-                                backgroundColor: colors.cardBg, 
+                            <View style={[styles.popupMoney, {
+                                backgroundColor: colors.cardBg,
                                 transform: [
-                                    { translateX: -horizontalScale(150) }, 
-                                    { translateY: -verticalScale(280) } 
-                                ] 
+                                    { translateX: -horizontalScale(150) },
+                                    { translateY: -verticalScale(280) }
+                                ]
                             }]}>
 
                                 {/* close button */}
@@ -435,11 +435,11 @@ export default function Home() {
                                     onPress={() => setPopupMoney(null)}
                                     color={colors.text}
                                     size={24}
-                                    style={{ 
-                                        position: "absolute", 
-                                        right: 15, 
-                                        top: 15, 
-                                        zIndex: 100 
+                                    style={{
+                                        position: "absolute",
+                                        right: 15,
+                                        top: 15,
+                                        zIndex: 100
                                     }}
                                 />
 
@@ -476,7 +476,7 @@ export default function Home() {
                                     />
 
                                     {/* expense text by category */}
-                                    <Text style={{ color: colors.text,marginBottom: 10,marginTop: 20,textAlign: 'center',fontWeight: 'bold' }}>
+                                    <Text style={{ color: colors.text, marginBottom: 10, marginTop: 20, textAlign: 'center', fontWeight: 'bold' }}>
                                         {t('expenseByCat')}
                                     </Text>
 
@@ -499,9 +499,9 @@ export default function Home() {
                     animationType="fade"
                     onRequestClose={() => setPopupGroup(null)}
                 >
-                    <BlurView 
-                        intensity={5} 
-                        tint="dark" 
+                    <BlurView
+                        intensity={5}
+                        tint="dark"
                         style={styles.popupContainer}
                     >
                         <TouchableOpacity
@@ -517,26 +517,26 @@ export default function Home() {
 
             {/* popup About */}
             <Modal
-                visible={isOpen} 
-                transparent 
-                animationType="fade" 
+                visible={isOpen}
+                transparent
+                animationType="fade"
                 onRequestClose={closePopup}
             >
-                <BlurView 
-                    intensity={5} 
-                    tint="dark" 
+                <BlurView
+                    intensity={5}
+                    tint="dark"
                     style={styles.popupContainer}
                 >
                     <View style={dialogStyles.overlay}>
-                        {/* overlay */}
+                        {/* Overlay */}
                         <TouchableOpacity
                             style={[StyleSheet.absoluteFillObject]}
                             activeOpacity={1}
                             onPress={closePopup}
                         />
-                        <View style={[dialogStyles.card, { 
-                            backgroundColor: colors.cardBg, 
-                            borderColor: colors.border 
+                        <View style={[dialogStyles.card, {
+                            backgroundColor: colors.cardBg,
+                            borderColor: colors.border
                         }]}>
 
                             {/* close button */}
@@ -544,30 +544,30 @@ export default function Home() {
                                 onPress={closePopup}
                                 size={24}
                                 color={colors.text}
-                                style={{ 
-                                    position: "absolute", 
-                                    right: 15, 
-                                    top: 15, 
-                                    zIndex: 100 
+                                style={{
+                                    position: "absolute",
+                                    right: 15,
+                                    top: 15,
+                                    zIndex: 100
                                 }}
                             />
-                            <View style={{ 
-                                alignItems: 'center', 
-                                marginBottom: verticalScale(16) 
+                            <View style={{
+                                alignItems: 'center',
+                                marginBottom: verticalScale(16)
                             }}>
 
-                                {/* logo */}
-                                <Image 
-                                    source={require('../imgs/Logo_FWH.png')} 
-                                    style={dialogStyles.aboutLogo} 
+                                {/* Logo */}
+                                <Image
+                                    source={require('../imgs/Logo_FWH.png')}
+                                    style={dialogStyles.aboutLogo}
                                 />
 
-                                {/* title */}
+                                {/* Title */}
                                 <Text style={[dialogStyles.title, { color: colors.text }]}>
                                     FakeWalletHub
                                 </Text>
 
-                                {/* version */}
+                                {/* Version */}
                                 <View style={[dialogStyles.versionTag, { backgroundColor: colors.accent + '35' }]}>
                                     <Text style={{ color: colors.accent, fontSize: 12, fontWeight: 'bold' }}>
                                         v1.1.0
@@ -576,15 +576,15 @@ export default function Home() {
                             </View>
 
                             <View style={{ marginTop: verticalScale(10) }}>
-                                {/* description */}
+                                {/* Description */}
                                 <Text style={[dialogStyles.aboutDesc, { color: colors.text }]}>
                                     {t('aboutDescFull')}
                                 </Text>
 
-                                {/* divider */}
+                                {/* Divider */}
                                 <View style={[dialogStyles.divider, { backgroundColor: colors.text + '50' }]} />
 
-                                {/* info rows - Developer */}
+                                {/* info rows -Developer */}
                                 <View style={dialogStyles.infoRow}>
                                     <Text style={{ color: colors.gray, fontSize: moderateScale(13) }}>
                                         {t('developer')}
@@ -594,7 +594,7 @@ export default function Home() {
                                     </Text>
                                 </View>
 
-                                {/* info rows - License */}
+                                {/* info rows -License */}
                                 <View style={dialogStyles.infoRow}>
                                     <Text style={{ color: colors.gray, fontSize: moderateScale(13) }}>
                                         {t('license')}
@@ -604,14 +604,14 @@ export default function Home() {
                                     </Text>
                                 </View>
 
-                                {/* divider */}
+                                {/* Divider */}
                                 <View style={[dialogStyles.divider, { backgroundColor: colors.text + '50' }]} />
 
-                                {/* links */}
+                                {/* Links */}
                                 <View style={dialogStyles.linksContainer}>
-                                    {/* GitHub */}
-                                    <TouchableOpacity  
-                                        style={dialogStyles.linkItem} 
+                                    {/* Git hub */}
+                                    <TouchableOpacity
+                                        style={dialogStyles.linkItem}
                                         onPress={() => Linking.openURL(GITHUB_URL)}
                                     >
                                         <Github size={20} color={colors.accent} />
@@ -621,8 +621,8 @@ export default function Home() {
                                     </TouchableOpacity>
 
                                     {/* Contact Email */}
-                                    <TouchableOpacity 
-                                        style={dialogStyles.linkItem} 
+                                    <TouchableOpacity
+                                        style={dialogStyles.linkItem}
                                         onPress={() => Linking.openURL(`mailto:${CONTACT_EMAIL}`)}
                                     >
                                         <Mail size={20} color={colors.accent} />
@@ -632,12 +632,12 @@ export default function Home() {
                                     </TouchableOpacity>
                                 </View>
 
-                                {/* footer */}
+                                {/* Footer */}
                                 <View style={dialogStyles.footer}>
-                                    <View style={{ 
-                                        flexDirection: 'row', 
-                                        alignItems: 'center', 
-                                        marginTop: 4 
+                                    <View style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        marginTop: 4
                                     }}>
                                         <Text style={{ color: colors.gray, fontSize: 11 }}>
                                             Made with &nbsp;
@@ -668,7 +668,7 @@ export default function Home() {
     );
 }
 
-// --- Styles ---
+// ---Styles ---
 const styles = StyleSheet.create({
     card: {
         flexDirection: "row",

@@ -87,6 +87,8 @@ const TRANSLATIONS: Translations = {
         getStarted: 'เริ่มใช้งาน', notSpecified: 'ไม่ระบุ',
         notifications: 'แจ้งเตือน',
         savingsGoal: 'เป้าหมายการออม', savingsGoalAmount: 'จำนวนเงินเป้าหมาย',
+        goalAmountZeroAlert: 'จำนวนเป้าหมายไม่ถูกต้อง',
+        goalAmountZeroAlertDesc: 'เมื่อเปิดเป้าหมายการออม โปรดระบุจำนวนเงินเป้าหมายมากกว่า 0',
     },
     en: {
         about: 'About', settings: 'Settings', language: 'Language',
@@ -135,6 +137,8 @@ const TRANSLATIONS: Translations = {
         getStarted: 'Get Started', notSpecified: 'Not Specified',
         notifications: 'Notifications',
         savingsGoal: 'Savings Goal', savingsGoalAmount: 'Goal Amount',
+        goalAmountZeroAlert: 'Invalid goal amount',
+        goalAmountZeroAlertDesc: 'When savings goal is on, enter a goal amount greater than 0.',
     },
     zh: {
         about: '关于', settings: '设置', language: '语言',
@@ -183,6 +187,8 @@ const TRANSLATIONS: Translations = {
         getStarted: '开始使用', notSpecified: '未指定',
         notifications: '通知',
         savingsGoal: '储蓄目标', savingsGoalAmount: '目标金额',
+        goalAmountZeroAlert: '目标金额无效',
+        goalAmountZeroAlertDesc: '开启储蓄目标时，请输入大于 0 的目标金额。',
     },
     ja: {
         about: 'について', settings: '設定', language: '言語',
@@ -231,6 +237,8 @@ const TRANSLATIONS: Translations = {
         getStarted: '始める', notSpecified: '未指定',
         notifications: '通知',
         savingsGoal: '貯蓄目標', savingsGoalAmount: '目標金額',
+        goalAmountZeroAlert: '目標金額が無効です',
+        goalAmountZeroAlertDesc: '貯蓄目標をオンにする場合は、0より大きい目標金額を入力してください。',
     },
 };
 

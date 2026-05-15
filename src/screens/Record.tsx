@@ -715,7 +715,7 @@ export default function Record() {
                             <View style={styles.actionButtons}>
                                 {/* Edit Button */}
                                 <TouchableOpacity
-                                    style={[styles.actionBtnEdit, { backgroundColor: colors.cardBg, borderColor: colors.border, borderWidth: 1 }]}
+                                    style={[styles.actionBtnEdit, { backgroundColor: colors.chart }]}
                                     onPress={handleEdit}
                                     activeOpacity={0.8}
                                 >

@@ -23,6 +23,7 @@ import { useLanguage, LANGUAGES } from "../context/LanguageContext";
 import { useCurrency, CURRENCIES } from "../context/CurrencyContext";
 import { useCategory, CategoryItem } from "../context/CategoryContext";
 import { CARD_SHADOW } from "../style/Theme";
+import AlertPopup from "./AlertPopup";
 
 // --- Icons ---
 import {
@@ -110,6 +111,7 @@ export default function Nav() {
     // --- State: Savings Goal ---
     const [goalEnabled, setGoalEnabled] = useState(false);
     const [goalAmount, setGoalAmount] = useState('');
+    const [showGoalAmountAlert, setShowGoalAmountAlert] = useState(false);
 
     // --- Animation Refs ---
     const menuAnim = useRef(new Animated.Value(0)).current;
@@ -259,15 +261,19 @@ export default function Nav() {
 
     const handleSaveCategory = async () => {
         if (editingCategory) {
+            const numAmount = parseFloat(goalAmount) || 0;
+            if (goalEnabled && numAmount === 0) {
+                setShowGoalAmountAlert(true);
+                return;
+            }
+
             if (newCategoryName.trim()) {
                 await editCategory(editingCategory.id, newCategoryName.trim());
             }
             if (selectedIcon) {
                 await editCategoryIcon(editingCategory.id, selectedIcon);
             }
-            
-            // Save Savings Goal
-            const numAmount = parseFloat(goalAmount) || 0;
+
             await saveCategoryGoal(editingCategory.id, goalEnabled, numAmount);
 
             // Reset to defaults
@@ -343,7 +349,7 @@ export default function Nav() {
     });
 
     // --- Sub-Components ---
-    
+
     interface MenuItemProps {
         icon: ReactNode;
         label: string;
@@ -464,152 +470,152 @@ export default function Nav() {
 
                         {/* Dropdown Menu */}
                         <Animated.View
-                        style={[
-                            styles.dropdownMenu,
-                            {
-                                backgroundColor: colors.cardBg,
-                                borderColor: colors.border,
-                                opacity: menuOpacity,
-                                transform: [
-                                    { scale: menuScale },
-                                    { translateY: menuTranslateY },
-                                ],
-                            },
-                        ]}>
-                        {/* Edit Categories */}
-                        <MenuItem
-                            index={4}
-                            icon={<Edit3 size={18} color={colors.accent} />}
-                            label={t('editCategory')}
-                            onPress={() => {
-                                closeMenu();
-                                setShowCategoryModal(true);
-                            }}
-                        />
+                            style={[
+                                styles.dropdownMenu,
+                                {
+                                    backgroundColor: colors.cardBg,
+                                    borderColor: colors.border,
+                                    opacity: menuOpacity,
+                                    transform: [
+                                        { scale: menuScale },
+                                        { translateY: menuTranslateY },
+                                    ],
+                                },
+                            ]}>
+                            {/* Edit Categories */}
+                            <MenuItem
+                                index={4}
+                                icon={<Edit3 size={18} color={colors.accent} />}
+                                label={t('editCategory')}
+                                onPress={() => {
+                                    closeMenu();
+                                    setShowCategoryModal(true);
+                                }}
+                            />
 
-                        {/* Theme Toggle */}
-                        <MenuItem
-                            index={0}
-                            icon={
-                                isDarkMode
-                                    ? <Moon size={18} color={colors.accent} />
-                                    : <Sun size={18} color={colors.accent} />
-                            }
-                            label={isDarkMode ? t('darkMode') : t('lightMode')}
-                            onPress={() => {
-                                toggleTheme();
-                            }}
-                            rightContent={
-                                <View style={[
-                                    styles.toggleTrack,
-                                    { backgroundColor: isDarkMode ? colors.accent : colors.gray + '40' },
-                                ]}>
+                            {/* Theme Toggle */}
+                            <MenuItem
+                                index={0}
+                                icon={
+                                    isDarkMode
+                                        ? <Moon size={18} color={colors.accent} />
+                                        : <Sun size={18} color={colors.accent} />
+                                }
+                                label={isDarkMode ? t('darkMode') : t('lightMode')}
+                                onPress={() => {
+                                    toggleTheme();
+                                }}
+                                rightContent={
                                     <View style={[
-                                        styles.toggleThumb,
-                                        {
-                                            backgroundColor: colors.white,
-                                            transform: [{ translateX: isDarkMode ? 18 : 2 }],
-                                        },
-                                    ]} />
-                                </View>
-                            }
-                        />
+                                        styles.toggleTrack,
+                                        { backgroundColor: isDarkMode ? colors.accent : colors.gray + '40' },
+                                    ]}>
+                                        <View style={[
+                                            styles.toggleThumb,
+                                            {
+                                                backgroundColor: colors.white,
+                                                transform: [{ translateX: isDarkMode ? 18 : 2 }],
+                                            },
+                                        ]} />
+                                    </View>
+                                }
+                            />
 
-                        {/* Language Selector */}
-                        <MenuItem
-                            index={1}
-                            icon={<Globe size={18} color={colors.accent} />}
-                            label={t('language')}
-                            onPress={toggleLangMenu}
-                            rightContent={
-                                <View style={styles.langBadgeContainer}>
-                                    <Text style={styles.langBadgeFlag}>{languages[currentLang].flag}</Text>
-                                    <Text style={[styles.langBadgeText, { color: colors.textSecondary }]}>
-                                        {languages[currentLang].name}
-                                    </Text>
-                                    <Animated.View style={{
-                                        transform: [{ rotate: langRotate }],
-                                    }}>
-                                        <ChevronDown size={14} color={colors.textSecondary} />
-                                    </Animated.View>
-                                </View>
-                            }
-                        />
+                            {/* Language Selector */}
+                            <MenuItem
+                                index={1}
+                                icon={<Globe size={18} color={colors.accent} />}
+                                label={t('language')}
+                                onPress={toggleLangMenu}
+                                rightContent={
+                                    <View style={styles.langBadgeContainer}>
+                                        <Text style={styles.langBadgeFlag}>{languages[currentLang].flag}</Text>
+                                        <Text style={[styles.langBadgeText, { color: colors.textSecondary }]}>
+                                            {languages[currentLang].name}
+                                        </Text>
+                                        <Animated.View style={{
+                                            transform: [{ rotate: langRotate }],
+                                        }}>
+                                            <ChevronDown size={14} color={colors.textSecondary} />
+                                        </Animated.View>
+                                    </View>
+                                }
+                            />
 
-                        {/* Language Sub-menu */}
-                        <Animated.View
-                            style={[
-                                styles.langSubmenu,
-                                {
-                                    height: langHeight,
-                                    opacity: langOpacity,
-                                    backgroundColor: colors.background + '80',
-                                    borderColor: langMenuOpen ? colors.border : 'transparent',
-                                    overflow: 'hidden',
-                                },
-                            ]}
-                        >
-                            {Object.values(LANGUAGES).map((lang) => (
-                                <LangItem
-                                    key={lang.code}
-                                    lang={lang}
-                                    isSelected={currentLang === lang.code}
-                                />
-                            ))}
+                            {/* Language Sub-menu */}
+                            <Animated.View
+                                style={[
+                                    styles.langSubmenu,
+                                    {
+                                        height: langHeight,
+                                        opacity: langOpacity,
+                                        backgroundColor: colors.background + '80',
+                                        borderColor: langMenuOpen ? colors.border : 'transparent',
+                                        overflow: 'hidden',
+                                    },
+                                ]}
+                            >
+                                {Object.values(LANGUAGES).map((lang) => (
+                                    <LangItem
+                                        key={lang.code}
+                                        lang={lang}
+                                        isSelected={currentLang === lang.code}
+                                    />
+                                ))}
+                            </Animated.View>
+
+                            {/* Currency Selector */}
+                            <MenuItem
+                                index={3}
+                                icon={<Banknote size={18} color={colors.accent} />}
+                                label={t('currency')}
+                                onPress={toggleCurMenu}
+                                rightContent={
+                                    <View style={styles.langBadgeContainer}>
+                                        <Text style={[styles.langBadgeFlag, { color: colors.text }]}>{CURRENCIES[currentCurrency].symbol}</Text>
+                                        <Animated.View style={{
+                                            transform: [{ rotate: curRotate }],
+                                        }}>
+                                            <ChevronDown size={14} color={colors.textSecondary} />
+                                        </Animated.View>
+                                    </View>
+                                }
+                            />
+
+                            {/* Currency Sub-menu */}
+                            <Animated.View
+                                style={[
+                                    styles.langSubmenu,
+                                    {
+                                        height: curHeight,
+                                        opacity: curOpacity,
+                                        backgroundColor: colors.background + '80',
+                                        overflow: 'hidden',
+                                    },
+                                ]}
+                            >
+                                {Object.values(CURRENCIES).map((cur) => (
+                                    <CurItem
+                                        key={cur.code}
+                                        cur={cur}
+                                        isSelected={currentCurrency === cur.code}
+                                    />
+                                ))}
+                            </Animated.View>
+
+
+                            {/* About */}
+                            <MenuItem
+                                index={5}
+                                icon={<CircleQuestionMark size={18} color={colors.accent} />}
+                                label={t('about')}
+                                onPress={() => {
+                                    closeMenu();
+                                    openPopup();
+                                }}
+                                isLast
+                            />
                         </Animated.View>
-
-                        {/* Currency Selector */}
-                        <MenuItem
-                            index={3}
-                            icon={<Banknote size={18} color={colors.accent} />}
-                            label={t('currency')}
-                            onPress={toggleCurMenu}
-                            rightContent={
-                                <View style={styles.langBadgeContainer}>
-                                    <Text style={[styles.langBadgeFlag, { color: colors.text }]}>{CURRENCIES[currentCurrency].symbol}</Text>
-                                    <Animated.View style={{
-                                        transform: [{ rotate: curRotate }],
-                                    }}>
-                                        <ChevronDown size={14} color={colors.textSecondary} />
-                                    </Animated.View>
-                                </View>
-                            }
-                        />
-
-                        {/* Currency Sub-menu */}
-                        <Animated.View
-                            style={[
-                                styles.langSubmenu,
-                                {
-                                    height: curHeight,
-                                    opacity: curOpacity,
-                                    backgroundColor: colors.background + '80',
-                                    overflow: 'hidden',
-                                },
-                            ]}
-                        >
-                            {Object.values(CURRENCIES).map((cur) => (
-                                <CurItem
-                                    key={cur.code}
-                                    cur={cur}
-                                    isSelected={currentCurrency === cur.code}
-                                />
-                            ))}
-                        </Animated.View>
-
-
-                        {/* About */}
-                        <MenuItem
-                            index={5}
-                            icon={<CircleQuestionMark size={18} color={colors.accent} />}
-                            label={t('about')}
-                            onPress={() => {
-                                closeMenu();
-                                openPopup();
-                            }}
-                            isLast
-                        />
-                    </Animated.View>
                     </View>
                 </Modal>
             )}
@@ -665,10 +671,10 @@ export default function Nav() {
                     style={{ flex: 1 }}
                 >
                     <TouchableWithoutFeedback onPress={handleCloseCategoryModal}>
-                        <BlurView 
-                            intensity={30} 
-                            tint="dark" 
-                            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.8)' }]} 
+                        <BlurView
+                            intensity={30}
+                            tint="dark"
+                            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.8)' }]}
                         />
                     </TouchableWithoutFeedback>
 
@@ -676,7 +682,7 @@ export default function Nav() {
                         <Text style={[styles.categoryModalTitle, { color: colors.text }]}>
                             {t('editCategory')}
                         </Text>
-                        
+
                         {editingCategory ? (
                             <View>
                                 <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
@@ -695,10 +701,10 @@ export default function Nav() {
                                 </Text>
                                 <View style={styles.iconGrid}>
                                     {AVAILABLE_ICONS.map((item) => (
-                                        <TouchableOpacity 
+                                        <TouchableOpacity
                                             key={item.name}
                                             style={[
-                                                styles.iconBox, 
+                                                styles.iconBox,
                                                 { backgroundColor: colors.background },
                                                 (selectedIcon === item.name || (!selectedIcon && editingCategory.iconName === item.name)) && { borderColor: colors.accent, borderWidth: 2 }
                                             ]}
@@ -765,7 +771,7 @@ export default function Nav() {
                                                 {cat.name}
                                             </Text>
                                         </View>
-                                        <TouchableOpacity 
+                                        <TouchableOpacity
                                             onPress={() => handleEditCategoryStart(cat)}
                                             style={{ padding: 8, backgroundColor: colors.accent + '20', borderRadius: 8 }}
                                         >
@@ -783,6 +789,17 @@ export default function Nav() {
                     </View>
                 </KeyboardAvoidingView>
             </Modal>
+
+            {showGoalAmountAlert && (
+                <AlertPopup
+                    visible={showGoalAmountAlert}
+                    title={t('goalAmountZeroAlert')}
+                    description={t('goalAmountZeroAlertDesc')}
+                    onClose={() => setShowGoalAmountAlert(false)}
+                    buttonText={t('ok')}
+                    type="warning"
+                />
+            )}
         </>
     );
 }

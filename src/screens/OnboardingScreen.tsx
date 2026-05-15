@@ -241,7 +241,12 @@ export default function OnboardingScreen() {
                     onPress={onPress}
                     activeOpacity={0.7}
                 >
-                    <Text style={styles.selectionIcon}>{icon}</Text>
+                    <Text style={[
+                        styles.selectionIcon, 
+                        { color: isSelected ? colors.accent : colors.text }
+                    ]}>
+                        {icon}
+                    </Text>
                     <Text
                         style={[
                             styles.selectionLabel,
