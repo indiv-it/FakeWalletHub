@@ -25,8 +25,10 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
     const [notes, setNotes] = useState<NoteData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchNotes = useCallback(async () => {
-        setIsLoading(true);
+    const fetchNotes = useCallback(async (silent = false) => {
+        if (!silent) {
+            setIsLoading(true);
+        }
         try {
             await initDatabase();
             const data = await getAllNotes();
@@ -34,7 +36,9 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             console.error('Error fetching notes:', error);
         } finally {
-            setIsLoading(false);
+            if (!silent) {
+                setIsLoading(false);
+            }
         }
     }, []);
 
@@ -51,7 +55,7 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
 
         const subscription = AppState.addEventListener('change', nextAppState => {
             if (nextAppState === 'active') {
-                fetchNotes();
+                fetchNotes(true);
             }
         });
         return () => subscription.remove();

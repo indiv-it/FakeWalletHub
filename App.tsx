@@ -1,5 +1,6 @@
 import 'react-native-reanimated';
 import { useState, useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -52,8 +53,13 @@ function AppNavigator() {
     }
   };
 
-  // Loading
-  if (!initialRoute) return null;
+  if (!initialRoute) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000' }}>
+        <ActivityIndicator size="large" color="#ACF532" />
+      </View>
+    );
+  }
 
   return (
     <NavigationContainer>

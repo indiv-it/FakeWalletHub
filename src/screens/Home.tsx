@@ -570,7 +570,7 @@ export default function Home() {
                                 {/* Version */}
                                 <View style={[dialogStyles.versionTag, { backgroundColor: colors.accent + '35' }]}>
                                     <Text style={{ color: colors.accent, fontSize: 12, fontWeight: 'bold' }}>
-                                        v1.1.0
+                                        v1.2.1
                                     </Text>
                                 </View>
                             </View>

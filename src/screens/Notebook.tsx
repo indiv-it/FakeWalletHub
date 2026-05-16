@@ -8,7 +8,7 @@ import {
     TextInput,
     Platform
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { BlurView } from 'expo-blur';
 
@@ -80,6 +80,7 @@ export default function Notebook() {
         setNoteColor(NOTE_COLORS[1]);
         setDateTime(new Date());
         setDateText(new Date().toLocaleDateString());
+        setShowDatePicker(false);
         setModalVisible(true);
     };
 
@@ -97,6 +98,7 @@ export default function Notebook() {
         const noteDate = new Date(note.date + "T00:00:00");
         setDateTime(noteDate);
         setDateText(noteDate.toLocaleDateString());
+        setShowDatePicker(false);
 
         setModalVisible(true);
     };
@@ -151,12 +153,23 @@ export default function Notebook() {
     };
 
     // --- Handlers: Date Picker ---
+    // Android: hide native dialog before updating date state (avoids reopen/crash — see Record.tsx).
+    // Only apply date when user confirms (event.type === 'set'); ignore 'dismissed'.
     const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-        const currentDate = selectedDate || dateTime;
-        setShowDatePicker(Platform.OS === 'ios');
-        setDateTime(currentDate);
-        setDateText(currentDate.toLocaleDateString());
+        if (Platform.OS === 'android') {
+            setShowDatePicker(false);
+        }
+        if (event.type === 'set' && selectedDate) {
+            setDateTime(selectedDate);
+            setDateText(selectedDate.toLocaleDateString());
+        }
     };
+
+    useEffect(() => {
+        if (!modalVisible) {
+            setShowDatePicker(false);
+        }
+    }, [modalVisible]);
 
     // --- Renderers ---
     /**
@@ -312,12 +325,12 @@ export default function Notebook() {
                             </Text>
                         </TouchableOpacity>
 
-                        {/* Date Picker */}
-                        {showDatePicker && (
+                        {/* Date Picker (iOS only inline — Android dialog must render outside Modal) */}
+                        {showDatePicker && Platform.OS === 'ios' && (
                             <DateTimePicker
                                 value={dateTime}
                                 mode="date"
-                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                display="spinner"
                                 onChange={onDateChange}
                             />
                         )}
@@ -355,6 +368,16 @@ export default function Notebook() {
                     </View>
                 </BlurView>
             </Modal>
+
+            {/* Android: DatePickerDialog outside Modal to avoid native window / double-open crashes */}
+            {showDatePicker && Platform.OS === 'android' && modalVisible && (
+                <DateTimePicker
+                    value={dateTime}
+                    mode="date"
+                    display="default"
+                    onChange={onDateChange}
+                />
+            )}
 
             {/* Shared Popup Modals */}
             <ConfirmPopup

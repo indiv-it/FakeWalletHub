@@ -163,10 +163,13 @@ export default function AddList() {
     * Handle Date Picker Change
     */
     const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-        const currentDate = selectedDate || dateTime;
-        setShowDatePicker(Platform.OS === 'ios');
-        setDateTime(currentDate);
-        setDate(currentDate.toLocaleDateString());
+        if (Platform.OS === 'android') {
+            setShowDatePicker(false);
+        }
+        if (event.type === 'set' && selectedDate) {
+            setDateTime(selectedDate);
+            setDate(selectedDate.toLocaleDateString());
+        }
     };
 
     /**
@@ -330,12 +333,12 @@ export default function AddList() {
                         </Text>
                     </TouchableOpacity>
 
-                    {/* iOS/Android Date Picker */}
-                    {showDatePicker && (
+                    {/* Date Picker (iOS inline spinner) */}
+                    {showDatePicker && Platform.OS === 'ios' && (
                         <DateTimePicker
                             value={dateTime}
                             mode="date"
-                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            display="spinner"
                             onChange={onDateChange}
                             themeVariant="dark"
                         />
@@ -539,6 +542,15 @@ export default function AddList() {
                     onClose={() => setShowSaveErrorAlert(false)}
                     buttonText={t('ok')}
                     type="error"
+                />
+            )}
+
+            {showDatePicker && Platform.OS === 'android' && (
+                <DateTimePicker
+                    value={dateTime}
+                    mode="date"
+                    display="default"
+                    onChange={onDateChange}
                 />
             )}
         </View>

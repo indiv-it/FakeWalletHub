@@ -6,21 +6,24 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const guidelineBaseWidth = 375;
 const guidelineBaseHeight = 812;
 
+// Cap scale on tablets / large phones so UI does not over-stretch on Play Store devices
+const MAX_SCALE = 1.15;
+const widthScale = Math.min(SCREEN_WIDTH / guidelineBaseWidth, MAX_SCALE);
+const heightScale = Math.min(SCREEN_HEIGHT / guidelineBaseHeight, MAX_SCALE);
+
 /**
  * Scaling width based on screen width.
  * @param size - Size in pixels.
  * @returns Scaled size.
  */
-const horizontalScale = (size: number): number =>
-    (SCREEN_WIDTH / guidelineBaseWidth) * size;
+const horizontalScale = (size: number): number => widthScale * size;
 
 /**
  * Scaling height based on screen height.
  * @param size - Size in pixels.
  * @returns Scaled size.
  */
-const verticalScale = (size: number): number =>
-    (SCREEN_HEIGHT / guidelineBaseHeight) * size;
+const verticalScale = (size: number): number => heightScale * size;
 
 /**
  * Moderately scaling the size (blend of both horizontal and vertical).
@@ -37,7 +40,7 @@ const moderateScale = (size: number, factor: number = 0.5): number =>
  * @returns Normalized font size.
  */
 const normalize = (size: number): number => {
-    const newSize = (SCREEN_WIDTH / guidelineBaseWidth) * size;
+    const newSize = widthScale * size;
     return Math.round(PixelRatio.roundToNearestPixel(newSize));
 };
 
