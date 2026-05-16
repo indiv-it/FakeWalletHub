@@ -56,67 +56,69 @@ export const useTransactionStats = (): {
     const { colors } = useTheme();
 
     const calculateData = (txList: TransactionData[]): TransactionStats => {
-        // Only include transactions with a valid list type
-        const validTx = txList.filter(
-            t => t.listType === LIST_TYPE_CASH || t.listType === LIST_TYPE_BANK
-        );
-
-        const totalIncome = validTx
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
-
-        const totalExpense = validTx
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.amount, 0);
-
-        const bankIncome = validTx
-            .filter(t => t.type === 'income' && t.listType === LIST_TYPE_BANK)
-            .reduce((sum, t) => sum + t.amount, 0);
-        const bankExpense = validTx
-            .filter(t => t.type === 'expense' && t.listType === LIST_TYPE_BANK)
-            .reduce((sum, t) => sum + t.amount, 0);
-
-        const cashIncome = validTx
-            .filter(t => t.type === 'income' && t.listType === LIST_TYPE_CASH)
-            .reduce((sum, t) => sum + t.amount, 0);
-        const cashExpense = validTx
-            .filter(t => t.type === 'expense' && t.listType === LIST_TYPE_CASH)
-            .reduce((sum, t) => sum + t.amount, 0);
-
-        // Breakdown by category
         const categoryStats: Record<string, CategoryStat> = {};
         CATEGORY_IDS.forEach(catId => {
-            const catTx = txList.filter(t => t.category === catId);
-            categoryStats[catId] = {
-                income: catTx.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0),
-                expense: catTx.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0),
-            };
+            categoryStats[catId] = { income: 0, expense: 0 };
         });
+
+        let totalIncome = 0;
+        let totalExpense = 0;
+        let bankIncome = 0;
+        let bankExpense = 0;
+        let cashIncome = 0;
+        let cashExpense = 0;
+
+        for (const t of txList) {
+            const isBankOrCash =
+                t.listType === LIST_TYPE_CASH || t.listType === LIST_TYPE_BANK;
+            const isIncome = t.type === 'income';
+            const amount = t.amount;
+
+            if (CATEGORY_IDS.includes(t.category)) {
+                if (isIncome) categoryStats[t.category].income += amount;
+                else categoryStats[t.category].expense += amount;
+            }
+
+            if (!isBankOrCash) continue;
+
+            if (isIncome) {
+                totalIncome += amount;
+                if (t.listType === LIST_TYPE_BANK) bankIncome += amount;
+                else cashIncome += amount;
+            } else {
+                totalExpense += amount;
+                if (t.listType === LIST_TYPE_BANK) bankExpense += amount;
+                else cashExpense += amount;
+            }
+        }
 
         const sumMoney = totalIncome - totalExpense;
 
-        // Global percentages
         const totalVolume = totalIncome + totalExpense;
         const incomePercent = totalVolume > 0 ? (totalIncome / totalVolume) * 100 : 0;
         const expensePercent = totalVolume > 0 ? (totalExpense / totalVolume) * 100 : 0;
 
-        // Category percentages
+        // Category share of current balance (income - expense) vs sum of all category balances
+        const categoryBalances = CATEGORY_IDS.map(
+            catId => categoryStats[catId].income - categoryStats[catId].expense
+        );
+        const totalCategoryBalance = categoryBalances.reduce((sum, b) => sum + b, 0);
+
         const categoryPercent: Record<string, number> = {};
-        const totalCategoryIncome = Object.values(categoryStats).reduce((sum, cat) => sum + cat.income, 0);
-        const totalCategoryExpense = Object.values(categoryStats).reduce((sum, cat) => sum + cat.expense, 0);
-        const totalCatVolume = totalCategoryIncome + totalCategoryExpense;
+        CATEGORY_IDS.forEach((catId, index) => {
+            categoryPercent[catId] =
+                totalCategoryBalance !== 0
+                    ? (categoryBalances[index] / totalCategoryBalance) * 100
+                    : 0;
+        });
 
-        for (const [cat, stat] of Object.entries(categoryStats)) {
-            const totalInCat = stat.income + stat.expense;
-            categoryPercent[cat] = totalCatVolume > 0 ? (totalInCat / totalCatVolume) * 100 : 0;
-        }
-
+        // Share of global income/expense (not in-category income vs expense split)
         const categoryStatsPercent: Record<string, CategoryStatPercent> = {};
-        for (const [cat, stat] of Object.entries(categoryStats)) {
-            const total = stat.income + stat.expense;
-            categoryStatsPercent[cat] = {
-                incomePercent: total > 0 ? (stat.income / total) * 100 : 0,
-                expensePercent: total > 0 ? (stat.expense / total) * 100 : 0,
+        for (const catId of CATEGORY_IDS) {
+            const stat = categoryStats[catId];
+            categoryStatsPercent[catId] = {
+                incomePercent: totalIncome > 0 ? (stat.income / totalIncome) * 100 : 0,
+                expensePercent: totalExpense > 0 ? (stat.expense / totalExpense) * 100 : 0,
             };
         }
 

@@ -79,14 +79,14 @@ export default function Home() {
         };
     }), [CATEGORY_IDS, getCategoryDisplayName, getCategoryIconName, colors.background]);
 
-    /**
-     * Calculate category balance (income -expense)
-     */
-    const getCategoryBalance = (stats: Record<string, { income: number; expense: number }>, catId: string) => {
-        const income = stats?.[catId]?.income || 0;
-        const expense = stats?.[catId]?.expense || 0;
-        return income - expense;
-    };
+    const categoryBalances = useMemo(() => {
+        const map: Record<string, number> = {};
+        for (const catId of CATEGORY_IDS) {
+            const stat = allTimeStats.categoryStats[catId];
+            map[catId] = (stat?.income ?? 0) - (stat?.expense ?? 0);
+        }
+        return map;
+    }, [allTimeStats.categoryStats, CATEGORY_IDS]);
 
     // ---Sub-Components ---
 
@@ -95,7 +95,7 @@ export default function Home() {
      */
     const CategoryCard = ({ catId, icon }: { catId: string; icon: React.ReactNode }) => {
         const displayName = getCategoryDisplayName(catId);
-        const balance = getCategoryBalance(allTimeStats.categoryStats, catId);
+        const balance = categoryBalances[catId] ?? 0;
         const isLast = catId === CATEGORY_IDS[CATEGORY_IDS.length - 1];
 
         // Savings Goal
@@ -179,9 +179,17 @@ export default function Home() {
      */
     const GroupPopup = ({ catId }: { catId: string }) => {
         const displayName = getCategoryDisplayName(catId);
+        const monthlyCat = monthlyStats.categoryStats[catId];
+        const monthlyIncome = monthlyCat?.income ?? 0;
+        const monthlyExpense = monthlyCat?.expense ?? 0;
+        const monthlyVolume = monthlyIncome + monthlyExpense;
+        const monthlyIncomePercent = monthlyVolume > 0 ? (monthlyIncome / monthlyVolume) * 100 : 0;
+        const monthlyExpensePercent = monthlyVolume > 0 ? (monthlyExpense / monthlyVolume) * 100 : 0;
+        const totalShare = allTimeStats.categoryPercent[catId] ?? 0;
+        const pieShare = Math.min(Math.max(totalShare, 0), 100);
+
         return (
             <View style={[styles.popupMoney, { backgroundColor: colors.cardBg }]}>
-                {/* close button */}
                 <X
                     onPress={() => setPopupGroup(null)}
                     size={24}
@@ -194,57 +202,50 @@ export default function Home() {
                     }}
                 />
 
-                {/* category name */}
                 <Text style={{ color: colors.accent, fontSize: SIZES.xl, fontWeight: FONTS.bold }}>
                     {displayName}
                 </Text>
 
-                {/* month year */}
                 <Text style={{ color: colors.text, marginTop: 10, marginBottom: 20, fontSize: SIZES.xs, fontWeight: FONTS.normal }}>
                     {t('monthlyData')} : {formatMonthYear()}
                 </Text>
 
-                {/* income chart */}
                 <ChartIncomeExpense
                     title={t('income')}
-                    money={monthlyStats.categoryStats[catId]?.income || 0}
+                    money={monthlyIncome}
                     color='white'
-                    income={monthlyStats.categoryStats[catId]?.income || 0}
-                    expense={monthlyStats.categoryStats[catId]?.expense || 0}
-                    percent={monthlyStats.categoryStatsPercent[catId]?.incomePercent.toFixed(1) || '0'}
+                    income={monthlyIncome}
+                    expense={monthlyExpense}
+                    percent={monthlyIncomePercent.toFixed(1)}
                     background={colors.accent}
                 />
 
-                {/* expense chart */}
                 <ChartIncomeExpense
                     title={t('expense')}
-                    money={monthlyStats.categoryStats[catId]?.expense || 0}
+                    money={monthlyExpense}
                     color='white'
-                    income={monthlyStats.categoryStats[catId]?.expense || 0}
-                    expense={monthlyStats.categoryStats[catId]?.income || 0}
-                    percent={monthlyStats.categoryStatsPercent[catId]?.expensePercent.toFixed(1) || '0'}
+                    income={monthlyExpense}
+                    expense={monthlyIncome}
+                    percent={monthlyExpensePercent.toFixed(1)}
                     background={colors.red}
                 />
 
                 <View style={[styles.pieChartContainer, { borderLeftColor: colors.text }]}>
-                    {/* total ratio text */}
                     <View>
                         <Text style={{ color: colors.text, fontSize: 16, fontWeight: 'bold' }}>
                             {t('totalRatio')}
                         </Text>
-                        {/* Changed to allTimeData label as requested */}
                         <Text style={{ color: colors.gray, fontSize: 12, marginBottom: 4 }}>
                             {t('allTimeData')}
                         </Text>
                         <Text style={{ color: colors.text, fontSize: 18, fontWeight: 'bold' }}>
-                            {allTimeStats.categoryPercent[catId]?.toFixed(1) || 0}%
+                            {totalShare.toFixed(1)}%
                         </Text>
                     </View>
 
-                    {/* Overall Ratio Pie Chart -Changed to allTimeStats */}
                     <PieChartComponent
-                        income={allTimeStats.categoryPercent[catId] || 0}
-                        expense={100 - (allTimeStats.categoryPercent[catId] || 0)}
+                        income={pieShare}
+                        expense={100 - pieShare}
                         size={80}
                         color='white'
                         background={colors.text}
@@ -475,15 +476,17 @@ export default function Home() {
                                         background={colors.red}
                                     />
 
-                                    {/* expense text by category */}
-                                    <Text style={{ color: colors.text, marginBottom: 10, marginTop: 20, textAlign: 'center', fontWeight: 'bold' }}>
+                                    <Text style={{ color: colors.text, marginTop: 20, textAlign: 'center', fontWeight: 'bold' }}>
                                         {t('expenseByCat')}
                                     </Text>
+                                    <Text style={{ color: colors.gray, fontSize: SIZES.xs, marginBottom: 10, textAlign: 'center' }}>
+                                        {t('allTimeData')}
+                                    </Text>
 
-                                    {/* pie chart group */}
+                                    {/* pie chart group - all-time category expense share */}
                                     <PieChartGroup
-                                        data={monthlyStats.expenseByCategory || []}
-                                        expense={monthlyStats.expenseByCategoryPercent.map(i => i.percent.toFixed(1))}
+                                        data={allTimeStats.expenseByCategory || []}
+                                        expense={allTimeStats.expenseByCategoryPercent.map(i => i.percent.toFixed(1))}
                                     />
                                 </View>
                             </View>
