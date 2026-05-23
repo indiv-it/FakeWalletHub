@@ -1,11 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { View, Animated, StyleSheet, Image, Text } from 'react-native';
+import { View, Animated, StyleSheet, Image } from 'react-native';
 import { horizontalScale, verticalScale, moderateScale } from '../utils/responsive';
 import { LinearGradient } from 'expo-linear-gradient';
 
 /**
- * LoadingOverlay Component
- * Displays a full-screen loading animation with a glowing rotating orb and a logo.
+ * App launch splash — full-screen branded loader shown while the app initializes.
  */
 export default function LoadingOverlay() {
     const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -37,7 +36,9 @@ export default function LoadingOverlay() {
                     <Image source={require('../imgs/Logo_FWH.png')} style={{ width: horizontalScale(60), height: horizontalScale(60) }} />
                 </Animated.View>
             </View>
-            <Text style={styles.loadingText}>Loading...</Text>
+            <Animated.Text style={[styles.loadingText, { opacity: pulseAnim }]}>
+                FakeWalletHub
+            </Animated.Text>
         </View>
     );
 }

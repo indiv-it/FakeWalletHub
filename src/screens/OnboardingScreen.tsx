@@ -329,11 +329,16 @@ export default function OnboardingScreen() {
                     </Text>
                 </View>
                 <View style={styles.selectionGrid}>
-                    {Object.values(CURRENCIES).map((cur, index) => (
+                    {Object.values(CURRENCIES)
+                        .filter(cur => cur.code !== 'cny' && cur.code !== 'jpy')
+                        .map((cur, index) => (
                         <SelectionCard
                             key={cur.code}
                             item={cur}
-                            isSelected={currentCurrency === cur.code}
+                            isSelected={
+                                currentCurrency === cur.code
+                                || (cur.code === 'cny_jpy' && (currentCurrency === 'cny' || currentCurrency === 'jpy'))
+                            }
                             onPress={() => changeCurrency(cur.code)}
                             index={index + 4}
                             icon={cur.symbol}

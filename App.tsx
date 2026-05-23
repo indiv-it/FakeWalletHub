@@ -1,6 +1,5 @@
 import 'react-native-reanimated';
 import { useState, useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -21,6 +20,7 @@ import Record from './src/screens/Record';
 import Notebook from './src/screens/Notebook';
 import AddList from './src/screens/AddList';
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import LoadingOverlay from './src/components/LoadingOverlay';
 
 // Stack navigator types
 export type RootStackParamList = {
@@ -54,11 +54,7 @@ function AppNavigator() {
   };
 
   if (!initialRoute) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000' }}>
-        <ActivityIndicator size="large" color="#ACF532" />
-      </View>
-    );
+    return <LoadingOverlay />;
   }
 
   return (

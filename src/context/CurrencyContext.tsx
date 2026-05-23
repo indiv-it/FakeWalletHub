@@ -20,6 +20,8 @@ interface CurrencyContextValue {
 export const CURRENCIES: Record<string, CurrencyInfo> = {
     thb: { code: 'thb', symbol: '฿', name: 'THB', locale: 'th-TH' },
     usd: { code: 'usd', symbol: '$', name: 'USD', locale: 'en-US' },
+    cny_jpy: { code: 'cny_jpy', symbol: '¥', name: 'CNY / JPY', locale: 'zh-CN' },
+    // Legacy entries — kept for backward compat with existing saved data, hidden from picker
     cny: { code: 'cny', symbol: '¥', name: 'CNY', locale: 'zh-CN' },
     jpy: { code: 'jpy', symbol: '¥', name: 'JPY', locale: 'ja-JP' },
 };

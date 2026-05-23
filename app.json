@@ -2,17 +2,18 @@
   "expo": {
     "name": "FakeWalletHub",
     "slug": "fakewallethub",
-    "version": "1.2.1",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/Logo_FWH2.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/Logo_FWH2.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#0a0a0a"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.chockpipat.fakewallethub"
     },
     "android": {
       "adaptiveIcon": {
@@ -29,7 +30,15 @@
     "plugins": [
       "@react-native-community/datetimepicker",
       "expo-web-browser",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0a0a0a",
+          "image": "./assets/Logo_FWH2.png",
+          "imageWidth": 200
+        }
+      ]
     ],
     "extra": {
       "eas": {

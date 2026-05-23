@@ -21,7 +21,9 @@ interface CategoryContextValue {
     categories: CategoryItem[];
     editCategory: (id: string, newName: string) => Promise<void>;
     editCategoryIcon: (id: string, iconName: string) => Promise<void>;
+    saveCategoryDetails: (id: string, newName: string, iconName: string | null) => Promise<void>;
     isCategoriesReady: boolean;
+    isSaving: boolean;
     loadCategories: () => Promise<void>;
     getCategoryDisplayName: (categoryId: string) => string;
     getCategoryIconName: (categoryId: string) => string | null;
@@ -58,6 +60,7 @@ export const CategoryProvider = ({ children }: { children: React.ReactNode }) =>
     const [customNames, setCustomNames] = useState<Record<string, string>>({});
     const [customIcons, setCustomIcons] = useState<Record<string, string>>({});
     const [isCategoriesReady, setIsCategoriesReady] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [categoryGoals, setCategoryGoals] = useState<Record<string, CategoryGoal>>({});
 
     useEffect(() => { loadCategories(); }, []);
@@ -122,31 +125,51 @@ export const CategoryProvider = ({ children }: { children: React.ReactNode }) =>
     }));
 
     const editCategory = async (id: string, newName: string) => {
-        try {
-            await updateCustomCategory(id, newName, customIcons[id]);
-            await loadCategories();
-        } catch (e) { console.log('Error editing category name', e); }
+        await saveCategoryDetails(id, newName, customIcons[id] ?? null);
     };
 
     const editCategoryIcon = async (id: string, iconName: string) => {
+        setIsSaving(true);
         try {
-            await updateCustomCategory(id, customNames[id], iconName);
+            await updateCustomCategory(id, { icon: iconName });
             await loadCategories();
-        } catch (e) { console.log('Error editing category icon', e); }
+        } catch (e) {
+            console.log('Error editing category icon', e);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const saveCategoryDetails = async (id: string, newName: string, iconName: string | null) => {
+        setIsSaving(true);
+        try {
+            await updateCustomCategory(id, { customName: newName.trim(), icon: iconName });
+            await loadCategories();
+        } catch (e) {
+            console.log('Error saving category details', e);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const saveCategoryGoal = async (id: string, enabled: boolean, amount: number) => {
+        setIsSaving(true);
         try {
             await upsertCategoryGoal(id, enabled, amount);
             await loadCategories();
-        } catch (e) { console.log('Error saving category goal', e); }
+        } catch (e) {
+            console.log('Error saving category goal', e);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const getCategoryGoal = (id: string): CategoryGoal | null => categoryGoals[id] || null;
 
     return (
         <CategoryContext.Provider value={{
-            categories, editCategory, editCategoryIcon, isCategoriesReady,
+            categories, editCategory, editCategoryIcon, saveCategoryDetails,
+            isCategoriesReady, isSaving,
             loadCategories, getCategoryDisplayName, getCategoryIconName,
             resolveCategoryId, CATEGORY_IDS,
             categoryGoals, saveCategoryGoal, getCategoryGoal,

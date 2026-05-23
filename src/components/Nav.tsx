@@ -8,10 +8,6 @@ import {
     Animated,
     TouchableWithoutFeedback,
     Modal,
-    TextInput,
-    KeyboardAvoidingView,
-    Platform,
-    Switch,
 } from "react-native";
 import { BlurView } from 'expo-blur';
 import { horizontalScale, verticalScale, moderateScale } from "../utils/responsive";
@@ -21,9 +17,9 @@ import { useTheme } from '../context/ThemeContext';
 import { usePopup } from "../context/PopupContext";
 import { useLanguage, LANGUAGES } from "../context/LanguageContext";
 import { useCurrency, CURRENCIES } from "../context/CurrencyContext";
-import { useCategory, CategoryItem } from "../context/CategoryContext";
 import { CARD_SHADOW } from "../style/Theme";
-import AlertPopup from "./AlertPopup";
+import CategoryEditorModal from "./CategoryEditorModal";
+import HowToUseModal from "./HowToUseModal";
 
 // --- Icons ---
 import {
@@ -33,61 +29,19 @@ import {
     ChevronDown,
     Globe,
     Check,
-    Settings,
     Banknote,
     Edit3,
-    ShoppingCart,
-    ShoppingBag,
-    ChartColumnBig,
-    PiggyBank,
-    Heart,
-    Home as HomeIcon,
-    Car,
-    Utensils,
-    Gift,
-    BookOpen,
-    Briefcase,
-    Gamepad2,
-    Plane,
-    Stethoscope,
-    GraduationCap,
 } from 'lucide-react-native';
 
-// --- Constants ---
-const AVAILABLE_ICONS = [
-    { name: 'ShoppingCart', Icon: ShoppingCart },
-    { name: 'ShoppingBag', Icon: ShoppingBag },
-    { name: 'ChartColumnBig', Icon: ChartColumnBig },
-    { name: 'PiggyBank', Icon: PiggyBank },
-    { name: 'Heart', Icon: Heart },
-    { name: 'HomeIcon', Icon: HomeIcon },
-    { name: 'Car', Icon: Car },
-    { name: 'Utensils', Icon: Utensils },
-    { name: 'Gift', Icon: Gift },
-    { name: 'BookOpen', Icon: BookOpen },
-    { name: 'Briefcase', Icon: Briefcase },
-    { name: 'Gamepad2', Icon: Gamepad2 },
-    { name: 'Plane', Icon: Plane },
-    { name: 'Stethoscope', Icon: Stethoscope },
-    { name: 'GraduationCap', Icon: GraduationCap },
-];
-
-/**
- * Map icon name to component for easy rendering
- */
-export const getIconComponent = (name: string | null, size: number, color: string) => {
-    const iconObj = AVAILABLE_ICONS.find(i => i.name === name);
-    if (iconObj) {
-        const { Icon } = iconObj;
-        return <Icon size={size} color={color} />;
-    }
-    return null;
-};
+// Currencies visible in the picker UI (hide legacy cny/jpy)
+const PICKER_CURRENCIES = Object.values(CURRENCIES).filter(
+    c => c.code !== 'cny' && c.code !== 'jpy'
+);
 
 /**
  * Nav Component
  * The top navigation bar, featuring dropdown menus for theme, language,
- * currency settings, as well as category customization modals.
+ * currency settings, and the how-to-use guide. Category editing opens CategoryEditorModal.
  */
 export default function Nav() {
     // --- Context Hooks ---
@@ -95,88 +49,65 @@ export default function Nav() {
     const { openPopup } = usePopup();
     const { currentLang, changeLanguage, t, languages } = useLanguage();
     const { currentCurrency, changeCurrency } = useCurrency();
-    const { categories, editCategory, editCategoryIcon, saveCategoryGoal, getCategoryGoal } = useCategory();
 
     // --- State: Menus ---
     const [menuOpen, setMenuOpen] = useState(false);
     const [langMenuOpen, setLangMenuOpen] = useState(false);
     const [curMenuOpen, setCurMenuOpen] = useState(false);
 
-    // --- State: Category Modal ---
+    // --- State: Modals ---
     const [showCategoryModal, setShowCategoryModal] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
-    const [newCategoryName, setNewCategoryName] = useState('');
-    const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
-
-    // --- State: Savings Goal ---
-    const [goalEnabled, setGoalEnabled] = useState(false);
-    const [goalAmount, setGoalAmount] = useState('');
-    const [showGoalAmountAlert, setShowGoalAmountAlert] = useState(false);
+    const [showHowToUseModal, setShowHowToUseModal] = useState(false);
 
     // --- Animation Refs ---
+    // FIX (Task 5): All animations use the same driver (menuAnim useNativeDriver:true)
+    // Chevron rotation is derived from menuAnim so it stays perfectly in sync.
     const menuAnim = useRef(new Animated.Value(0)).current;
     const langMenuAnim = useRef(new Animated.Value(0)).current;
     const curMenuAnim = useRef(new Animated.Value(0)).current;
-    const rotateAnim = useRef(new Animated.Value(0)).current;
 
     // --- Handlers: Dropdowns ---
     /**
-     * Toggles the main dropdown menu open or closed
+     * Toggles the main dropdown menu open or closed.
      */
     const toggleMenu = () => {
         const next = !menuOpen;
         setMenuOpen(next);
 
         if (!next) {
+            // FIX (Task 6): sync-reset submenu values BEFORE animating closed
+            // so they don't "stick" on next open
+            langMenuAnim.setValue(0);
+            curMenuAnim.setValue(0);
             setLangMenuOpen(false);
             setCurMenuOpen(false);
-            Animated.parallel([
-                Animated.timing(menuAnim, {
-                    toValue: 0,
-                    duration: 250,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(rotateAnim, {
-                    toValue: 0,
-                    duration: 250,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(langMenuAnim, {
-                    toValue: 0,
-                    duration: 200,
-                    useNativeDriver: false,
-                }),
-                Animated.timing(curMenuAnim, {
-                    toValue: 0,
-                    duration: 200,
-                    useNativeDriver: false,
-                }),
-            ]).start();
+
+            Animated.timing(menuAnim, {
+                toValue: 0,
+                duration: 250,
+                useNativeDriver: true,
+            }).start();
         } else {
-            Animated.parallel([
-                Animated.spring(menuAnim, {
-                    toValue: 1,
-                    friction: 8,
-                    tension: 65,
-                    useNativeDriver: true,
-                }),
-                Animated.timing(rotateAnim, {
-                    toValue: 1,
-                    duration: 250,
-                    useNativeDriver: true,
-                }),
-            ]).start();
+            Animated.spring(menuAnim, {
+                toValue: 1,
+                friction: 8,
+                tension: 65,
+                useNativeDriver: true,
+            }).start();
         }
     };
 
     /**
-     * Toggles the secondary Language dropdown
+     * Toggles the Language sub-dropdown.
      */
     const toggleLangMenu = () => {
         const next = !langMenuOpen;
         setLangMenuOpen(next);
-        if (next && curMenuOpen) toggleCurMenu(); // Close the other
-
+        if (next && curMenuOpen) {
+            // close currency menu
+            setCurMenuOpen(false);
+            Animated.timing(curMenuAnim, { toValue: 0, duration: 200, useNativeDriver: false }).start();
+        }
         Animated.timing(langMenuAnim, {
             toValue: next ? 1 : 0,
             duration: 250,
@@ -185,13 +116,16 @@ export default function Nav() {
     };
 
     /**
-     * Toggles the secondary Currency dropdown
+     * Toggles the Currency sub-dropdown.
      */
     const toggleCurMenu = () => {
         const next = !curMenuOpen;
         setCurMenuOpen(next);
-        if (next && langMenuOpen) toggleLangMenu(); // Close the other
-
+        if (next && langMenuOpen) {
+            // close language menu
+            setLangMenuOpen(false);
+            Animated.timing(langMenuAnim, { toValue: 0, duration: 200, useNativeDriver: false }).start();
+        }
         Animated.timing(curMenuAnim, {
             toValue: next ? 1 : 0,
             duration: 250,
@@ -200,102 +134,40 @@ export default function Nav() {
     };
 
     /**
-     * Closes the main and secondary menus
+     * Closes the main and all secondary menus.
      */
     const closeMenu = () => {
         setMenuOpen(false);
         setLangMenuOpen(false);
         setCurMenuOpen(false);
+        // FIX (Task 6): reset submenu values immediately so they don't stick
+        langMenuAnim.setValue(0);
+        curMenuAnim.setValue(0);
 
-        Animated.parallel([
-            Animated.timing(menuAnim, {
-                toValue: 0,
-                duration: 250,
-                useNativeDriver: true,
-            }),
-            Animated.timing(rotateAnim, {
-                toValue: 0,
-                duration: 250,
-                useNativeDriver: true,
-            }),
-            Animated.timing(langMenuAnim, {
-                toValue: 0,
-                duration: 200,
-                useNativeDriver: false,
-            }),
-            Animated.timing(curMenuAnim, {
-                toValue: 0,
-                duration: 200,
-                useNativeDriver: false,
-            }),
-        ]).start();
+        Animated.timing(menuAnim, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true,
+        }).start();
     };
 
     // --- Handlers: General Settings ---
+    // FIX (Task 6): instant-reset submenu anims before close so they don't stick on reopen
     const handleLangSelect = (langCode: string) => {
         changeLanguage(langCode);
+        langMenuAnim.setValue(0);
+        curMenuAnim.setValue(0);
         closeMenu();
     };
 
     const handleCurSelect = (curCode: string) => {
         changeCurrency(curCode);
+        langMenuAnim.setValue(0);
+        curMenuAnim.setValue(0);
         closeMenu();
     };
 
-    // --- Handlers: Category Editor ---
-    const handleEditCategoryStart = (cat: CategoryItem) => {
-        setEditingCategory(cat);
-        setNewCategoryName(cat.name);
-        setSelectedIcon(cat.iconName);
-
-        // Load existing goal
-        const goal = getCategoryGoal(cat.id);
-        if (goal) {
-            setGoalEnabled(goal.goal_enabled);
-            setGoalAmount(goal.goal_amount > 0 ? String(goal.goal_amount) : '');
-        } else {
-            setGoalEnabled(false);
-            setGoalAmount('');
-        }
-    };
-
-    const handleSaveCategory = async () => {
-        if (editingCategory) {
-            const numAmount = parseFloat(goalAmount) || 0;
-            if (goalEnabled && numAmount === 0) {
-                setShowGoalAmountAlert(true);
-                return;
-            }
-
-            if (newCategoryName.trim()) {
-                await editCategory(editingCategory.id, newCategoryName.trim());
-            }
-            if (selectedIcon) {
-                await editCategoryIcon(editingCategory.id, selectedIcon);
-            }
-
-            await saveCategoryGoal(editingCategory.id, goalEnabled, numAmount);
-
-            // Reset to defaults
-            setEditingCategory(null);
-            setNewCategoryName('');
-            setSelectedIcon(null);
-            setGoalEnabled(false);
-            setGoalAmount('');
-            setShowCategoryModal(false);
-        }
-    };
-
-    const handleCloseCategoryModal = () => {
-        setShowCategoryModal(false);
-        setEditingCategory(null);
-        setNewCategoryName('');
-        setSelectedIcon(null);
-        setGoalEnabled(false);
-        setGoalAmount('');
-    };
-
-    // --- Interpolated Animations Computations ---
+    // --- Interpolated Animations ---
     const menuScale = menuAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [0.9, 1],
@@ -311,38 +183,37 @@ export default function Nav() {
         outputRange: [-10, 0],
     });
 
-    // Chevron main
-    const rotateInterpolate = rotateAnim.interpolate({
+    // FIX (Task 5): Derive main chevron rotation from menuAnim (same driver thread)
+    const rotateInterpolate = menuAnim.interpolate({
         inputRange: [0, 1],
         outputRange: ['0deg', '180deg'],
     });
 
-    // Lang submenu height
+    // Lang submenu
     const langHeight = langMenuAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [0, Object.keys(LANGUAGES).length * verticalScale(53) + verticalScale(8)],
     });
-
     const langOpacity = langMenuAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [0, 1],
     });
-
+    // FIX (Task 5): lang chevron derived from langMenuAnim (same JS thread)
     const langRotate = langMenuAnim.interpolate({
         inputRange: [0, 1],
         outputRange: ['0deg', '180deg'],
     });
 
+    // Currency submenu
     const curHeight = curMenuAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, Object.keys(CURRENCIES).length * verticalScale(53) + verticalScale(8)],
+        outputRange: [0, PICKER_CURRENCIES.length * verticalScale(53) + verticalScale(8)],
     });
-
     const curOpacity = curMenuAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [0, 1],
     });
-
+    // FIX (Task 5): cur chevron derived from curMenuAnim (same JS thread)
     const curRotate = curMenuAnim.interpolate({
         inputRange: [0, 1],
         outputRange: ['0deg', '180deg'],
@@ -465,7 +336,7 @@ export default function Nav() {
                 <Modal transparent visible={menuOpen} animationType="none" onRequestClose={closeMenu}>
                     <View style={{ flex: 1 }}>
                         <TouchableWithoutFeedback onPress={closeMenu}>
-                            <BlurView intensity={20} tint={isDarkMode ? "dark" : "dark"} style={styles.backdrop} />
+                            <BlurView intensity={20} tint="dark" style={styles.backdrop} />
                         </TouchableWithoutFeedback>
 
                         {/* Dropdown Menu */}
@@ -484,7 +355,7 @@ export default function Nav() {
                             ]}>
                             {/* Edit Categories */}
                             <MenuItem
-                                index={4}
+                                index={0}
                                 icon={<Edit3 size={18} color={colors.accent} />}
                                 label={t('editCategory')}
                                 onPress={() => {
@@ -495,16 +366,14 @@ export default function Nav() {
 
                             {/* Theme Toggle */}
                             <MenuItem
-                                index={0}
+                                index={1}
                                 icon={
                                     isDarkMode
                                         ? <Moon size={18} color={colors.accent} />
                                         : <Sun size={18} color={colors.accent} />
                                 }
                                 label={isDarkMode ? t('darkMode') : t('lightMode')}
-                                onPress={() => {
-                                    toggleTheme();
-                                }}
+                                onPress={toggleTheme}
                                 rightContent={
                                     <View style={[
                                         styles.toggleTrack,
@@ -523,7 +392,7 @@ export default function Nav() {
 
                             {/* Language Selector */}
                             <MenuItem
-                                index={1}
+                                index={2}
                                 icon={<Globe size={18} color={colors.accent} />}
                                 label={t('language')}
                                 onPress={toggleLangMenu}
@@ -533,9 +402,8 @@ export default function Nav() {
                                         <Text style={[styles.langBadgeText, { color: colors.textSecondary }]}>
                                             {languages[currentLang].name}
                                         </Text>
-                                        <Animated.View style={{
-                                            transform: [{ rotate: langRotate }],
-                                        }}>
+                                        {/* FIX (Task 5): derived from langMenuAnim — same JS thread as height anim */}
+                                        <Animated.View style={{ transform: [{ rotate: langRotate }] }}>
                                             <ChevronDown size={14} color={colors.textSecondary} />
                                         </Animated.View>
                                     </View>
@@ -572,17 +440,18 @@ export default function Nav() {
                                 onPress={toggleCurMenu}
                                 rightContent={
                                     <View style={styles.langBadgeContainer}>
-                                        <Text style={[styles.langBadgeFlag, { color: colors.text }]}>{CURRENCIES[currentCurrency].symbol}</Text>
-                                        <Animated.View style={{
-                                            transform: [{ rotate: curRotate }],
-                                        }}>
+                                        <Text style={[styles.langBadgeFlag, { color: colors.text }]}>
+                                            {CURRENCIES[currentCurrency]?.symbol ?? '¥'}
+                                        </Text>
+                                        {/* FIX (Task 5): derived from curMenuAnim — same JS thread */}
+                                        <Animated.View style={{ transform: [{ rotate: curRotate }] }}>
                                             <ChevronDown size={14} color={colors.textSecondary} />
                                         </Animated.View>
                                     </View>
                                 }
                             />
 
-                            {/* Currency Sub-menu */}
+                            {/* Currency Sub-menu (Task 8: only show non-legacy currencies) */}
                             <Animated.View
                                 style={[
                                     styles.langSubmenu,
@@ -594,15 +463,29 @@ export default function Nav() {
                                     },
                                 ]}
                             >
-                                {Object.values(CURRENCIES).map((cur) => (
+                                {PICKER_CURRENCIES.map((cur) => (
                                     <CurItem
                                         key={cur.code}
                                         cur={cur}
-                                        isSelected={currentCurrency === cur.code}
+                                        isSelected={
+                                            currentCurrency === cur.code
+                                            // FIX (Task 8): treat legacy cny/jpy as cny_jpy in the picker
+                                            || (cur.code === 'cny_jpy' && (currentCurrency === 'cny' || currentCurrency === 'jpy'))
+                                        }
                                     />
                                 ))}
                             </Animated.View>
 
+                            {/* How To Use (Task 7) */}
+                            <MenuItem
+                                index={4}
+                                icon={<CircleQuestionMark size={18} color={colors.accent} />}
+                                label={t('howToUse')}
+                                onPress={() => {
+                                    closeMenu();
+                                    setShowHowToUseModal(true);
+                                }}
+                            />
 
                             {/* About */}
                             <MenuItem
@@ -652,6 +535,7 @@ export default function Nav() {
                             ? <Moon size={16} color={colors.accent} />
                             : <Sun size={16} color={colors.accent} />
                         }
+                        {/* FIX (Task 5): same menuAnim → same GPU thread = perfectly in sync */}
                         <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
                             <ChevronDown size={16} color={colors.textSecondary} />
                         </Animated.View>
@@ -659,147 +543,17 @@ export default function Nav() {
                 </TouchableOpacity>
             </View>
 
-            {/* Category Edit Modal */}
-            <Modal
-                transparent
+            {/* Category Editor Modal (Task 4) */}
+            <CategoryEditorModal
                 visible={showCategoryModal}
-                animationType="fade"
-                onRequestClose={handleCloseCategoryModal}
-            >
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    style={{ flex: 1 }}
-                >
-                    <TouchableWithoutFeedback onPress={handleCloseCategoryModal}>
-                        <BlurView
-                            intensity={30}
-                            tint="dark"
-                            style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.8)' }]}
-                        />
-                    </TouchableWithoutFeedback>
+                onClose={() => setShowCategoryModal(false)}
+            />
 
-                    <View style={[styles.categoryModal, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-                        <Text style={[styles.categoryModalTitle, { color: colors.text }]}>
-                            {t('editCategory')}
-                        </Text>
-
-                        {editingCategory ? (
-                            <View>
-                                <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
-                                    {t('editNewName')}
-                                </Text>
-                                <TextInput
-                                    style={[styles.categoryInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                    value={newCategoryName}
-                                    onChangeText={setNewCategoryName}
-                                    autoFocus
-                                    placeholderTextColor={colors.textSecondary}
-                                />
-
-                                <Text style={{ color: colors.textSecondary, marginBottom: 12, marginTop: 10 }}>
-                                    {t('editIcon')}
-                                </Text>
-                                <View style={styles.iconGrid}>
-                                    {AVAILABLE_ICONS.map((item) => (
-                                        <TouchableOpacity
-                                            key={item.name}
-                                            style={[
-                                                styles.iconBox,
-                                                { backgroundColor: colors.background },
-                                                (selectedIcon === item.name || (!selectedIcon && editingCategory.iconName === item.name)) && { borderColor: colors.accent, borderWidth: 2 }
-                                            ]}
-                                            onPress={() => setSelectedIcon(item.name)}
-                                        >
-                                            <item.Icon size={20} color={(selectedIcon === item.name || (!selectedIcon && editingCategory.iconName === item.name)) ? colors.accent : colors.gray} />
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-
-                                {/* Savings Goal UI */}
-                                <View style={styles.goalContainer}>
-                                    <View style={styles.goalHeader}>
-                                        <Text style={{ color: colors.text, fontWeight: 'bold' }}>{t('savingsGoal')}</Text>
-                                        <Switch
-                                            value={goalEnabled}
-                                            onValueChange={setGoalEnabled}
-                                            trackColor={{ false: colors.border, true: colors.accent + '80' }}
-                                            thumbColor={goalEnabled ? colors.accent : colors.gray}
-                                        />
-                                    </View>
-                                    {goalEnabled && (
-                                        <View style={{ marginTop: verticalScale(10) }}>
-                                            <Text style={{ color: colors.textSecondary, marginBottom: verticalScale(8) }}>
-                                                {t('savingsGoalAmount')}
-                                            </Text>
-                                            <TextInput
-                                                style={[styles.categoryInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                                                value={goalAmount}
-                                                onChangeText={setGoalAmount}
-                                                keyboardType="numeric"
-                                                placeholder="0.00"
-                                                placeholderTextColor={colors.textSecondary}
-                                            />
-                                        </View>
-                                    )}
-                                </View>
-
-                                <View style={styles.categoryActions}>
-                                    <TouchableOpacity style={[styles.categoryBtn, { backgroundColor: colors.border }]} onPress={handleCloseCategoryModal}>
-                                        <Text style={{ color: colors.text, fontWeight: 'bold' }}>
-                                            {t('cancel')}
-                                        </Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.categoryBtn, { backgroundColor: colors.accent }]} onPress={handleSaveCategory}>
-                                        <Text style={{ color: colors.background, fontWeight: 'bold' }}>
-                                            {t('save')}
-                                        </Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        ) : (
-                            <View>
-                                {categories.map(cat => (
-                                    <View
-                                        key={cat.id}
-                                        style={[styles.categoryRow, { borderBottomColor: colors.border }]}
-                                    >
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                            <View style={[styles.miniIcon, { backgroundColor: colors.accent + '15' }]}>
-                                                {getIconComponent(cat.iconName, 16, colors.accent) || <Settings size={16} color={colors.accent} />}
-                                            </View>
-                                            <Text style={{ color: colors.text, fontSize: 16 }}>
-                                                {cat.name}
-                                            </Text>
-                                        </View>
-                                        <TouchableOpacity
-                                            onPress={() => handleEditCategoryStart(cat)}
-                                            style={{ padding: 8, backgroundColor: colors.accent + '20', borderRadius: 8 }}
-                                        >
-                                            <Edit3 size={16} color={colors.accent} />
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
-                                <TouchableOpacity style={[styles.categoryCloseBtn, { backgroundColor: colors.border, marginTop: 16 }]} onPress={handleCloseCategoryModal}>
-                                    <Text style={{ color: colors.text, fontWeight: 'bold' }}>
-                                        {t('close')}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
-
-            {showGoalAmountAlert && (
-                <AlertPopup
-                    visible={showGoalAmountAlert}
-                    title={t('goalAmountZeroAlert')}
-                    description={t('goalAmountZeroAlertDesc')}
-                    onClose={() => setShowGoalAmountAlert(false)}
-                    buttonText={t('ok')}
-                    type="warning"
-                />
-            )}
+            {/* How To Use Modal (Task 7) */}
+            <HowToUseModal
+                visible={showHowToUseModal}
+                onClose={() => setShowHowToUseModal(false)}
+            />
         </>
     );
 }
@@ -864,27 +618,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: moderateScale(16),
         elevation: 12,
-    },
-
-    // Menu header
-    menuHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: horizontalScale(10),
-        paddingHorizontal: horizontalScale(16),
-        paddingVertical: verticalScale(14),
-        borderBottomWidth: 1,
-    },
-    menuHeaderIconBg: {
-        width: horizontalScale(30),
-        height: verticalScale(30),
-        borderRadius: moderateScale(8),
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    menuHeaderText: {
-        fontSize: moderateScale(15),
-        fontWeight: '700',
     },
 
     // Menu items
@@ -974,93 +707,4 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-
-    // Category Modal
-    categoryModal: {
-        position: 'absolute',
-        top: '15%',
-        left: horizontalScale(20),
-        right: horizontalScale(20),
-        borderRadius: moderateScale(16),
-        padding: horizontalScale(24),
-        borderWidth: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: verticalScale(4) },
-        shadowOpacity: 0.3,
-        shadowRadius: moderateScale(10),
-        elevation: 10,
-    },
-    categoryModalTitle: {
-        fontSize: moderateScale(18),
-        fontWeight: 'bold',
-        marginBottom: verticalScale(20),
-        textAlign: 'center',
-    },
-    categoryRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: verticalScale(10),
-        borderBottomWidth: 1,
-    },
-    categoryInput: {
-        borderWidth: 1,
-        borderRadius: moderateScale(10),
-        paddingHorizontal: horizontalScale(16),
-        paddingVertical: verticalScale(10),
-        fontSize: moderateScale(16),
-        marginBottom: verticalScale(10),
-    },
-    categoryActions: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        gap: horizontalScale(12),
-        marginTop: verticalScale(20),
-    },
-    categoryBtn: {
-        paddingHorizontal: horizontalScale(20),
-        paddingVertical: verticalScale(10),
-        borderRadius: moderateScale(10),
-        minWidth: horizontalScale(80),
-        alignItems: 'center',
-    },
-    categoryCloseBtn: {
-        paddingVertical: verticalScale(12),
-        borderRadius: moderateScale(10),
-        alignItems: 'center',
-    },
-    miniIcon: {
-        width: horizontalScale(32),
-        height: horizontalScale(32),
-        borderRadius: moderateScale(8),
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    iconGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: horizontalScale(8),
-        justifyContent: 'center',
-    },
-    iconBox: {
-        width: horizontalScale(42),
-        height: horizontalScale(42),
-        borderRadius: moderateScale(10),
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: 'transparent',
-    },
-    // Savings Goal
-    goalContainer: {
-        marginTop: verticalScale(20),
-        paddingTop: verticalScale(16),
-        borderTopWidth: 1,
-        borderTopColor: '#333',
-    },
-    goalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    }
 });

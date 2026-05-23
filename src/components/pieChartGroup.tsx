@@ -47,9 +47,11 @@ function PieChartGroup({ data, expense }: PieChartGroupProps) {
             <PieChart
                 data={pieData}
                 donut
-                radius={moderateScale(40)}
-                innerRadius={moderateScale(25)}
+                radius={moderateScale(45)}
+                innerRadius={moderateScale(28)}
                 innerCircleColor={colors.cardBg}
+                strokeWidth={3}
+                extraRadius={4}
                 focusOnPress
             />
             <View style={{ marginLeft: horizontalScale(20) }}>

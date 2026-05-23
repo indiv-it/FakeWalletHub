@@ -21,6 +21,7 @@ import { SIZES, FONTS, CARD_SHADOW, COLORS } from "../style/Theme";
 import { useTheme } from "../context/ThemeContext";
 import ConfirmPopup from "../components/ConfirmPopup";
 import Footer from "../components/Footer";
+import ScreenLoader from "../components/ScreenLoader";
 
 // --- Contexts ---
 import { useTransaction } from "../context/TransactionContext";
@@ -65,7 +66,7 @@ export default function Record() {
 
     // --- Context Hooks ---
     const { colors } = useTheme();
-    const { transactions, loadTransactions, removeTransaction } = useTransaction();
+    const { transactions, loadTransactions, removeTransaction, isLoading } = useTransaction();
     const { t, formatDateByLang } = useLanguage();
     const { formatMoney } = useCurrency();
     const { getCategoryDisplayName } = useCategory();
@@ -424,8 +425,8 @@ export default function Record() {
         return (
             <View style={styles.emptyState}>
                 {/* Icon */}
-                <View style={[styles.emptyIconWrap, { backgroundColor: colors.chart }]}>
-                    <Scroll size={48} color={colors.text} />
+                <View style={[styles.emptyIconWrap, { backgroundColor: colors.accent + '30' }]}>
+                    <Scroll size={48} color={colors.accent} />
                 </View>
 
                 {/* Title */}
@@ -462,6 +463,9 @@ export default function Record() {
     // --- Main Render ---
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
+            {/* Loading Spinner */}
+            <ScreenLoader visible={isLoading} />
+
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: horizontalScale(10) }}>
                 <ClipboardList size={20} color={colors.accent} />
                 <Text style={[styles.textHeader, { color: colors.text }]}>

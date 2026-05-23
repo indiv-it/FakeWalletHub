@@ -20,10 +20,13 @@ import { usePopup } from '../context/PopupContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useCategory } from '../context/CategoryContext';
-import Nav, { getIconComponent } from '../components/Nav';
+import { useTransaction } from '../context/TransactionContext';
+import Nav from '../components/Nav';
+import { getIconComponent } from '../utils/categoryIcons';
 import Footer from '../components/Footer';
 import PieChartComponent from '../components/pieChart';
 import PieChartGroup from '../components/pieChartGroup';
+import ScreenLoader from '../components/ScreenLoader';
 
 // ---Icons ---
 import {
@@ -51,13 +54,20 @@ export default function Home() {
     const { isOpen, closePopup } = usePopup();
     const { t, formatMonthYear } = useLanguage();
     const { formatMoney } = useCurrency();
+    const { isLoading } = useTransaction();
 
     // ---Local State ---
     const [popupMoney, setPopupMoney] = useState<boolean | null>(null); // Toggles general income/expense popup
     const [popupGroup, setPopupGroup] = useState<string | null>(null); // Stores the active category ID for group popup
 
     // ---Category & Stats Hooks ---
-    const { getCategoryDisplayName, CATEGORY_IDS, getCategoryIconName, getCategoryGoal } = useCategory();
+    const {
+        getCategoryDisplayName,
+        CATEGORY_IDS,
+        getCategoryIconName,
+        getCategoryGoal,
+        isSaving: isCategorySaving,
+    } = useCategory();
     const { allTimeStats, monthlyStats } = useTransactionStats();
 
     // ---Helpers & Computations ---
@@ -182,9 +192,9 @@ export default function Home() {
         const monthlyCat = monthlyStats.categoryStats[catId];
         const monthlyIncome = monthlyCat?.income ?? 0;
         const monthlyExpense = monthlyCat?.expense ?? 0;
-        const monthlyVolume = monthlyIncome + monthlyExpense;
-        const monthlyIncomePercent = monthlyVolume > 0 ? (monthlyIncome / monthlyVolume) * 100 : 0;
-        const monthlyExpensePercent = monthlyVolume > 0 ? (monthlyExpense / monthlyVolume) * 100 : 0;
+        const monthlyPercentBase = Math.max(monthlyIncome, monthlyExpense);
+        const monthlyIncomePercent = monthlyPercentBase > 0 ? (monthlyIncome / monthlyPercentBase) * 100 : 0;
+        const monthlyExpensePercent = monthlyPercentBase > 0 ? (monthlyExpense / monthlyPercentBase) * 100 : 0;
         const totalShare = allTimeStats.categoryPercent[catId] ?? 0;
         const pieShare = Math.min(Math.max(totalShare, 0), 100);
 
@@ -320,6 +330,9 @@ export default function Home() {
             padding: horizontalScale(20),
             flex: 1
         }}>
+            {/* Loading Spinner */}
+            <ScreenLoader visible={isLoading || isCategorySaving} />
+
             {/* Top Navigation Component */}
             <Nav />
 
@@ -423,13 +436,7 @@ export default function Home() {
                             activeOpacity={1}
                             onPress={() => setPopupMoney(null)}
                         >
-                            <View style={[styles.popupMoney, {
-                                backgroundColor: colors.cardBg,
-                                transform: [
-                                    { translateX: -horizontalScale(150) },
-                                    { translateY: -verticalScale(280) }
-                                ]
-                            }]}>
+                            <View style={[styles.popupMoney, { backgroundColor: colors.cardBg }]}>
 
                                 {/* close button */}
                                 <X
@@ -479,14 +486,11 @@ export default function Home() {
                                     <Text style={{ color: colors.text, marginTop: 20, textAlign: 'center', fontWeight: 'bold' }}>
                                         {t('expenseByCat')}
                                     </Text>
-                                    <Text style={{ color: colors.gray, fontSize: SIZES.xs, marginBottom: 10, textAlign: 'center' }}>
-                                        {t('allTimeData')}
-                                    </Text>
 
-                                    {/* pie chart group - all-time category expense share */}
+                                    {/* pie chart group - monthly category expense share */}
                                     <PieChartGroup
-                                        data={allTimeStats.expenseByCategory || []}
-                                        expense={allTimeStats.expenseByCategoryPercent.map(i => i.percent.toFixed(1))}
+                                        data={monthlyStats.expenseByCategory || []}
+                                        expense={monthlyStats.expenseByCategoryPercent.map(i => i.percent.toFixed(1))}
                                     />
                                 </View>
                             </View>
@@ -573,7 +577,7 @@ export default function Home() {
                                 {/* Version */}
                                 <View style={[dialogStyles.versionTag, { backgroundColor: colors.accent + '35' }]}>
                                     <Text style={{ color: colors.accent, fontSize: 12, fontWeight: 'bold' }}>
-                                        v1.2.1
+                                        v1.3.0
                                     </Text>
                                 </View>
                             </View>

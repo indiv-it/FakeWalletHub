@@ -47,6 +47,15 @@ export const TransactionProvider = ({ children }: { children: React.ReactNode })
         }
     }, []);
 
+    const runWithLoading = useCallback(async (action: () => Promise<void>) => {
+        setIsLoading(true);
+        try {
+            await action();
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     // ------ Load Data on Mount ------
     useEffect(() => {
         (async () => {
@@ -63,35 +72,41 @@ export const TransactionProvider = ({ children }: { children: React.ReactNode })
 
     // ------ Add Data ------
     const addTransaction = useCallback(async (data: Partial<TransactionData>) => {
-        try {
-            await insertTransaction(data);
-            await loadTransactions();
-        } catch (error) {
-            console.error('Error adding transaction:', error);
-            throw error;
-        }
-    }, [loadTransactions]);
+        await runWithLoading(async () => {
+            try {
+                await insertTransaction(data);
+                await loadTransactions();
+            } catch (error) {
+                console.error('Error adding transaction:', error);
+                throw error;
+            }
+        });
+    }, [loadTransactions, runWithLoading]);
 
     // ------ Edit Data ------
     const editTransaction = useCallback(async (id: number, data: Partial<TransactionData>) => {
-        try {
-            await updateTransaction(id, data);
-            await loadTransactions();
-        } catch (error) {
-            console.error('Error editing transaction:', error);
-            throw error;
-        }
-    }, [loadTransactions]);
+        await runWithLoading(async () => {
+            try {
+                await updateTransaction(id, data);
+                await loadTransactions();
+            } catch (error) {
+                console.error('Error editing transaction:', error);
+                throw error;
+            }
+        });
+    }, [loadTransactions, runWithLoading]);
 
     // ------ Delete Data ------
     const removeTransaction = useCallback(async (id: number) => {
-        try {
-            await deleteTransaction(id);
-            await loadTransactions();
-        } catch (error) {
-            console.error('Error removing transaction:', error);
-        }
-    }, [loadTransactions]);
+        await runWithLoading(async () => {
+            try {
+                await deleteTransaction(id);
+                await loadTransactions();
+            } catch (error) {
+                console.error('Error removing transaction:', error);
+            }
+        });
+    }, [loadTransactions, runWithLoading]);
 
     const value: TransactionContextValue = {
         transactions,

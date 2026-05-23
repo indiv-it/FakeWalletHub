@@ -94,9 +94,10 @@ export const useTransactionStats = (): {
 
         const sumMoney = totalIncome - totalExpense;
 
-        const totalVolume = totalIncome + totalExpense;
-        const incomePercent = totalVolume > 0 ? (totalIncome / totalVolume) * 100 : 0;
-        const expensePercent = totalVolume > 0 ? (totalExpense / totalVolume) * 100 : 0;
+        // % relative to the larger of income/expense (e.g. income 100, expense 50 → expense 50%)
+        const percentBase = Math.max(totalIncome, totalExpense);
+        const incomePercent = percentBase > 0 ? (totalIncome / percentBase) * 100 : 0;
+        const expensePercent = percentBase > 0 ? (totalExpense / percentBase) * 100 : 0;
 
         // Category share of current balance (income - expense) vs sum of all category balances
         const categoryBalances = CATEGORY_IDS.map(

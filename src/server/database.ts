@@ -398,6 +398,7 @@ export async function deleteNote(id: number): Promise<void> {
  */
 export async function getAllCustomCategories(): Promise<CustomCategory[]> {
     try {
+        await initDatabase();
         const database = await getDatabase();
         const rows = await database.getAllAsync<CustomCategory>(`SELECT * FROM custom_categories`);
         return rows || [];
@@ -412,18 +413,24 @@ export async function getAllCustomCategories(): Promise<CustomCategory[]> {
  */
 export async function updateCustomCategory(
     id: string,
-    customName?: string,
-    icon?: string | null
+    updates: { customName?: string; icon?: string | null }
 ): Promise<void> {
     try {
+        await initDatabase();
         const database = await getDatabase();
         const existing = await database.getFirstAsync<CustomCategory>(
             `SELECT * FROM custom_categories WHERE id = ?`,
             [id]
         );
 
-        const finalName = customName !== undefined ? customName : (existing ? existing.custom_name : '');
-        const finalIcon = icon !== undefined ? icon : (existing ? existing.icon : null);
+        const finalName =
+            updates.customName !== undefined
+                ? updates.customName
+                : (existing?.custom_name ?? '');
+        const finalIcon =
+            updates.icon !== undefined
+                ? updates.icon
+                : (existing?.icon ?? null);
 
         await database.runAsync(
             `INSERT OR REPLACE INTO custom_categories (id, custom_name, icon) VALUES (?, ?, ?)`,

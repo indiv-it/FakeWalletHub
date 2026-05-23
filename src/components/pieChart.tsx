@@ -54,9 +54,9 @@ const PieChartComponent = ({
     const content = (
         <View style={[styles.container, { width: scaledSize, height: scaledSize }]}>
             <Svg width={scaledSize} height={scaledSize} viewBox={`0 0 ${scaledSize} ${scaledSize}`} pointerEvents="none">
-                <Circle cx={center} cy={center} r={adjustedRadius} stroke={color === "white" ? colors.chart : colors.red} strokeWidth={strokeWidth} fill="none" />
+                <Circle cx={center} cy={center} r={adjustedRadius} stroke={color === "white" ? colors.chart : colors.red} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" />
                 {total > 0 && (
-                    <AnimatedCircle cx={center} cy={center} r={adjustedRadius} stroke={background} strokeWidth={strokeWidth} fill="none" animatedProps={animatedProps} strokeDashoffset={circumference * 0.25} strokeLinecap="butt" />
+                    <AnimatedCircle cx={center} cy={center} r={adjustedRadius} stroke={background} strokeWidth={strokeWidth} fill="none" animatedProps={animatedProps} strokeDashoffset={circumference * 0.25} strokeLinecap="round" />
                 )}
             </Svg>
         </View>

@@ -6,7 +6,9 @@ import {
     FlatList,
     Modal,
     TextInput,
-    Platform
+    Platform,
+    KeyboardAvoidingView,
+    ScrollView,
 } from 'react-native';
 import { useState, useEffect } from 'react';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -27,6 +29,7 @@ import { NoteData } from '../server/database';
 import Footer from '../components/Footer';
 import ConfirmPopup from '../components/ConfirmPopup';
 import AlertPopup from '../components/AlertPopup';
+import ScreenLoader from '../components/ScreenLoader';
 
 // --- Constants ---
 const NOTE_COLORS = [
@@ -209,6 +212,9 @@ export default function Notebook() {
     // --- Render Main screen ---
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
+            {/* Loading Spinner */}
+            <ScreenLoader visible={isLoading} />
+
             {/* Header Component */}
             <View style={styles.headerContainer}>
                 <NotebookPen size={20} color={colors.accent} />
@@ -255,11 +261,20 @@ export default function Notebook() {
                 transparent={true}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <BlurView
-                    intensity={30}
-                    tint="dark"
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.modalOverlay}
                 >
+                    <BlurView
+                        intensity={30}
+                        tint="dark"
+                        style={StyleSheet.absoluteFillObject}
+                    />
+                    <ScrollView
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.modalScrollContent}
+                    >
                     <View style={[styles.modalContent, { backgroundColor: colors.cardBg }]}>
                         {/* Modal Header */}
                         <View style={styles.modalHeader}>
@@ -366,7 +381,8 @@ export default function Notebook() {
                             </Text>
                         </TouchableOpacity>
                     </View>
-                </BlurView>
+                    </ScrollView>
+                </KeyboardAvoidingView>
             </Modal>
 
             {/* Android: DatePickerDialog outside Modal to avoid native window / double-open crashes */}
@@ -486,6 +502,10 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'flex-end',
         backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalScrollContent: {
+        flexGrow: 1,
+        justifyContent: 'flex-end',
     },
     modalContent: {
         borderTopLeftRadius: moderateScale(24),

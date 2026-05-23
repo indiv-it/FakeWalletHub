@@ -38,6 +38,7 @@ import { useCurrency } from "../context/CurrencyContext";
 // --- Constants & Components ---
 import { LIST_TYPE_CASH, LIST_TYPE_BANK, TransactionData } from "../server/database";
 import AlertPopup from "../components/AlertPopup";
+import ScreenLoader from "../components/ScreenLoader";
 
 // --- Types ---
 type RootStackParamList = {
@@ -125,7 +126,7 @@ export default function AddList() {
 
     // --- Contexts ---
     const { colors } = useTheme();
-    const { addTransaction, editTransaction } = useTransaction();
+    const { addTransaction, editTransaction, isLoading } = useTransaction();
     const { t } = useLanguage();
     const { categories } = useCategory();
     const { currencyInfo } = useCurrency();
@@ -245,6 +246,7 @@ export default function AddList() {
     // --- Render ---
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <ScreenLoader visible={isLoading} />
             {/* Header Area */}
             {isEditMode ? (
                 <View style={styles.headerContainer}>
