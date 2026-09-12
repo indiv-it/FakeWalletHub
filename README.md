@@ -1,5 +1,7 @@
 # 💰 FakeWalletHub: Your Smart Financial Companion
 
+![โลโก้](./assets/FakeWalletHub.jpg)
+
 ## 📲 Download the App
 
 | Platform | Download Link |
